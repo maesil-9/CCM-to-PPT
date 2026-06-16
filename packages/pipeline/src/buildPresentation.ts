@@ -29,6 +29,7 @@ import {
   type ScoreValidationResult,
   type SlidePlan,
 } from "@worship-score/core";
+import { defaultFontConfig } from "./fonts.js";
 
 export interface SlideAsset {
   index: number;
@@ -121,6 +122,9 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
   const options = resolveOptions(input.options);
   const profile = input.profile ?? DEFAULT_PRESENTATION_PROFILE;
   const emitFullMusicXml = input.emitFullMusicXml ?? true;
+  // Default to the bundled Korean-capable font so lyrics rasterize identically
+  // on any machine. A caller can pass `fonts: {}` to opt back into system fonts.
+  const fonts = input.fonts ?? defaultFontConfig();
 
   const resolvedScore =
     options.key.transposeSemitones !== 0
@@ -144,7 +148,7 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
     throw new Error(`슬라이드가 너무 많습니다(${slidePlan.slides.length} > ${MAX_SLIDES}) — 반복 횟수·구성을 확인하세요.`);
   }
   const prepared = prepareScore(resolvedScore);
-  const renderOptions = renderOptionsFor(profile, options, input.fonts);
+  const renderOptions = renderOptionsFor(profile, options, fonts);
 
   const ownsRenderer = !input.renderer;
   let renderer = input.renderer;

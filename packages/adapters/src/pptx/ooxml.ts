@@ -133,6 +133,23 @@ export async function validatePptxOoxml(
   }
   add("media_valid_signature", mediaValid, mediaDetail);
 
+  // Every [Content_Types].xml Override must point to a part that exists (OPC).
+  let overridesOk = true;
+  let overrideDetail: string | undefined;
+  const ctFile = zip.file("[Content_Types].xml");
+  if (ctFile) {
+    const ct = await ctFile.async("string");
+    for (const m of ct.matchAll(/<Override\s+PartName="([^"]+)"/g)) {
+      const part = (m[1] ?? "").replace(/^\//, "");
+      if (part && !has(part)) {
+        overridesOk = false;
+        overrideDetail = `phantom override ${part}`;
+        break;
+      }
+    }
+  }
+  add("content_types_overrides_resolve", overridesOk, overrideDetail);
+
   // processEntities:false disables internal/external entity expansion (defense in
   // depth — this validator may run on untrusted PPTX in later milestones; pair
   // with a streaming size cap there).

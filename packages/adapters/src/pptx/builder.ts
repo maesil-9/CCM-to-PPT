@@ -20,6 +20,7 @@ import type {
   ValidatePptxInput,
 } from "@worship-score/core";
 import { validatePptxOoxml } from "./ooxml.js";
+import { sanitizePptx } from "./sanitize.js";
 
 const BUILDER_NAME = "pptxgenjs";
 const BUILDER_VERSION = "4.0.1";
@@ -240,7 +241,9 @@ export class PptxGenJsBuilder implements PptxBuilder {
     }
 
     const out = (await pptx.write({ outputType: "nodebuffer" })) as Buffer | Uint8Array;
-    const buffer = out instanceof Uint8Array ? new Uint8Array(out) : new Uint8Array(Buffer.from(out));
+    const raw = out instanceof Uint8Array ? new Uint8Array(out) : new Uint8Array(Buffer.from(out));
+    // Dedup common media + drop phantom content-type overrides (OPC/PowerPoint).
+    const buffer = await sanitizePptx(raw);
 
     return {
       buffer,

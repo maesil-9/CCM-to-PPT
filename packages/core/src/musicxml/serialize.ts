@@ -381,9 +381,15 @@ function buildHarmony(h: HarmonyChord, offsetDivisions: number): XmlNode {
   return el("harmony", undefined, kids);
 }
 
+// ScoreIR uses the ergonomic alias "final"; MusicXML's <bar-style> has no such
+// value — a final barline is "light-heavy" (the IR↔MusicXML boundary, ADR-001).
+const BAR_STYLE_MUSICXML: Partial<Record<string, string>> = { final: "light-heavy" };
+
 function buildBarline(barline: Barline): XmlNode {
   const kids: XmlChild[] = [];
-  if (barline.style) kids.push(el("bar-style", undefined, [barline.style]));
+  if (barline.style) {
+    kids.push(el("bar-style", undefined, [BAR_STYLE_MUSICXML[barline.style] ?? barline.style]));
+  }
   if (barline.ending) {
     kids.push(
       el("ending", {

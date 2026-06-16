@@ -12,5 +12,8 @@
   },
   "dependencies": {
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "libxml2-wasm": "^0.7.1"
   }
 }

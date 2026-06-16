@@ -32,6 +32,7 @@ export {
   type SerializeOptions,
   type PreparedScore,
 } from "./musicxml/serialize.js";
+export { validateMusicXmlAgainstXsd, type XsdValidationResult } from "./musicxml/xsd.js";
 
 // Transposition & chords
 export { transposeScore, transposeKey } from "./transpose.js";

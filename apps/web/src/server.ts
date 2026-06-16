@@ -14,12 +14,14 @@ import { fileURLToPath } from "node:url";
 import { ZodError } from "zod";
 
 import {
+  deleteBackground,
   listScores,
   loadUiOptions,
   readBackground,
   readScore,
   resolveBuildOptions,
   resolveProfile,
+  saveBackground,
   saveUiOptions,
 } from "./scores.js";
 import {
@@ -100,6 +102,17 @@ async function readJsonBody(req: http.IncomingMessage): Promise<unknown> {
   }
 }
 
+async function readBinaryBody(req: http.IncomingMessage, max = 8_500_000): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  let total = 0;
+  for await (const chunk of req) {
+    total += (chunk as Buffer).length;
+    if (total > max) throw payloadTooLarge("파일이 너무 큽니다");
+    chunks.push(chunk as Buffer);
+  }
+  return Buffer.concat(chunks);
+}
+
 interface ErrorResponse {
   status: number;
   message: string;
@@ -154,6 +167,19 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse): Promi
     const buf = Buffer.from(bytes);
     writeHead(res, 200, { "Content-Type": "image/png", "Content-Length": buf.byteLength, "Cache-Control": "no-store" });
     return void res.end(buf);
+  }
+
+  if ((method === "PUT" || method === "POST") && /^\/api\/scores\/[^/]+\/background$/.test(p)) {
+    const id = decodeURIComponent(p.split("/")[3] ?? "");
+    const bytes = await readBinaryBody(req);
+    await saveBackground(id, new Uint8Array(bytes));
+    return sendJson(res, 200, { ok: true });
+  }
+
+  if (method === "DELETE" && /^\/api\/scores\/[^/]+\/background$/.test(p)) {
+    const id = decodeURIComponent(p.split("/")[3] ?? "");
+    await deleteBackground(id);
+    return sendJson(res, 200, { ok: true });
   }
 
   if (method === "GET" && /^\/api\/scores\/[^/]+$/.test(p)) {

@@ -9,7 +9,7 @@ const CARD_PAD = 0.18;
 const FONTS = ["Malgun Gothic", "Noto Sans KR", "Pretendard", "Segoe UI", "Arial", "Georgia", "Times New Roman"];
 
 const $ = (id) => document.getElementById(id);
-const state = { id: null, hasBackground: false, slides: [] };
+const state = { id: null, hasBackground: false, slides: [], bgVersion: 0 };
 let lastRenderKey = null;
 let renderTimer = null;
 
@@ -193,7 +193,9 @@ function compose() {
     preview.appendChild(e);
     return;
   }
-  const bgUrl = ui.backgroundEnabled ? `/api/scores/${encodeURIComponent(state.id)}/background` : null;
+  const bgUrl = ui.backgroundEnabled
+    ? `/api/scores/${encodeURIComponent(state.id)}/background?v=${state.bgVersion}`
+    : null;
   const shadow = bgUrl ? "0 2px 4px rgba(0,0,0,0.6)" : "none";
 
   for (const s of state.slides) {
@@ -346,6 +348,46 @@ async function exportPptx() {
   }
 }
 
+async function uploadBackground(file) {
+  if (!state.id || !file) return;
+  setStatus("배경 올리는 중…");
+  try {
+    const buf = await file.arrayBuffer();
+    const res = await fetch(`/api/scores/${encodeURIComponent(state.id)}/background`, {
+      method: "PUT",
+      headers: { "content-type": "image/png" },
+      body: buf,
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error || "업로드 실패");
+    }
+    state.hasBackground = true;
+    state.bgVersion++;
+    $("bg-enabled").checked = true;
+    syncBgState();
+    compose();
+    setStatus("배경 적용됨 ✓", "ok");
+  } catch (e) {
+    setStatus("오류: " + e.message, "err");
+  }
+}
+
+async function removeBackground() {
+  if (!state.id) return;
+  try {
+    const res = await fetch(`/api/scores/${encodeURIComponent(state.id)}/background`, { method: "DELETE" });
+    if (!res.ok) throw new Error("제거 실패");
+    state.hasBackground = false;
+    $("bg-enabled").checked = false;
+    syncBgState();
+    compose();
+    setStatus("배경 제거됨", "ok");
+  } catch (e) {
+    setStatus("오류: " + e.message, "err");
+  }
+}
+
 function resetDefaults() {
   setColor($("ink-color"), "1A1A1A");
   $("line-thickness").value = "1";
@@ -437,6 +479,12 @@ async function init() {
   $("export").addEventListener("click", exportPptx);
   $("save").addEventListener("click", saveOptions);
   $("reset").addEventListener("click", resetDefaults);
+  $("bg-file").addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) uploadBackground(f);
+    e.target.value = "";
+  });
+  $("bg-remove").addEventListener("click", removeBackground);
   $("score-select").addEventListener("change", (e) => loadScore(e.target.value));
 
   const res = await fetch("/api/scores");

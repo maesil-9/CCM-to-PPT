@@ -84,6 +84,14 @@
             <span class="row-label">배경 그림</span>
             <input type="checkbox" id="bg-enabled" />
           </label>
+          <label class="row" data-hint="배경 그림 파일(PNG)을 이 곡에 올립니다.">
+            <span class="row-label">그림 올리기</span>
+            <input type="file" id="bg-file" accept="image/png" />
+          </label>
+          <label class="row" data-hint="이 곡의 배경 그림을 지웁니다.">
+            <span class="row-label">그림 제거</span>
+            <button type="button" id="bg-remove">제거</button>
+          </label>
           <label class="row" data-hint="배경 그림이 없을 때의 바탕 색입니다.">
             <span class="row-label">바탕 색</span>
             <input type="color" id="bg-color" value="#ffffff" />

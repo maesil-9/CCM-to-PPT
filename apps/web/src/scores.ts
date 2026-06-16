@@ -10,7 +10,7 @@ import {
   type PresentationProfile,
   type ScoreIR,
 } from "@worship-score/core";
-import { badRequest, notFound, unprocessable } from "./errors.js";
+import { badRequest, notFound, payloadTooLarge, unprocessable } from "./errors.js";
 
 // Resolve scores/ relative to the repo root (apps/web/src → ../../../) so the
 // server works regardless of launch cwd; WS_SCORES_DIR overrides it.
@@ -85,6 +85,30 @@ export async function readBackground(id: string): Promise<Uint8Array | null> {
   const p = path.join(SCORES_DIR, id, "background.png");
   if (!(await exists(p))) return null;
   return new Uint8Array(await fs.readFile(p));
+}
+
+function isPng(bytes: Uint8Array): boolean {
+  return bytes.length >= 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+}
+
+export async function saveBackground(id: string, bytes: Uint8Array): Promise<void> {
+  safeId(id);
+  if (!(await exists(path.join(SCORES_DIR, id, "score.ir.json")))) {
+    throw notFound(`악보를 찾을 수 없습니다: ${id}`);
+  }
+  if (bytes.length === 0) throw badRequest("빈 파일입니다");
+  if (bytes.length > 8 * 1024 * 1024) throw payloadTooLarge("배경 이미지가 너무 큽니다(8MB 이하)");
+  if (!isPng(bytes)) throw unprocessable("PNG 파일만 올릴 수 있습니다");
+  await fs.writeFile(path.join(SCORES_DIR, id, "background.png"), bytes);
+}
+
+export async function deleteBackground(id: string): Promise<void> {
+  safeId(id);
+  try {
+    await fs.unlink(path.join(SCORES_DIR, id, "background.png"));
+  } catch {
+    /* already absent */
+  }
 }
 
 const hex = z.string().regex(/^[0-9A-Fa-f]{6}$/);

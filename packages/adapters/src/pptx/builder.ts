@@ -141,9 +141,10 @@ export class PptxGenJsBuilder implements PptxBuilder {
     const labelStyle: TextStyle = profile.sectionLabel ?? {};
     const titleColor = titleStyle.color ?? (hasBgImage ? "FFFFFF" : "111111");
     const labelColor = labelStyle.color ?? (hasBgImage ? "F2F2F2" : "555555");
-    const textShadow: PptxShadow | undefined = hasBgImage
-      ? { type: "outer", color: "000000", blur: 4, offset: 2, angle: 90, opacity: 0.6 }
-      : undefined;
+    // A FRESH shadow object per addText call: PptxGenJS converts shadow units to
+    // EMU in place, so a shared object accumulates across slides and overflows.
+    const makeShadow = (): PptxShadow | undefined =>
+      hasBgImage ? { type: "outer", color: "000000", blur: 4, offset: 2, angle: 90, opacity: 0.6 } : undefined;
 
     for (const spec of input.slides) {
       const slide = pptx.addSlide();
@@ -175,7 +176,10 @@ export class PptxGenJsBuilder implements PptxBuilder {
           ...(titleStyle.fontFace ? { fontFace: titleStyle.fontFace } : {}),
           align: "center",
           color: titleColor,
-          ...(textShadow ? { shadow: textShadow } : {}),
+          ...(() => {
+            const s = makeShadow();
+            return s ? { shadow: s } : {};
+          })(),
         });
         contentTop = margin * 0.5 + 0.8;
       }
@@ -192,7 +196,10 @@ export class PptxGenJsBuilder implements PptxBuilder {
           ...(labelStyle.fontFace ? { fontFace: labelStyle.fontFace } : {}),
           align: "left",
           color: labelColor,
-          ...(textShadow ? { shadow: textShadow } : {}),
+          ...(() => {
+            const s = makeShadow();
+            return s ? { shadow: s } : {};
+          })(),
         });
         contentTop += 0.55;
       }

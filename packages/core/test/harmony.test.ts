@@ -18,8 +18,18 @@ describe("MusicXML harmony layer", () => {
     const xml = serializeMusicXml(scoreWithChord(), { includeChords: true });
     expect(xml).toContain("<harmony>");
     expect(xml).toContain("<root-step>G</root-step>");
-    // kind carries a derived display text (G major → "G").
-    expect(xml).toContain('<kind text="G">major</kind>');
+    // kind text is the SUFFIX only (major → empty → no text attr) so the root
+    // does not print twice ("GG"). The root renders from <root-step>.
+    expect(xml).toContain("<kind>major</kind>");
+    expect(xml).not.toContain('text="G"');
+  });
+
+  it("emits the quality suffix (not the root) as the kind text", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.harmonies = [{ id: "h1", offsetDivisions: 0, root: { step: "D" }, kind: "minor-seventh" }];
+    const xml = serializeMusicXml(scoreOf([m]), { includeChords: true });
+    expect(xml).toContain('<kind text="m7">minor-seventh</kind>');
+    expect(xml).not.toContain('text="Dm7"');
   });
 
   it("places the chord before the note it aligns with", () => {

@@ -10,7 +10,7 @@
  * ("새 시스템에 필요한 음자리표·조표·박자 표시").
  */
 import { computeActiveAttributes, orderedMeasures, type ActiveAttributes } from "../context.js";
-import { deriveChordText } from "../chord.js";
+import { deriveChordSuffix } from "../chord.js";
 import { eventDurationDivisions, measureDurationDivisions } from "../duration.js";
 import type {
   Barline,
@@ -242,10 +242,12 @@ function buildHarmony(h: HarmonyChord, offsetDivisions: number): XmlNode {
   if (h.root.alter !== undefined && h.root.alter !== 0) {
     rootKids.push(el("root-alter", undefined, [String(h.root.alter)]));
   }
-  const text = h.text ?? deriveChordText(h.root, h.kind, h.bass);
+  // The kind `text` carries ONLY the quality suffix; the root prints from <root>
+  // and the bass from <bass>. (Empty suffix → omit text so just the root shows.)
+  const suffix = deriveChordSuffix(h.kind);
   const kids: XmlChild[] = [
     el("root", undefined, rootKids),
-    el("kind", { text }, [h.kind]),
+    el("kind", suffix ? { text: suffix } : undefined, [h.kind]),
   ];
   if (h.bass) {
     const bassKids: XmlChild[] = [el("bass-step", undefined, [h.bass.step])];

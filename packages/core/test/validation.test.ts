@@ -82,4 +82,30 @@ describe("validateScore", () => {
     m.harmonies = [{ id: "h1", offsetDivisions: 16, root: { step: "G" }, kind: "major" }];
     expect(validateScore(scoreOf([m])).hasBlocking).toBe(false);
   });
+
+  it("flags DUPLICATE_ID across measures/events", () => {
+    const a = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    const b = measure("m1", 1, [qn("dup", 1, "D", 4, "whole")], false); // duplicate measure id
+    const result = validateScore(scoreOf([a, b]));
+    expect(result.hasBlocking).toBe(true);
+    expect(codes(scoreOf([a, b]))).toContain("DUPLICATE_ID");
+  });
+
+  it("flags SECTION_MEASURE_REF_VALID for a dangling section reference", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    const score = scoreOf([m], {
+      sections: [{ id: "s1", kind: "verse", label: "V", startMeasureId: "m1", endMeasureId: "nope" }],
+    });
+    expect(validateScore(score).hasBlocking).toBe(true);
+    expect(new Set(validateScore(score).issues.map((i) => i.code))).toContain("SECTION_MEASURE_REF_VALID");
+  });
+
+  it("flags PRESENTATION_SECTION_REF_VALID for an unknown section in the running order", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    const score = scoreOf([m], {
+      sections: [{ id: "s1", kind: "verse", label: "V", startMeasureId: "m1", endMeasureId: "m1" }],
+      presentation: { chordVisibility: "hidden", order: [{ id: "p1", sectionId: "ghost" }] },
+    });
+    expect(new Set(validateScore(score).issues.map((i) => i.code))).toContain("PRESENTATION_SECTION_REF_VALID");
+  });
 });

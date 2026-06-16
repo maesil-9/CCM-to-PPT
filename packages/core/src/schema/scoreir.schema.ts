@@ -40,8 +40,8 @@ const clefSchema = z.object({
 });
 
 const lyricSchema = z.object({
-  verse: z.number().int().positive(),
-  text: z.string(),
+  verse: z.number().int().positive().max(64),
+  text: z.string().max(200),
   syllabic: z.enum(["single", "begin", "middle", "end"]),
   extend: z.boolean().optional(),
 });
@@ -128,9 +128,9 @@ const measureSchema = z.object({
       clef: clefSchema.optional(),
     })
     .optional(),
-  events: z.array(eventSchema),
-  harmonies: z.array(harmonySchema).optional(),
-  barlines: z.array(barlineSchema).optional(),
+  events: z.array(eventSchema).max(512),
+  harmonies: z.array(harmonySchema).max(128).optional(),
+  barlines: z.array(barlineSchema).max(8).optional(),
   sectionId: z.string().optional(),
 });
 
@@ -158,10 +158,10 @@ const sourceRegionSchema = z.object({
   documentId: z.string(),
   pageNumber: z.number().int(),
   bbox: z.object({
-    x: z.number(),
-    y: z.number(),
-    width: z.number(),
-    height: z.number(),
+    x: z.number().finite(),
+    y: z.number().finite(),
+    width: z.number().finite(),
+    height: z.number().finite(),
   }),
   imageAssetId: z.string().optional(),
   contentHash: z.string(),
@@ -182,10 +182,10 @@ const uncertaintySchema = z.object({
 const presentationItemSchema = z.object({
   id: z.string(),
   sectionId: z.string(),
-  verse: z.number().int().positive().optional(),
-  repeatCount: z.number().int().positive().optional(),
+  verse: z.number().int().positive().max(64).optional(),
+  repeatCount: z.number().int().positive().max(32).optional(),
   hidden: z.boolean().optional(),
-  label: z.string().optional(),
+  label: z.string().max(120).optional(),
 });
 
 export const scoreIrSchema = z.object({
@@ -206,7 +206,7 @@ export const scoreIrSchema = z.object({
     initialKey: keySchema,
     initialTime: timeSchema,
     initialClef: clefSchema,
-    tempoBpm: z.number().positive().optional(),
+    tempoBpm: z.number().positive().finite().max(400).optional(),
   }),
   parts: z.array(
     z.object({
@@ -215,14 +215,14 @@ export const scoreIrSchema = z.object({
       staffCount: z.number().int().positive(),
     }),
   ),
-  measures: z.array(measureSchema),
-  sections: z.array(sectionSchema),
-  sourceRegions: z.array(sourceRegionSchema),
-  uncertainties: z.array(uncertaintySchema),
+  measures: z.array(measureSchema).max(2000),
+  sections: z.array(sectionSchema).max(500),
+  sourceRegions: z.array(sourceRegionSchema).max(5000),
+  uncertainties: z.array(uncertaintySchema).max(5000),
   presentation: z.object({
     profileRef: z.string().optional(),
     chordVisibility: z.enum(["hidden", "visible"]),
-    order: z.array(presentationItemSchema),
+    order: z.array(presentationItemSchema).max(1000),
   }),
 });
 

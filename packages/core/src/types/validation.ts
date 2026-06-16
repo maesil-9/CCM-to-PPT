@@ -19,6 +19,10 @@ export const VALIDATION_RULES = [
   // Implementation-specific additions:
   "DANGLING_SOURCE_REGION",
   "HARMONY_OFFSET_IN_RANGE",
+  "EMPTY_SCORE",
+  "DUPLICATE_ID",
+  "SECTION_MEASURE_REF_VALID",
+  "PRESENTATION_SECTION_REF_VALID",
 ] as const;
 
 export type ValidationRuleCode = (typeof VALIDATION_RULES)[number];

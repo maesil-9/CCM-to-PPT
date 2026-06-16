@@ -77,6 +77,8 @@ export function renderPreview(score: ScoreIR, options: Partial<BuildOptions>): P
   });
 }
 
+export class ExportValidationError extends Error {}
+
 export function exportPptx(score: ScoreIR, options: Partial<BuildOptions>): Promise<Uint8Array> {
   return withLock(async () => {
     const renderer = await getRenderer();
@@ -87,6 +89,10 @@ export function exportPptx(score: ScoreIR, options: Partial<BuildOptions>): Prom
       builder: getBuilder(),
       emitFullMusicXml: false,
     });
+    if (!result.validation.ok) {
+      const failed = result.validation.checks.filter((c) => !c.passed).map((c) => c.name).join(", ");
+      throw new ExportValidationError(`파일 구조 검증 실패 — 내보낼 수 없습니다 (${failed})`);
+    }
     return result.pptx.buffer;
   });
 }

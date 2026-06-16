@@ -132,6 +132,13 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
   }
 
   const slidePlan = planPresentation(resolvedScore, profile);
+  if (slidePlan.slides.length === 0) {
+    throw new Error("생성할 슬라이드가 없습니다 — 악보 마디·섹션·발표순서(presentation.order)를 확인하세요.");
+  }
+  const MAX_SLIDES = 300;
+  if (slidePlan.slides.length > MAX_SLIDES) {
+    throw new Error(`슬라이드가 너무 많습니다(${slidePlan.slides.length} > ${MAX_SLIDES}) — 반복 횟수·구성을 확인하세요.`);
+  }
   const prepared = prepareScore(resolvedScore);
   const renderOptions = renderOptionsFor(profile, options, input.fonts);
 

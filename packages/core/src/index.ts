@@ -35,7 +35,7 @@ export {
 
 // Transposition & chords
 export { transposeScore, transposeKey } from "./transpose.js";
-export { deriveChordText } from "./chord.js";
+export { deriveChordText, deriveChordSuffix } from "./chord.js";
 
 // Presentation
 export {

@@ -38,8 +38,18 @@ function rootText(root: RootStep): string {
   return `${root.step}${ACCIDENTAL[root.alter ?? 0] ?? ""}`;
 }
 
+/**
+ * The quality suffix only (no root, no bass): major→"", minor→"m", dominant→"7".
+ * MusicXML renders the root from <root> and the bass from <bass>, so the <kind>
+ * `text` attribute must carry the suffix ALONE — otherwise the root prints twice
+ * (e.g. "CC", "Dm7" → "DDm7").
+ */
+export function deriveChordSuffix(kind: string): string {
+  return kind in KIND_SUFFIX ? (KIND_SUFFIX[kind] ?? "") : kind;
+}
+
+/** Full human-readable chord text (root + suffix + optional slash bass). */
 export function deriveChordText(root: RootStep, kind: string, bass?: RootStep): string {
-  const suffix = kind in KIND_SUFFIX ? KIND_SUFFIX[kind] : kind;
-  const base = `${rootText(root)}${suffix ?? ""}`;
+  const base = `${rootText(root)}${deriveChordSuffix(kind)}`;
   return bass ? `${base}/${rootText(bass)}` : base;
 }

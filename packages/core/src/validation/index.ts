@@ -222,6 +222,9 @@ export function validateScore(score: ScoreIR): ScoreValidationResult {
   // --- NO_ORPHANED_SOURCE_REGION / DANGLING_SOURCE_REGION ---
   validateSourceRegions(score, issues);
 
+  // --- EMPTY_SCORE / DUPLICATE_ID / referential integrity ---
+  validateIntegrity(score, ordered, issues);
+
   const hasBlocking = issues.some((i) => i.severity === "error" || i.severity === "fatal");
   return { issues, ok: !hasBlocking, hasBlocking };
 }
@@ -297,6 +300,64 @@ function validateSourceRegions(score: ScoreIR, issues: ScoreValidationIssue[]): 
           sourceRegionId: region.id,
         }),
       );
+    }
+  }
+}
+
+function validateIntegrity(
+  score: ScoreIR,
+  ordered: ReturnType<typeof orderedMeasures>,
+  issues: ScoreValidationIssue[],
+): void {
+  if (ordered.length === 0) {
+    issues.push(issue("EMPTY_SCORE", "error", "악보에 마디가 없습니다", {}));
+  }
+
+  // Unique ids across measures / events / harmonies / sections / source regions.
+  const seen = new Map<string, string>();
+  const checkId = (id: string, kind: string, measureId?: string) => {
+    const prev = seen.get(id);
+    if (prev) {
+      issues.push(
+        issue("DUPLICATE_ID", "error", `중복 ID '${id}' (${kind} / 이전 ${prev})`, {
+          entityId: id,
+          ...(measureId ? { measureId } : {}),
+        }),
+      );
+    } else {
+      seen.set(id, kind);
+    }
+  };
+  for (const m of ordered) {
+    checkId(m.id, "measure", m.id);
+    for (const ev of m.events) checkId(ev.id, "event", m.id);
+    for (const h of m.harmonies ?? []) checkId(h.id, "harmony", m.id);
+  }
+  for (const s of score.sections) checkId(s.id, "section");
+  for (const r of score.sourceRegions) checkId(r.id, "sourceRegion");
+
+  // Section → measure references.
+  const measureIds = new Set(ordered.map((m) => m.id));
+  const indexById = new Map(ordered.map((m) => [m.id, m.index] as const));
+  for (const s of score.sections) {
+    if (!measureIds.has(s.startMeasureId)) {
+      issues.push(issue("SECTION_MEASURE_REF_VALID", "error", `섹션 ${s.id}의 시작 마디 '${s.startMeasureId}'가 존재하지 않습니다`, { entityId: s.id }));
+    }
+    if (!measureIds.has(s.endMeasureId)) {
+      issues.push(issue("SECTION_MEASURE_REF_VALID", "error", `섹션 ${s.id}의 끝 마디 '${s.endMeasureId}'가 존재하지 않습니다`, { entityId: s.id }));
+    }
+    const si = indexById.get(s.startMeasureId);
+    const ei = indexById.get(s.endMeasureId);
+    if (si !== undefined && ei !== undefined && si > ei) {
+      issues.push(issue("SECTION_MEASURE_REF_VALID", "error", `섹션 ${s.id}의 시작 마디가 끝 마디보다 뒤에 있습니다`, { entityId: s.id }));
+    }
+  }
+
+  // Presentation order → section references.
+  const sectionIds = new Set(score.sections.map((s) => s.id));
+  for (const item of score.presentation.order) {
+    if (!sectionIds.has(item.sectionId)) {
+      issues.push(issue("PRESENTATION_SECTION_REF_VALID", "error", `발표 순서 항목 ${item.id}의 섹션 '${item.sectionId}'가 존재하지 않습니다`, { entityId: item.id }));
     }
   }
 }

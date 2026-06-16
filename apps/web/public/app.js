@@ -126,11 +126,14 @@ function setStatus(text, cls) {
   el.className = "status" + (cls ? " " + cls : "");
 }
 
-function updateValidation(v) {
+function updateValidation(v, ooxmlOk) {
   const blocking = v.issues.filter((i) => i.severity === "error" || i.severity === "fatal").length;
   const warn = v.issues.filter((i) => i.severity === "warning").length;
   if (blocking > 0) {
     setStatus(`검증: 오류 ${blocking}건 — 내보낼 수 없습니다`, "err");
+    $("export").disabled = true;
+  } else if (ooxmlOk === false) {
+    setStatus("파일 구조 검증 실패 — 내보낼 수 없습니다", "err");
     $("export").disabled = true;
   } else {
     setStatus(`검증: 통과${warn ? ` · 주의 ${warn}건` : ""}`, "ok");
@@ -260,7 +263,7 @@ async function serverRender() {
     if (!res.ok) throw new Error(data.error || "미리보기 실패");
     state.slides = data.slides;
     lastRenderKey = renderKeyOf(opts);
-    updateValidation(data.validation);
+    updateValidation(data.validation, data.ooxmlOk);
     compose();
   } catch (e) {
     setStatus("오류: " + e.message, "err");

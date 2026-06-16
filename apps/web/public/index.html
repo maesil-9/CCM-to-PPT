@@ -27,6 +27,17 @@
     <main class="layout">
       <aside class="controls" aria-label="스타일 설정">
         <section class="group">
+          <h2 class="group-title">형식</h2>
+          <label class="row" data-hint="자막형: 큰 가사와 작은 멜로디를 화면에 띄우는 예배용. 악보형: 코드까지 촘촘히 담는 인쇄용 악보.">
+            <span class="row-label">형식</span>
+            <select id="layout-mode">
+              <option value="projection" selected>자막형</option>
+              <option value="leadsheet">악보형</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="group">
           <h2 class="group-title">악보</h2>
           <label class="row" data-hint="오선과 음표, 가사의 색입니다.">
             <span class="row-label">색</span>
@@ -40,24 +51,28 @@
 
         <section class="group">
           <h2 class="group-title">레이아웃</h2>
-          <label class="row" data-hint="한 줄에 넣을 마디 수입니다. 적을수록 악보가 커져 멀리서도 잘 보입니다.">
+          <label class="row" id="row-lyric-size" data-hint="자막형에서 가사 글씨 크기입니다. 클수록 멀리서도 잘 보입니다.">
+            <span class="row-label">가사 크기</span>
+            <input type="range" id="lyric-size" min="3" max="8" step="0.5" value="6" />
+          </label>
+          <label class="row" id="row-max-systems" data-hint="한 장에 담을 줄 수입니다. 자막형은 한 줄 = 한 가사 구절이라 보통 2줄을 권합니다.">
+            <span class="row-label">한 장 줄 수</span>
+            <select id="max-systems">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+            </select>
+          </label>
+          <label class="row" id="row-measures" data-hint="악보형에서 한 줄에 넣을 마디 수입니다. 적을수록 악보가 커집니다. (자막형에서는 구절 단위로 자동 배치됩니다.)">
             <span class="row-label">한 줄 마디</span>
             <select id="measures-per-system">
               <option value="1">1</option>
               <option value="2" selected>2</option>
               <option value="3">3</option>
               <option value="4">4</option>
-            </select>
-          </label>
-          <label class="row" data-hint="한 장에 넣을 줄(단) 수입니다. 줄이 많으면 한 장에 더 많은 마디가 들어갑니다.">
-            <span class="row-label">한 장 줄 수</span>
-            <select id="max-systems">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4" selected>4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
             </select>
           </label>
         </section>
@@ -67,6 +82,10 @@
           <label class="row" data-hint="음표 위에 코드 기호를 함께 보여 줍니다. 끄면 멜로디와 가사만 남습니다.">
             <span class="row-label">코드</span>
             <input type="checkbox" id="chords-visible" />
+          </label>
+          <label class="row" data-hint="악보 위에 빠르기표(♩=숫자)를 보여 줍니다. 끄면 사라집니다.">
+            <span class="row-label">빠르기표</span>
+            <input type="checkbox" id="tempo-visible" checked />
           </label>
           <label class="row" data-hint="곡 전체의 조를 반음 단위로 올리거나 내립니다. 0은 원래 조입니다.">
             <span class="row-label">조옮김</span>
@@ -106,7 +125,7 @@
           </label>
           <label class="row" data-hint="악보 뒤 바탕의 진하기입니다. 배경이 많이 비치게 하려면 낮춥니다.">
             <span class="row-label">진하기</span>
-            <input type="range" id="card-opacity" min="0" max="1" step="0.02" value="0.84" />
+            <input type="range" id="card-opacity" min="0" max="1" step="0.02" value="0.6" />
           </label>
         </section>
 
@@ -118,11 +137,11 @@
           </label>
           <label class="row" data-hint="제목 글씨의 크기입니다.">
             <span class="row-label">크기</span>
-            <input type="number" id="title-size" min="8" max="80" step="1" value="26" />
+            <input type="number" id="title-size" min="8" max="80" step="1" value="30" />
           </label>
           <label class="row" data-hint="제목 글씨의 색입니다.">
             <span class="row-label">색</span>
-            <input type="color" id="title-color" value="#ffffff" />
+            <input type="color" id="title-color" value="#1a1a1a" />
           </label>
           <label class="row" data-hint="제목을 굵게 표시합니다.">
             <span class="row-label">굵게</span>
@@ -138,11 +157,11 @@
           </label>
           <label class="row" data-hint="절 이름 글씨의 크기입니다.">
             <span class="row-label">크기</span>
-            <input type="number" id="label-size" min="8" max="60" step="1" value="16" />
+            <input type="number" id="label-size" min="8" max="60" step="1" value="18" />
           </label>
           <label class="row" data-hint="절 이름 글씨의 색입니다.">
             <span class="row-label">색</span>
-            <input type="color" id="label-color" value="#e8ecf7" />
+            <input type="color" id="label-color" value="#555555" />
           </label>
           <label class="row" data-hint="절 이름을 굵게 표시합니다.">
             <span class="row-label">굵게</span>

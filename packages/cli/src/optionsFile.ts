@@ -36,6 +36,7 @@ const optionsFileSchema = z
       .object({
         // "projection" (default) = worship subtitle slides; "leadsheet" = printed score.
         mode: z.enum(["projection", "leadsheet"]).optional(),
+        lyricSize: z.number().min(3).max(8).optional(),
         measuresPerSystem: z.number().int().min(1).max(4).optional(),
         maxSystemsPerSlide: z.number().int().min(1).max(6).optional(),
       })
@@ -103,6 +104,7 @@ export async function loadBuildOptions(scoreDir: string): Promise<LoadedOptions>
   const base = v.layout?.mode === "leadsheet" ? DEFAULT_PRESENTATION_PROFILE : PROJECTION_PRESENTATION_PROFILE;
   const profile: PresentationProfile = {
     ...base,
+    ...(v.layout?.lyricSize ? { lyricSize: v.layout.lyricSize } : {}),
     ...(v.layout?.measuresPerSystem ? { measuresPerSystem: v.layout.measuresPerSystem } : {}),
     ...(v.layout?.maxSystemsPerSlide ? { maxSystemsPerSlide: v.layout.maxSystemsPerSlide } : {}),
   };

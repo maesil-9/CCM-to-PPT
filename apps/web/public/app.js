@@ -75,8 +75,11 @@ function readOptions() {
   if (!bgOn) style.backgroundColor = toHex($("bg-color").value);
   const o = {
     chords: { visible: $("chords-visible").checked },
+    tempo: { visible: $("tempo-visible").checked },
     key: { transposeSemitones: clampInt($("transpose").value, -12, 12) },
     layout: {
+      mode: $("layout-mode").value === "leadsheet" ? "leadsheet" : "projection",
+      lyricSize: parseFloat($("lyric-size").value),
       measuresPerSystem: clampInt($("measures-per-system").value, 1, 4),
       maxSystemsPerSlide: clampInt($("max-systems").value, 1, 6),
     },
@@ -89,8 +92,11 @@ function readOptions() {
 
 function applyOptions(ui) {
   $("chords-visible").checked = !!ui.chords?.visible;
+  $("tempo-visible").checked = ui.tempo?.visible !== false;
   $("transpose").value = String(ui.key?.transposeSemitones ?? 0);
   $("bg-enabled").checked = !!ui.backgroundEnabled;
+  $("layout-mode").value = ui.layout?.mode === "leadsheet" ? "leadsheet" : "projection";
+  if (ui.layout?.lyricSize) $("lyric-size").value = String(ui.layout.lyricSize);
   if (ui.style?.title) {
     if (ui.style.title.fontFace) $("title-font").value = ui.style.title.fontFace;
     if (ui.style.title.fontSize) $("title-size").value = String(ui.style.title.fontSize);
@@ -117,6 +123,7 @@ function applyOptions(ui) {
     if (ui.layout.maxSystemsPerSlide) $("max-systems").value = String(ui.layout.maxSystemsPerSlide);
   }
   syncBgState();
+  syncModeUI();
 }
 
 function syncBgState() {
@@ -125,13 +132,23 @@ function syncBgState() {
   $("bg-color").disabled = $("bg-enabled").checked;
 }
 
+// Show only the layout controls that apply to the chosen format.
+function syncModeUI() {
+  const projection = $("layout-mode").value !== "leadsheet";
+  $("row-lyric-size").style.display = projection ? "" : "none";
+  $("row-measures").style.display = projection ? "none" : "";
+}
+
 function renderKeyOf(o) {
   // Anything that changes the rendered score image triggers a server re-render.
   return [
     o.chords.visible,
+    o.tempo.visible,
     o.key.transposeSemitones,
     o.score.inkColor,
     o.score.lineThickness,
+    o.layout.mode,
+    o.layout.lyricSize,
     o.layout.measuresPerSystem,
     o.layout.maxSystemsPerSlide,
   ].join("|");
@@ -295,6 +312,7 @@ async function serverRender() {
 
 function onAnyChange() {
   syncBgState();
+  syncModeUI();
   const opts = readOptions();
   if (renderKeyOf(opts) !== lastRenderKey) {
     clearTimeout(renderTimer);
@@ -391,21 +409,24 @@ async function removeBackground() {
 function resetDefaults() {
   setColor($("ink-color"), "1A1A1A");
   $("line-thickness").value = "1";
+  $("layout-mode").value = "projection";
+  $("lyric-size").value = "6";
   $("chords-visible").checked = false;
+  $("tempo-visible").checked = true;
   $("transpose").value = "0";
   $("measures-per-system").value = "2";
-  $("max-systems").value = "4";
+  $("max-systems").value = "2";
   $("bg-enabled").checked = false;
   setColor($("bg-color"), "FFFFFF");
   setColor($("card-color"), "FFFFFF");
-  $("card-opacity").value = "0.84";
+  $("card-opacity").value = "0.6";
   $("title-font").value = "Malgun Gothic";
-  $("title-size").value = "26";
-  setColor($("title-color"), "FFFFFF");
+  $("title-size").value = "30";
+  setColor($("title-color"), "1A1A1A");
   $("title-bold").checked = true;
   $("label-font").value = "Malgun Gothic";
-  $("label-size").value = "16";
-  setColor($("label-color"), "E8ECF7");
+  $("label-size").value = "18";
+  setColor($("label-color"), "555555");
   $("label-bold").checked = true;
   onAnyChange();
 }

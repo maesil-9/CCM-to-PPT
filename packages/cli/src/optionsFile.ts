@@ -2,7 +2,12 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import type { BuildOptions, StyleOptions } from "@worship-score/core";
+import {
+  DEFAULT_PRESENTATION_PROFILE,
+  type BuildOptions,
+  type PresentationProfile,
+  type StyleOptions,
+} from "@worship-score/core";
 
 const MAX_BG_BYTES = 8 * 1024 * 1024;
 
@@ -23,6 +28,13 @@ const optionsFileSchema = z
     key: z.object({ transposeSemitones: z.number().int().min(-24).max(24).optional() }).strict().optional(),
     score: z
       .object({ inkColor: hex.optional(), lineThickness: z.number().min(0.3).max(3).optional() })
+      .strict()
+      .optional(),
+    layout: z
+      .object({
+        measuresPerSystem: z.number().int().min(1).max(4).optional(),
+        maxSystemsPerSlide: z.number().int().min(1).max(6).optional(),
+      })
       .strict()
       .optional(),
     background: z.object({ image: z.string().optional() }).strict().optional(),
@@ -49,6 +61,7 @@ function detectImageMime(bytes: Uint8Array): "image/png" | "image/jpeg" | null {
 export interface LoadedOptions {
   options: Partial<BuildOptions>;
   backgroundPath?: string;
+  profile?: PresentationProfile;
 }
 
 export async function loadBuildOptions(scoreDir: string): Promise<LoadedOptions> {
@@ -80,6 +93,15 @@ export async function loadBuildOptions(scoreDir: string): Promise<LoadedOptions>
   if (v.style) options.style = v.style as StyleOptions;
   if (v.score) options.score = v.score;
 
+  let profile: PresentationProfile | undefined;
+  if (v.layout) {
+    profile = {
+      ...DEFAULT_PRESENTATION_PROFILE,
+      ...(v.layout.measuresPerSystem ? { measuresPerSystem: v.layout.measuresPerSystem } : {}),
+      ...(v.layout.maxSystemsPerSlide ? { maxSystemsPerSlide: v.layout.maxSystemsPerSlide } : {}),
+    };
+  }
+
   let backgroundPath: string | undefined;
   if (v.background?.image) {
     const root = path.resolve(scoreDir);
@@ -107,5 +129,8 @@ export async function loadBuildOptions(scoreDir: string): Promise<LoadedOptions>
     options.background = { data, mime };
   }
 
-  return backgroundPath ? { options, backgroundPath } : { options };
+  const result: LoadedOptions = { options };
+  if (backgroundPath) result.backgroundPath = backgroundPath;
+  if (profile) result.profile = profile;
+  return result;
 }

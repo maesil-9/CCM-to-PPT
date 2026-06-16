@@ -37,7 +37,9 @@ Domain(`core`)은 외부 엔진/SDK를 직접 import하지 않습니다.
 |---|---|
 | [`@worship-score/core`](packages/core) | 도메인: ScoreIR 타입·zod 스키마, 음악 검증 규칙, MusicXML 4.0 직렬화, 발표 프로파일·슬라이드 계획, provider 인터페이스 |
 | [`@worship-score/adapters`](packages/adapters) | 인프라 어댑터: Verovio 렌더러(WASM), resvg PNG 래스터라이저, PptxGenJS 빌더, OOXML 검증기 |
-| [`@worship-score/pipeline`](packages/pipeline) | Milestone 1 결정적 체인 러너 + 고정 ScoreIR fixture |
+| [`@worship-score/pipeline`](packages/pipeline) | 재사용 빌드 엔진(`buildPresentation`) + Milestone 1 러너 + 고정 fixture |
+| [`@worship-score/cli`](packages/cli) | 폴더-드롭 CLI (`pnpm ws …`) |
+| [`@worship-score/web`](apps/web) | 출력 스타일 에디터 — 라이브 미리보기 + PPTX 내보내기 ([ADR-011](docs/worship-score/adr/ADR-011-web-stack-vanilla-server.md)) |
 
 ## 빠른 시작
 
@@ -45,10 +47,24 @@ Domain(`core`)은 외부 엔진/SDK를 직접 import하지 않습니다.
 pnpm install        # 의존성 설치 (Node >= 20, pnpm)
 pnpm ws demo        # 데모 악보(코드+배경+전조) 생성 후 준비
 pnpm ws build scores/demo   # → scores/demo/out/presentation.pptx 생성
+pnpm web            # 스타일 에디터 서버 → http://localhost:4317
 pnpm test           # vitest 전체
 pnpm typecheck      # tsc 타입체크 (strict, NodeNext)
 pnpm m1             # Milestone 1 결정적 체인 단독 실행 → out/
 ```
+
+## 웹 스타일 에디터 (`pnpm web`)
+
+`http://localhost:4317` 접속 → 곡 선택 → 옵션 편집 → 미리보기 → 내보내기.
+**먼저 `pnpm ws demo`(또는 `ws analyze`/`ws init`)로 `scores/`에 곡을 만들어야** 목록에 뜹니다.
+
+조절 항목: 악보 색·선 두께, 코드 표시, 조옮김, 레이아웃(한 줄 마디·한 장 줄 수),
+배경 그림, 가독성 바탕, 제목/절-이름 타이포. **저장** 버튼으로 곡별 `options.json`에
+보관해 다음 주에 그대로 불러옵니다. **내보내기**는 실제 PPTX를 받습니다.
+
+미리보기는 브라우저에서 즉시 합성되고(스타일 변경은 서버 왕복 없음), 코드·조옮김·잉크색·
+선두께·레이아웃만 서버에서 악보를 다시 렌더합니다([ADR-011](docs/worship-score/adr/ADR-011-web-stack-vanilla-server.md)).
+기본은 인증 없는 **로컬 전용**(127.0.0.1) 도구입니다.
 
 ## 악보 → PPT 워크플로 (CLI)
 

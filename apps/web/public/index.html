@@ -15,6 +15,9 @@
       </label>
       <span id="status" class="status" role="status" aria-live="polite"></span>
       <span class="spacer"></span>
+      <button id="save" data-hint="지금 설정을 이 곡에 저장합니다. 다음에 같은 곡을 열면 그대로 불러옵니다.">
+        저장
+      </button>
       <button id="export" class="primary" data-hint="지금 화면의 설정 그대로 발표용 파일을 내려받습니다.">
         내보내기
       </button>
@@ -31,6 +34,30 @@
           <label class="row" data-hint="오선·음표 기둥·마디선의 굵기입니다. 멀리서도 잘 보이게 굵게 할 수 있습니다.">
             <span class="row-label">선 두께</span>
             <input type="range" id="line-thickness" min="0.6" max="2.4" step="0.1" value="1" />
+          </label>
+        </section>
+
+        <section class="group">
+          <h2 class="group-title">레이아웃</h2>
+          <label class="row" data-hint="한 줄에 넣을 마디 수입니다. 적을수록 악보가 커져 멀리서도 잘 보입니다.">
+            <span class="row-label">한 줄 마디</span>
+            <select id="measures-per-system">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+          </label>
+          <label class="row" data-hint="한 장에 넣을 줄(단) 수입니다. 줄이 많으면 한 장에 더 많은 마디가 들어갑니다.">
+            <span class="row-label">한 장 줄 수</span>
+            <select id="max-systems">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4" selected>4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+            </select>
           </label>
         </section>
 

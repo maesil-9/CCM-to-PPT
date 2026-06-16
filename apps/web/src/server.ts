@@ -13,7 +13,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ZodError } from "zod";
 
-import { listScores, loadUiOptions, readBackground, readScore, resolveBuildOptions } from "./scores.js";
+import {
+  listScores,
+  loadUiOptions,
+  readBackground,
+  readScore,
+  resolveBuildOptions,
+  resolveProfile,
+  saveUiOptions,
+} from "./scores.js";
 import { drain, exportPptx, ExportValidationError, getReadiness, renderPreview } from "./engine.js";
 import { HttpError, payloadTooLarge } from "./errors.js";
 
@@ -142,12 +150,20 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse): Promi
     return sendJson(res, 200, { id, score, options });
   }
 
+  if (method === "POST" && /^\/api\/scores\/[^/]+\/options$/.test(p)) {
+    const id = decodeURIComponent(p.split("/")[3] ?? "");
+    const body = (await readJsonBody(req)) as { options?: unknown };
+    await saveUiOptions(id, body.options ?? body);
+    return sendJson(res, 200, { ok: true });
+  }
+
   if (method === "POST" && p === "/api/preview") {
     const body = (await readJsonBody(req)) as { scoreId?: string; options?: unknown };
     if (!body.scoreId) throw new HttpError(400, "scoreId가 필요합니다");
     const score = await readScore(body.scoreId);
     const build = await resolveBuildOptions(body.scoreId, body.options ?? {});
-    return sendJson(res, 200, await renderPreview(score, build));
+    const profile = resolveProfile(body.options ?? {});
+    return sendJson(res, 200, await renderPreview(score, build, profile));
   }
 
   if (method === "POST" && p === "/api/export") {
@@ -155,7 +171,8 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse): Promi
     if (!body.scoreId) throw new HttpError(400, "scoreId가 필요합니다");
     const score = await readScore(body.scoreId);
     const build = await resolveBuildOptions(body.scoreId, body.options ?? {});
-    const buf = Buffer.from(await exportPptx(score, build));
+    const profile = resolveProfile(body.options ?? {});
+    const buf = Buffer.from(await exportPptx(score, build, profile));
     const filename = encodeURIComponent(body.scoreId) + ".pptx";
     writeHead(res, 200, {
       "Content-Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",

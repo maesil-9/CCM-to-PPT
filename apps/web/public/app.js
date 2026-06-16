@@ -75,6 +75,10 @@ function readOptions() {
   const o = {
     chords: { visible: $("chords-visible").checked },
     key: { transposeSemitones: clampInt($("transpose").value, -12, 12) },
+    layout: {
+      measuresPerSystem: clampInt($("measures-per-system").value, 1, 4),
+      maxSystemsPerSlide: clampInt($("max-systems").value, 1, 6),
+    },
     score: { inkColor: toHex($("ink-color").value), lineThickness: parseFloat($("line-thickness").value) },
     style,
   };
@@ -106,6 +110,10 @@ function applyOptions(ui) {
     if (ui.score.inkColor) setColor($("ink-color"), ui.score.inkColor);
     if (ui.score.lineThickness != null) $("line-thickness").value = String(ui.score.lineThickness);
   }
+  if (ui.layout) {
+    if (ui.layout.measuresPerSystem) $("measures-per-system").value = String(ui.layout.measuresPerSystem);
+    if (ui.layout.maxSystemsPerSlide) $("max-systems").value = String(ui.layout.maxSystemsPerSlide);
+  }
   syncBgState();
 }
 
@@ -117,7 +125,14 @@ function syncBgState() {
 
 function renderKeyOf(o) {
   // Anything that changes the rendered score image triggers a server re-render.
-  return `${o.chords.visible}|${o.key.transposeSemitones}|${o.score.inkColor}|${o.score.lineThickness}`;
+  return [
+    o.chords.visible,
+    o.key.transposeSemitones,
+    o.score.inkColor,
+    o.score.lineThickness,
+    o.layout.measuresPerSystem,
+    o.layout.maxSystemsPerSlide,
+  ].join("|");
 }
 
 function setStatus(text, cls) {
@@ -329,6 +344,28 @@ async function exportPptx() {
   }
 }
 
+async function saveOptions() {
+  if (!state.id) return;
+  const btn = $("save");
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/scores/${encodeURIComponent(state.id)}/options`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ options: readOptions() }),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error || "저장 실패");
+    }
+    setStatus("저장됨 ✓", "ok");
+  } catch (e) {
+    setStatus("오류: " + e.message, "err");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function initTooltip() {
   const tip = $("tooltip");
   document.addEventListener("mouseover", (e) => {
@@ -374,6 +411,7 @@ async function init() {
   $("transpose-down").addEventListener("click", () => stepTranspose(-1));
   $("transpose-up").addEventListener("click", () => stepTranspose(1));
   $("export").addEventListener("click", exportPptx);
+  $("save").addEventListener("click", saveOptions);
   $("score-select").addEventListener("change", (e) => loadScore(e.target.value));
 
   const res = await fetch("/api/scores");

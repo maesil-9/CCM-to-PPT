@@ -5,7 +5,13 @@
  */
 import { buildPresentation } from "@worship-score/pipeline";
 import { PptxGenJsBuilder, VerovioRenderer } from "@worship-score/adapters";
-import type { BuildOptions, RendererProvider, ScoreIR, ScoreValidationResult } from "@worship-score/core";
+import type {
+  BuildOptions,
+  PresentationProfile,
+  RendererProvider,
+  ScoreIR,
+  ScoreValidationResult,
+} from "@worship-score/core";
 
 let rendererPromise: Promise<RendererProvider> | undefined;
 let builder: PptxGenJsBuilder | undefined;
@@ -65,12 +71,17 @@ export interface PreviewResult {
   ooxmlOk: boolean;
 }
 
-export function renderPreview(score: ScoreIR, options: Partial<BuildOptions>): Promise<PreviewResult> {
+export function renderPreview(
+  score: ScoreIR,
+  options: Partial<BuildOptions>,
+  profile?: PresentationProfile,
+): Promise<PreviewResult> {
   return withLock(async () => {
     const renderer = await getRenderer();
     const result = await buildPresentation({
       score,
       options,
+      ...(profile ? { profile } : {}),
       renderer,
       builder: getBuilder(),
       emitFullMusicXml: false,
@@ -97,12 +108,17 @@ export function renderPreview(score: ScoreIR, options: Partial<BuildOptions>): P
 
 export class ExportValidationError extends Error {}
 
-export function exportPptx(score: ScoreIR, options: Partial<BuildOptions>): Promise<Uint8Array> {
+export function exportPptx(
+  score: ScoreIR,
+  options: Partial<BuildOptions>,
+  profile?: PresentationProfile,
+): Promise<Uint8Array> {
   return withLock(async () => {
     const renderer = await getRenderer();
     const result = await buildPresentation({
       score,
       options,
+      ...(profile ? { profile } : {}),
       renderer,
       builder: getBuilder(),
       emitFullMusicXml: false,

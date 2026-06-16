@@ -72,12 +72,12 @@ function printScoreValidation(v: ScoreValidationResult): void {
 async function cmdBuild(scoreDir: string): Promise<void> {
   console.log(`\n[build] ${scoreDir}`);
   const score = await readScoreIr(scoreDir);
-  const { options, backgroundPath } = await loadBuildOptions(scoreDir);
+  const { options, backgroundPath, profile } = await loadBuildOptions(scoreDir);
   console.log(
     `  옵션: 코드 ${options.chords?.visible ? "표시" : "숨김"} · 전조 ${options.key?.transposeSemitones ?? 0}반음 · 배경 ${backgroundPath ? path.basename(backgroundPath) : "없음"}`,
   );
 
-  const result = await buildPresentation({ score, options });
+  const result = await buildPresentation({ score, options, ...(profile ? { profile } : {}) });
   printScoreValidation(result.scoreValidation);
 
   const outDir = path.join(scoreDir, "out");

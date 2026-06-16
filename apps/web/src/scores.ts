@@ -3,7 +3,13 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { parseScoreIr, type BuildOptions, type ScoreIR } from "@worship-score/core";
+import {
+  DEFAULT_PRESENTATION_PROFILE,
+  parseScoreIr,
+  type BuildOptions,
+  type PresentationProfile,
+  type ScoreIR,
+} from "@worship-score/core";
 import { badRequest, notFound, unprocessable } from "./errors.js";
 
 // Resolve scores/ relative to the repo root (apps/web/src → ../../../) so the
@@ -98,6 +104,13 @@ export const uiOptionsSchema = z
     chords: z.object({ visible: z.boolean() }).strict().optional(),
     key: z.object({ transposeSemitones: z.number().int().min(-24).max(24) }).strict().optional(),
     backgroundEnabled: z.boolean().optional(),
+    layout: z
+      .object({
+        measuresPerSystem: z.number().int().min(1).max(4).optional(),
+        maxSystemsPerSlide: z.number().int().min(1).max(6).optional(),
+      })
+      .strict()
+      .optional(),
     score: z
       .object({ inkColor: hex.optional(), lineThickness: z.number().min(0.3).max(3).optional() })
       .strict()
@@ -133,6 +146,35 @@ export async function resolveBuildOptions(id: string, ui: unknown): Promise<Part
   return options;
 }
 
+/** Builds a presentation-profile override from the UI layout controls, if any. */
+export function resolveProfile(ui: unknown): PresentationProfile | undefined {
+  const v = uiOptionsSchema.parse(ui);
+  if (!v.layout) return undefined;
+  return {
+    ...DEFAULT_PRESENTATION_PROFILE,
+    ...(v.layout.measuresPerSystem ? { measuresPerSystem: v.layout.measuresPerSystem } : {}),
+    ...(v.layout.maxSystemsPerSlide ? { maxSystemsPerSlide: v.layout.maxSystemsPerSlide } : {}),
+  };
+}
+
+/** Persists the current UI options to the score's options.json (week-to-week reuse). */
+export async function saveUiOptions(id: string, ui: unknown): Promise<void> {
+  safeId(id);
+  const v = uiOptionsSchema.parse(ui);
+  const dir = path.join(SCORES_DIR, id);
+  if (!(await exists(path.join(dir, "score.ir.json")))) {
+    throw notFound(`악보를 찾을 수 없습니다: ${id}`);
+  }
+  const out: Record<string, unknown> = {};
+  if (v.chords) out["chords"] = v.chords;
+  if (v.key) out["key"] = v.key;
+  if (v.score) out["score"] = v.score;
+  if (v.style) out["style"] = v.style;
+  if (v.layout) out["layout"] = v.layout;
+  if (v.backgroundEnabled) out["background"] = { image: "background.png" };
+  await fs.writeFile(path.join(dir, "options.json"), JSON.stringify(out, null, 2) + "\n", "utf8");
+}
+
 /** Loads any saved options.json and returns it in the web client's UI shape. */
 export async function loadUiOptions(id: string): Promise<UiOptions> {
   safeId(id);
@@ -154,6 +196,7 @@ export async function loadUiOptions(id: string): Promise<UiOptions> {
   if (json["key"]) ui["key"] = json["key"];
   if (json["style"]) ui["style"] = json["style"];
   if (json["score"]) ui["score"] = json["score"];
+  if (json["layout"]) ui["layout"] = json["layout"];
   const bg = json["background"] as { image?: string } | undefined;
   if (bg?.image) ui["backgroundEnabled"] = true;
   const parsed = uiOptionsSchema.safeParse(ui);

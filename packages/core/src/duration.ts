@@ -39,11 +39,19 @@ export function eventDurationDivisions(
   duration: Duration,
   divisions: number,
 ): number {
-  const raw = QUARTER_MULTIPLE[duration.type] * divisions * dotFactor(duration.dots);
+  let raw = QUARTER_MULTIPLE[duration.type] * divisions * dotFactor(duration.dots);
+  if (duration.timeModification) {
+    const { actualNotes, normalNotes } = duration.timeModification;
+    if (actualNotes <= 0 || normalNotes <= 0) {
+      throw new RangeError(`Invalid time-modification ${normalNotes}/${actualNotes}`);
+    }
+    raw = (raw * normalNotes) / actualNotes;
+  }
   const rounded = Math.round(raw);
   if (Math.abs(raw - rounded) > 1e-9) {
+    const tm = duration.timeModification ? ` (${duration.timeModification.actualNotes}:${duration.timeModification.normalNotes})` : "";
     throw new RangeError(
-      `Non-integer duration: ${duration.type}${".".repeat(duration.dots)} at divisions=${divisions} -> ${raw}`,
+      `Non-integer duration: ${duration.type}${".".repeat(duration.dots)}${tm} at divisions=${divisions} -> ${raw}. Increase divisions (e.g. 24 for triplets).`,
     );
   }
   return rounded;

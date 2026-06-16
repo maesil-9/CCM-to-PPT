@@ -42,10 +42,22 @@ export type NoteTypeName =
   | "16th"
   | "32nd";
 
+export interface TimeModification {
+  /** Notes actually played in the time of `normalNotes` (e.g. 3 for a triplet). */
+  actualNotes: number;
+  /** Notes the group nominally occupies (e.g. 2 for a triplet). */
+  normalNotes: number;
+}
+
 export interface Duration {
   type: NoteTypeName;
   /** Augmentation dots (0..2). MVP commonly uses 0 or 1. */
   dots: number;
+  /**
+   * Tuplet ratio (triplets etc). Requires `divisions` divisible by the actual
+   * count so the scaled duration stays an integer (e.g. divisions=24 for triplets).
+   */
+  timeModification?: TimeModification;
 }
 
 export type Mode = "major" | "minor";
@@ -108,6 +120,10 @@ export interface Note {
   duration: Duration;
   tie?: { start: boolean; stop: boolean };
   slur?: { start: boolean; stop: boolean };
+  /** Tuplet group bracket (paired with duration.timeModification). */
+  tuplet?: { start: boolean; stop: boolean };
+  /** Fermata (늘임표) on this note. */
+  fermata?: boolean;
   lyrics?: Lyric[];
   /** Optional per-field confidence (PRD §10.2). Absent on hand-authored data. */
   confidence?: NoteConfidence;

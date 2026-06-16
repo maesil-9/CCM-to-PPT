@@ -69,6 +69,10 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
     const attrNode = buildAttributes(measure, ctx, emittedIndex === 0);
     if (attrNode) children.push(attrNode);
 
+    if (emittedIndex === 0 && score.musicalContext.tempoBpm) {
+      children.push(buildTempo(score.musicalContext.tempoBpm));
+    }
+
     // Chord layer: anchor each harmony to the note whose time span contains its
     // onset, emitting a MusicXML <offset> when it is not exactly on that onset.
     // Out-of-measure offsets are dropped here (validation flags them separately).
@@ -218,12 +222,24 @@ function buildNote(
   kids.push(el("type", undefined, [event.duration.type]));
   for (let i = 0; i < event.duration.dots; i++) kids.push(el("dot"));
 
+  if (event.duration.timeModification) {
+    kids.push(
+      el("time-modification", undefined, [
+        el("actual-notes", undefined, [String(event.duration.timeModification.actualNotes)]),
+        el("normal-notes", undefined, [String(event.duration.timeModification.normalNotes)]),
+      ]),
+    );
+  }
+
   if (event.kind === "note") {
     const notations: XmlChild[] = [];
     if (event.tie?.stop) notations.push(el("tied", { type: "stop" }));
     if (event.tie?.start) notations.push(el("tied", { type: "start" }));
     if (event.slur?.stop) notations.push(el("slur", { type: "stop", number: "1" }));
     if (event.slur?.start) notations.push(el("slur", { type: "start", number: "1" }));
+    if (event.tuplet?.stop) notations.push(el("tuplet", { type: "stop", number: "1" }));
+    if (event.tuplet?.start) notations.push(el("tuplet", { type: "start", number: "1" }));
+    if (event.fermata) notations.push(el("fermata"));
     if (notations.length) kids.push(el("notations", undefined, notations));
 
     if (event.lyrics && event.lyrics.length > 0) {
@@ -243,6 +259,19 @@ function buildNote(
   }
 
   return el("note", undefined, kids);
+}
+
+function buildTempo(bpm: number): XmlNode {
+  const value = String(Math.round(bpm));
+  return el("direction", { placement: "above" }, [
+    el("direction-type", undefined, [
+      el("metronome", undefined, [
+        el("beat-unit", undefined, ["quarter"]),
+        el("per-minute", undefined, [value]),
+      ]),
+    ]),
+    el("sound", { tempo: value }),
+  ]);
 }
 
 function buildHarmony(h: HarmonyChord, offsetDivisions: number): XmlNode {

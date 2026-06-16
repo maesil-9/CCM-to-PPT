@@ -20,6 +20,12 @@ const pitchSchema = z.object({
 const durationSchema = z.object({
   type: noteTypeSchema,
   dots: z.number().int().min(0).max(2),
+  timeModification: z
+    .object({
+      actualNotes: z.number().int().positive().max(16),
+      normalNotes: z.number().int().positive().max(16),
+    })
+    .optional(),
 });
 
 const keySchema = z.object({
@@ -58,7 +64,9 @@ const noteSchema = z.object({
   duration: durationSchema,
   tie: tieSchema.optional(),
   slur: tieSchema.optional(),
-  lyrics: z.array(lyricSchema).optional(),
+  tuplet: tieSchema.optional(),
+  fermata: z.boolean().optional(),
+  lyrics: z.array(lyricSchema).max(8).optional(),
   confidence: z
     .object({
       pitch: z.number().optional(),

@@ -419,7 +419,7 @@ function resetDefaults() {
   $("bg-enabled").checked = false;
   setColor($("bg-color"), "FFFFFF");
   setColor($("card-color"), "FFFFFF");
-  $("card-opacity").value = "0.6";
+  $("card-opacity").value = "0";
   $("title-font").value = "Malgun Gothic";
   $("title-size").value = "30";
   setColor($("title-color"), "1A1A1A");

@@ -119,7 +119,9 @@ function renderOptionsFor(
     // notes out (spacingLinear) to give the large lyrics room. Leadsheet keeps a
     // constant per-measure width.
     pageWidth: projection ? 2400 : Math.max(900, profile.measuresPerSystem * 620),
-    ...(projection ? { rendererOptions: { spacingLinear: 0.8, spacingNonLinear: 0.7 } } : {}),
+    // Modest extra spacing so big lyrics don't collide, but not so much that a
+    // sparse phrase over-spreads and wraps into extra rows (kept near default).
+    ...(projection ? { rendererOptions: { spacingLinear: 0.3, spacingNonLinear: 0.7 } } : {}),
     ...(profile.minimumStaffSize ? { minStaffSize: profile.minimumStaffSize } : {}),
     ...(profile.lyricSize ? { lyricSize: profile.lyricSize } : {}),
     ...(options.score?.inkColor ? { inkColor: options.score.inkColor } : {}),

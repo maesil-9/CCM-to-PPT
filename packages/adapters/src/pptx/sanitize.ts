@@ -67,5 +67,20 @@ export async function sanitizePptx(buffer: Uint8Array): Promise<Uint8Array> {
     zip.file("[Content_Types].xml", ct);
   }
 
+  // 3. Normalize timestamps so the same input yields byte-identical output.
+  const FIXED_ISO = "2001-01-01T00:00:00Z";
+  const FIXED_DATE = new Date(Date.UTC(2001, 0, 1));
+  const core = zip.file("docProps/core.xml");
+  if (core) {
+    let xml = await core.async("string");
+    xml = xml
+      .replace(/(<dcterms:created[^>]*>)[^<]*(<\/dcterms:created>)/, `$1${FIXED_ISO}$2`)
+      .replace(/(<dcterms:modified[^>]*>)[^<]*(<\/dcterms:modified>)/, `$1${FIXED_ISO}$2`);
+    zip.file("docProps/core.xml", xml);
+  }
+  for (const entry of Object.values(zip.files)) {
+    (entry as unknown as { date: Date }).date = FIXED_DATE;
+  }
+
   return zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
 }

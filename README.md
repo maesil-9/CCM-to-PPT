@@ -115,13 +115,35 @@ pnpm ws list                    # 곡 목록과 상태
 > 악보 분석(`score.ir.json` 생성)은 현재 세션 내 분석으로 수행합니다. 자동 비전 OMR은
 > `OMRProvider` 추상화 위에 추후 연결됩니다.
 
+## 셀프 호스팅 (Docker)
+
+```bash
+docker build -t worship-score .
+docker run -p 4317:4317 -v "$PWD/scores:/app/scores" worship-score
+# http://localhost:4317  (컨테이너는 WS_HOST=0.0.0.0)
+```
+
+`/readyz`로 헬스 체크합니다. CI(타입체크+테스트)는 `.github/workflows/ci.yml`.
+
 ## 결정적성과 한계 (정직한 현황)
 
-- **결정적(검증됨):** ScoreIR→MusicXML, ScoreIR→SVG/PNG는 동일 머신에서 결정적입니다.
+- **결정적(검증됨):** ScoreIR→MusicXML, ScoreIR→SVG/PNG, 그리고 동일 PNG 입력에 대한
+  **PPTX 바이트**(타임스탬프 정규화)가 동일 머신에서 결정적입니다.
 - **미완/주의:**
-  - PPTX의 **바이트 단위** 결정성은 아직 미보장(PptxGenJS가 생성 타임스탬프 삽입) — 정규화 예정.
+  - **크로스-머신** 결정성은 가사/제목 텍스트 래스터가 설치 폰트에 의존해 미보장 —
+    `fontFiles` 주입(엔진에 메커니즘 존재) 또는 동일 컨테이너 고정으로 해결.
   - 엄격한 **W3C MusicXML XSD** 검증은 미구현 — 현재는 구조 검증 + Verovio 라운드트립으로 대체.
-  - 실제 **PowerPoint "수리 경고 없이 열기"** 라이브 테스트는 미실행(머신에 Office 없음) — 수동/CI 절차로 추적.
+  - 실제 **PowerPoint "수리 경고 없이 열기"** 라이브 테스트는 미실행(머신에 Office 없음) —
+    OOXML 구조 검증 + media/Override 정합성 검사로 대체, 라이브 확인은 수동/CI 절차로 추적.
+
+## 문제 해결 (FAQ)
+
+- **웹에 곡 목록이 비어 있어요** — 먼저 `pnpm ws demo`(또는 `ws analyze`/`ws init`)로
+  `scores/`에 곡을 만들어야 합니다.
+- **가사/제목이 □(두부)로 보여요** — 렌더 머신에 한글 폰트(예: 맑은 고딕/Noto Sans KR)가 필요합니다.
+- **`pnpm install`에서 esbuild 빌드 경고** — `pnpm-workspace.yaml`의 `allowBuilds: { esbuild: true }`가
+  이미 허용합니다. CI도 동일.
+- **네이티브 의존성**(`@resvg/resvg-js`)은 플랫폼별 프리빌트 바이너리를 씁니다(빌드 도구 불필요).
   - 가사 텍스트의 **크로스-머신 폰트** 결정성은 미보장(resvg 시스템 폰트) — 폰트 임베드 예정.
 
 ## 문서

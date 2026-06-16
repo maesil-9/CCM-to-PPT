@@ -242,8 +242,9 @@ export class PptxGenJsBuilder implements PptxBuilder {
 
     const out = (await pptx.write({ outputType: "nodebuffer" })) as Buffer | Uint8Array;
     const raw = out instanceof Uint8Array ? new Uint8Array(out) : new Uint8Array(Buffer.from(out));
-    // Dedup common media + drop phantom content-type overrides (OPC/PowerPoint).
-    const buffer = await sanitizePptx(raw);
+    // Dedup common media + drop phantom content-type overrides (OPC/PowerPoint),
+    // and optionally embed fonts for portable native text (opt-in).
+    const buffer = await sanitizePptx(raw, input.fontEmbed ? { fontEmbed: input.fontEmbed } : {});
 
     return {
       buffer,

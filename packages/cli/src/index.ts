@@ -69,15 +69,24 @@ function printScoreValidation(v: ScoreValidationResult): void {
   }
 }
 
-async function cmdBuild(scoreDir: string): Promise<void> {
+interface BuildFlags {
+  embedFonts?: boolean;
+}
+
+async function cmdBuild(scoreDir: string, flags: BuildFlags = {}): Promise<void> {
   console.log(`\n[build] ${scoreDir}`);
   const score = await readScoreIr(scoreDir);
   const { options, backgroundPath, profile } = await loadBuildOptions(scoreDir);
   console.log(
-    `  옵션: 코드 ${options.chords?.visible ? "표시" : "숨김"} · 전조 ${options.key?.transposeSemitones ?? 0}반음 · 배경 ${backgroundPath ? path.basename(backgroundPath) : "없음"}`,
+    `  옵션: 코드 ${options.chords?.visible ? "표시" : "숨김"} · 전조 ${options.key?.transposeSemitones ?? 0}반음 · 배경 ${backgroundPath ? path.basename(backgroundPath) : "없음"}${flags.embedFonts ? " · 폰트임베드" : ""}`,
   );
 
-  const result = await buildPresentation({ score, options, ...(profile ? { profile } : {}) });
+  const result = await buildPresentation({
+    score,
+    options,
+    ...(profile ? { profile } : {}),
+    ...(flags.embedFonts ? { embedFonts: true } : {}),
+  });
   printScoreValidation(result.scoreValidation);
 
   const outDir = path.join(scoreDir, "out");
@@ -104,7 +113,7 @@ async function cmdBuild(scoreDir: string): Promise<void> {
   }
 }
 
-async function cmdBuildAll(): Promise<void> {
+async function cmdBuildAll(flags: BuildFlags = {}): Promise<void> {
   let dirs: string[];
   try {
     dirs = (await fs.readdir(SCORES_DIR, { withFileTypes: true }))
@@ -122,7 +131,7 @@ async function cmdBuildAll(): Promise<void> {
   const failures: string[] = [];
   for (const d of targets) {
     try {
-      await cmdBuild(d);
+      await cmdBuild(d, flags);
       ok++;
     } catch (e) {
       failures.push(`${d}: ${(e as Error).message}`);
@@ -282,6 +291,7 @@ WorshipScore AI CLI
   pnpm ws analyze <파일> [이름]  PDF/이미지 악보를 폴더로 받아 분석 준비
   pnpm ws build <scoreDir>      score.ir.json + options.json → PPT 생성
   pnpm ws build --all           scores/ 안의 분석된 모든 곡을 일괄 빌드
+      --embed-fonts             한글 폰트를 PPT에 임베드(제목·라벨 이식성↑, 파일↑)
   pnpm ws validate <scoreDir>   음악 검증만 실행
   pnpm ws init <scoreDir>       새 악보 폴더 템플릿 생성
   pnpm ws schema                ScoreIR JSON 스키마 내보내기
@@ -305,10 +315,13 @@ function requireDir(arg: string | undefined): string {
 async function main(): Promise<void> {
   const [cmd, arg, arg2] = process.argv.slice(2);
   switch (cmd) {
-    case "build":
-      if (arg === "--all") await cmdBuildAll();
-      else await cmdBuild(requireDir(arg));
+    case "build": {
+      const rest = process.argv.slice(3);
+      const flags: BuildFlags = { embedFonts: rest.includes("--embed-fonts") };
+      if (rest.includes("--all")) await cmdBuildAll(flags);
+      else await cmdBuild(requireDir(rest.find((a) => !a.startsWith("--"))), flags);
       break;
+    }
     case "validate":
       await cmdValidate(requireDir(arg));
       break;

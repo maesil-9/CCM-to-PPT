@@ -125,11 +125,28 @@ export interface PptxProfile {
   sectionLabel?: TextStyle;
 }
 
+/**
+ * Optional TrueType/OpenType font embedding for the PPTX's native text (title,
+ * section labels). Score lyrics are rasterized into the slide image, so they are
+ * always self-contained; this only makes the editable text portable to machines
+ * that lack the font. Embeds the full font (no subsetting), so it is opt-in.
+ */
+export interface PptxFontEmbed {
+  /** Font family as referenced by the text runs (e.g. "Pretendard"). */
+  family: string;
+  /** Raw font bytes for the regular weight. */
+  regular: Uint8Array;
+  /** Raw font bytes for the bold weight, if available. */
+  bold?: Uint8Array;
+}
+
 export interface GeneratePptxInput {
   metadata: { title?: string; subtitle?: string; copyright?: string };
   profile: PptxProfile;
   slides: PptxSlideSpec[];
   idempotencyKey?: string;
+  /** When set, embed these fonts into the package (opt-in; full font, large). */
+  fontEmbed?: PptxFontEmbed;
 }
 
 export interface GeneratedPptx {

@@ -7,6 +7,13 @@
  *     PowerPoint "repair" prompt).
  */
 import JSZip from "jszip";
+import type { PptxFontEmbed } from "@worship-score/core";
+import { embedFontsInPptx } from "./embedFonts.js";
+
+export interface SanitizeOptions {
+  /** Embed these fonts into the package (opt-in; full font, large). */
+  fontEmbed?: PptxFontEmbed;
+}
 
 function fnv1a(data: Uint8Array): string {
   let h = 0x811c9dc5;
@@ -23,7 +30,7 @@ function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
   return true;
 }
 
-export async function sanitizePptx(buffer: Uint8Array): Promise<Uint8Array> {
+export async function sanitizePptx(buffer: Uint8Array, options: SanitizeOptions = {}): Promise<Uint8Array> {
   const zip = await JSZip.loadAsync(buffer);
   const list = () => Object.keys(zip.files);
 
@@ -67,7 +74,13 @@ export async function sanitizePptx(buffer: Uint8Array): Promise<Uint8Array> {
     zip.file("[Content_Types].xml", ct);
   }
 
-  // 3. Normalize timestamps so the same input yields byte-identical output.
+  // 3. Optional font embedding (opt-in). Runs before timestamp normalization so
+  //    the new font/rels/xml entries inherit the fixed date (determinism).
+  if (options.fontEmbed) {
+    await embedFontsInPptx(zip, options.fontEmbed);
+  }
+
+  // 4. Normalize timestamps so the same input yields byte-identical output.
   const FIXED_ISO = "2001-01-01T00:00:00Z";
   const FIXED_DATE = new Date(Date.UTC(2001, 0, 1));
   const core = zip.file("docProps/core.xml");

@@ -8,8 +8,9 @@
  * Hangul + Latin) and wire it as the default so output is byte-identical on any
  * machine, with `loadSystemFonts` disabled downstream.
  */
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import type { PptxFontEmbed } from "@worship-score/core";
 import type { FontConfig } from "./buildPresentation.js";
 
 /** Internal family name of the bundled font (name table nameID 1/16). */
@@ -35,4 +36,21 @@ export function defaultFontConfig(): FontConfig {
   const fontFiles = bundledFontFiles();
   if (fontFiles.length === 0) return {};
   return { textFontFamily: BUNDLED_FONT_FAMILY, fontFiles };
+}
+
+/**
+ * Build a {@link PptxFontEmbed} from a font config by reading the regular/bold
+ * font bytes from disk. Returns undefined unless both a family and at least one
+ * font file are available. Used only when PPTX font embedding is opted in.
+ */
+export function fontEmbedFromConfig(fonts: FontConfig): PptxFontEmbed | undefined {
+  const files = fonts.fontFiles ?? [];
+  if (!fonts.textFontFamily || files.length === 0) return undefined;
+  const regular = files.find((f) => /regular/i.test(f)) ?? files[0]!;
+  const bold = files.find((f) => /bold/i.test(f));
+  return {
+    family: fonts.textFontFamily,
+    regular: new Uint8Array(readFileSync(regular)),
+    ...(bold ? { bold: new Uint8Array(readFileSync(bold)) } : {}),
+  };
 }

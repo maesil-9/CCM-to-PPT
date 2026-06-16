@@ -29,7 +29,7 @@ import {
   type ScoreValidationResult,
   type SlidePlan,
 } from "@worship-score/core";
-import { defaultFontConfig } from "./fonts.js";
+import { defaultFontConfig, fontEmbedFromConfig } from "./fonts.js";
 
 export interface SlideAsset {
   index: number;
@@ -54,6 +54,12 @@ export interface BuildPresentationInput {
   options?: Partial<BuildOptions>;
   profile?: PresentationProfile;
   fonts?: FontConfig;
+  /**
+   * Embed the text font into the PPTX so native title/labels are portable to
+   * machines without the font (opt-in; embeds the full font → larger file).
+   * Score lyrics are rasterized regardless, so they are always self-contained.
+   */
+  embedFonts?: boolean;
   /** Emit the full-score MusicXML in the result (CLI writes it). Default true. */
   emitFullMusicXml?: boolean;
   /** Reuse a renderer/builder across many builds (e.g. a web server). */
@@ -196,6 +202,7 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
     }
 
     const builder = input.builder ?? new (await import("@worship-score/adapters")).PptxGenJsBuilder();
+    const fontEmbed = input.embedFonts ? fontEmbedFromConfig(fonts) : undefined;
     const pptx = await builder.generate({
       metadata: {
         ...(resolvedScore.metadata.title ? { title: resolvedScore.metadata.title } : {}),
@@ -203,6 +210,7 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
       },
       profile: toPptxProfile(profile, options),
       slides: slideSpecs,
+      ...(fontEmbed ? { fontEmbed } : {}),
     });
     const validation = await builder.validate({ buffer: pptx.buffer, expectedSlideCount: pptx.slideCount });
 

@@ -22,8 +22,20 @@ import {
   resolveProfile,
   saveUiOptions,
 } from "./scores.js";
-import { drain, exportPptx, ExportValidationError, getReadiness, renderPreview } from "./engine.js";
+import {
+  drain,
+  exportPptx,
+  ExportValidationError,
+  getReadiness,
+  renderPreview,
+  type PreviewResult,
+} from "./engine.js";
 import { HttpError, payloadTooLarge } from "./errors.js";
+import { Lru } from "./cache.js";
+
+const previewCache = new Lru<PreviewResult>(24);
+let heavyInFlight = 0;
+const MAX_HEAVY = 8;
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.resolve(HERE, "../public");
@@ -160,26 +172,44 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse): Promi
   if (method === "POST" && p === "/api/preview") {
     const body = (await readJsonBody(req)) as { scoreId?: string; options?: unknown };
     if (!body.scoreId) throw new HttpError(400, "scoreId가 필요합니다");
-    const score = await readScore(body.scoreId);
-    const build = await resolveBuildOptions(body.scoreId, body.options ?? {});
-    const profile = resolveProfile(body.options ?? {});
-    return sendJson(res, 200, await renderPreview(score, build, profile));
+    const cacheKey = `${body.scoreId}:${JSON.stringify(body.options ?? {})}`;
+    const cached = previewCache.get(cacheKey);
+    if (cached) return sendJson(res, 200, cached);
+    if (heavyInFlight >= MAX_HEAVY) throw new HttpError(503, "서버가 바쁩니다. 잠시 후 다시 시도하세요.");
+    heavyInFlight++;
+    try {
+      const score = await readScore(body.scoreId);
+      const build = await resolveBuildOptions(body.scoreId, body.options ?? {});
+      const profile = resolveProfile(body.options ?? {});
+      const result = await renderPreview(score, build, profile);
+      previewCache.set(cacheKey, result);
+      return sendJson(res, 200, result);
+    } finally {
+      heavyInFlight--;
+    }
   }
 
   if (method === "POST" && p === "/api/export") {
     const body = (await readJsonBody(req)) as { scoreId?: string; options?: unknown };
     if (!body.scoreId) throw new HttpError(400, "scoreId가 필요합니다");
-    const score = await readScore(body.scoreId);
-    const build = await resolveBuildOptions(body.scoreId, body.options ?? {});
-    const profile = resolveProfile(body.options ?? {});
-    const buf = Buffer.from(await exportPptx(score, build, profile));
-    const filename = encodeURIComponent(body.scoreId) + ".pptx";
-    writeHead(res, 200, {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-      "Content-Length": buf.byteLength,
-    });
-    return void res.end(buf);
+    if (heavyInFlight >= MAX_HEAVY) throw new HttpError(503, "서버가 바쁩니다. 잠시 후 다시 시도하세요.");
+    heavyInFlight++;
+    try {
+      const score = await readScore(body.scoreId);
+      const build = await resolveBuildOptions(body.scoreId, body.options ?? {});
+      const profile = resolveProfile(body.options ?? {});
+      const buf = Buffer.from(await exportPptx(score, build, profile));
+      const filename = encodeURIComponent(body.scoreId) + ".pptx";
+      writeHead(res, 200, {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Length": buf.byteLength,
+      });
+      res.end(buf);
+      return;
+    } finally {
+      heavyInFlight--;
+    }
   }
 
   // Known API prefix but no match → 405/404.

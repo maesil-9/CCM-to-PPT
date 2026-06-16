@@ -84,4 +84,17 @@ describe("MusicXML W3C XSD validation (MusicXML 4.0)", () => {
     expect(r.ok).toBe(false);
     expect(r.errors.length).toBeGreaterThan(0);
   }, TIMEOUT);
+
+  it("rejects an enum-facet violation (bad clef sign), not just bad structure", async () => {
+    // Inject an invalid clef <sign>Z</sign> (clef-sign is an XSD enumeration:
+    // G/F/C/percussion/TAB/jianpu/none) — exercises XSD facet checking, not just
+    // element structure.
+    const xml = serializeMusicXml(scoreOf([validMeasure()])).replace(
+      /<sign>G<\/sign>/,
+      "<sign>Z</sign>",
+    );
+    const r = await validateMusicXmlAgainstXsd(xml);
+    expect(r.ok).toBe(false);
+    expect(r.errors.join("\n")).toMatch(/sign|enumeration|facet|'Z'/i);
+  }, TIMEOUT);
 });

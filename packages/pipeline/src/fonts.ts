@@ -46,8 +46,11 @@ export function defaultFontConfig(): FontConfig {
 export function fontEmbedFromConfig(fonts: FontConfig): PptxFontEmbed | undefined {
   const files = fonts.fontFiles ?? [];
   if (!fonts.textFontFamily || files.length === 0) return undefined;
-  const regular = files.find((f) => /regular/i.test(f)) ?? files[0]!;
-  const bold = files.find((f) => /bold/i.test(f));
+  // Match on the filename only — a "bold" or "regular" directory segment in the
+  // path must not misclassify the weight.
+  const base = (f: string) => f.split(/[\\/]/).pop() ?? f;
+  const regular = files.find((f) => /regular/i.test(base(f))) ?? files[0]!;
+  const bold = files.find((f) => /bold/i.test(base(f)));
   return {
     family: fonts.textFontFamily,
     regular: new Uint8Array(readFileSync(regular)),

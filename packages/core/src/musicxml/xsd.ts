@@ -26,10 +26,11 @@ const SCHEMA_PATH = fileURLToPath(new URL("../../schema/musicxml/musicxml.xsd", 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Lib = {
   XmlDocument: {
-    fromString(src: string, options?: { url?: string }): any;
-    fromBuffer(src: Uint8Array, options?: { url?: string }): any;
+    fromString(src: string, options?: { url?: string; option?: number }): any;
+    fromBuffer(src: Uint8Array, options?: { url?: string; option?: number }): any;
   };
   XsdValidator: { fromDoc(doc: any): any };
+  ParseOption: { XML_PARSE_NO_XXE: number };
 };
 
 let validatorPromise: Promise<{ lib: Lib; validator: any }> | null = null;
@@ -60,7 +61,10 @@ export async function validateMusicXmlAgainstXsd(musicXml: string): Promise<XsdV
   const { lib, validator } = await getValidator();
   let doc: any = null;
   try {
-    doc = lib.XmlDocument.fromString(musicXml);
+    // Untrusted input: disable external-entity / external-DTD loading. The
+    // serialized MusicXML carries a SYSTEM DOCTYPE; XML_PARSE_NO_XXE prevents
+    // any fetch/file read of it (defense-in-depth — no network either way).
+    doc = lib.XmlDocument.fromString(musicXml, { option: lib.ParseOption.XML_PARSE_NO_XXE });
   } catch (err) {
     return { ok: false, errors: [`XML parse error: ${(err as Error).message}`] };
   }

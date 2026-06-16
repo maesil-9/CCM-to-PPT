@@ -86,4 +86,50 @@ describe("serializeMusicXml", () => {
     expect(xml).toContain('<sound segno="1"/>');
     expect(xml).toContain("<offset>16</offset>");
   });
+
+  it("derives D.S. al Coda and a coda graphic", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.directions = [{ navigation: { jump: "dal-segno", target: "coda" } }, { navigation: { sign: "coda" } }];
+    const xml = serializeMusicXml(scoreOf([m]));
+    expect(xml).toContain("<words>D.S. al Coda</words>");
+    expect(xml).toContain('<sound dalsegno="1"/>');
+    expect(xml).toContain("<coda/>");
+    expect(xml).toContain('<sound coda="1"/>');
+  });
+
+  it("emits a standalone Fine and a bare D.C.", () => {
+    const m1 = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m1.directions = [{ navigation: { fine: true } }];
+    expect(serializeMusicXml(scoreOf([m1]))).toContain("<words>Fine</words>");
+    expect(serializeMusicXml(scoreOf([m1]))).toContain('<sound fine="yes"/>');
+
+    const m2 = measure("m2", 0, [qn("m2", 1, "C", 4, "whole")], true);
+    m2.directions = [{ navigation: { jump: "da-capo" } }];
+    const xml2 = serializeMusicXml(scoreOf([m2]));
+    expect(xml2).toContain("<words>D.C.</words>");
+    expect(xml2).not.toContain("al Fine");
+  });
+
+  it("honours an explicit navigation words override", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.directions = [{ navigation: { jump: "da-capo", target: "fine", words: "처음으로 (D.C.)" } }];
+    const xml = serializeMusicXml(scoreOf([m]));
+    expect(xml).toContain("<words>처음으로 (D.C.)</words>");
+    expect(xml).not.toContain("D.C. al Fine");
+  });
+
+  it("omits an empty direction (no renderable content)", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.directions = [{}, { dynamics: "p" }];
+    const xml = serializeMusicXml(scoreOf([m]));
+    // Exactly one <direction> element (the dynamics); the empty one is dropped.
+    // Match `<direction ` / `<direction>` but NOT `<direction-type>`.
+    expect((xml.match(/<direction[ >]/g) ?? []).length).toBe(1);
+  });
+
+  it("passes non-final bar styles through unchanged", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.barlines = [{ location: "right", style: "light-light" }];
+    expect(serializeMusicXml(scoreOf([m]))).toContain("<bar-style>light-light</bar-style>");
+  });
 });

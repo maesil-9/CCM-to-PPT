@@ -180,9 +180,16 @@ export class VerovioRendererPool implements RendererProvider {
 
   async dispose(): Promise<void> {
     this.disposed = true;
-    const pending = [...this.queue];
+    const err = new Error("VerovioRendererPool disposed");
+    // Reject queued jobs AND jobs currently in flight on a worker — otherwise a
+    // caller awaiting an in-flight render hangs forever (the terminate→exit
+    // handler short-circuits once `disposed` is set).
+    for (const job of this.queue) job.reject(err);
     this.queue.length = 0;
-    for (const job of pending) job.reject(new Error("VerovioRendererPool disposed"));
+    for (const handle of this.handles) {
+      handle.current?.reject(err);
+      handle.current = null;
+    }
     await Promise.all(this.handles.map((h) => h.worker.terminate()));
     this.handles.length = 0;
     this.idle.length = 0;

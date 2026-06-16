@@ -114,4 +114,35 @@ describe("PptxGenJsBuilder font embedding (opt-in)", () => {
     expect(Buffer.from(withEmbed1.buffer).equals(Buffer.from(withEmbed2.buffer))).toBe(true);
     expect(withEmbed1.buffer.length).toBeGreaterThan(without.buffer.length);
   });
+
+  it("embeds a single weight when only Regular is provided", async () => {
+    const builder = new PptxGenJsBuilder();
+    const pptx = await builder.generate({
+      ...baseInput,
+      fontEmbed: { family: "Pretendard", regular: fontEmbed.regular },
+    });
+    const zip = await JSZip.loadAsync(pptx.buffer);
+    const files = Object.keys(zip.files);
+    expect(files).toContain("ppt/fonts/font1.fntdata");
+    expect(files).not.toContain("ppt/fonts/font2.fntdata");
+    const rels = await zip.file("ppt/_rels/presentation.xml.rels")!.async("string");
+    expect((rels.match(/relationships\/font/g) ?? []).length).toBe(1);
+    const pres = await zip.file("ppt/presentation.xml")!.async("string");
+    expect(pres).toContain("<p:regular ");
+    expect(pres).not.toContain("<p:bold ");
+    expect((await builder.validate({ buffer: pptx.buffer, expectedSlideCount: 1 })).ok).toBe(true);
+  });
+
+  it("stays byte-deterministic with embedding + a background image", async () => {
+    const builder = new PptxGenJsBuilder();
+    const input = {
+      ...baseInput,
+      profile: { ...baseInput.profile, backgroundImage: { data: png("#2244aa"), mime: "image/png" as const } },
+      fontEmbed,
+    };
+    const a = await builder.generate(input);
+    const b = await builder.generate(input);
+    expect(Buffer.from(a.buffer).equals(Buffer.from(b.buffer))).toBe(true);
+    expect((await builder.validate({ buffer: a.buffer, expectedSlideCount: 1 })).ok).toBe(true);
+  });
 });

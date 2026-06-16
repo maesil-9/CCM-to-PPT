@@ -71,4 +71,25 @@ describe("VerovioRendererPool", () => {
     await pool.dispose();
     await expect(pool.renderScore({ musicXml: score("C"), outputMode: "svg" })).rejects.toThrow(/disposed/);
   }, TIMEOUT);
+
+  it("rejects an in-flight render on dispose instead of hanging", async () => {
+    const pool = await VerovioRendererPool.create(1);
+    const inFlight = pool.renderScore({ musicXml: score("C"), outputMode: "png" });
+    const disposing = pool.dispose(); // dispose while the job is dispatched to the worker
+    await expect(inFlight).rejects.toThrow(/disposed/);
+    await disposing;
+  }, TIMEOUT);
+
+  it("drains a queue behind a single worker", async () => {
+    const pool = await VerovioRendererPool.create(1);
+    try {
+      const results = await Promise.all(
+        ["C", "D", "E", "F", "G"].map((s) => pool.renderScore({ musicXml: score(s), outputMode: "png" })),
+      );
+      expect(results).toHaveLength(5);
+      for (const r of results) expect(r.pages[0]?.png?.length ?? 0).toBeGreaterThan(0);
+    } finally {
+      await pool.dispose();
+    }
+  }, TIMEOUT);
 });

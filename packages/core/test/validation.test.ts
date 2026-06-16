@@ -97,6 +97,17 @@ describe("validateScore", () => {
     expect(validateScore(scoreOf([m])).hasBlocking).toBe(false);
   });
 
+  it("treats the direction offset range as [0, capacity) — capacity flags, capacity-1 is fine", () => {
+    const scoreAt = (off: number) => {
+      const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true); // capacity 32
+      m.directions = [{ dynamics: "f", offsetDivisions: off }];
+      return scoreOf([m]);
+    };
+    expect(codes(scoreAt(32))).toContain("DIRECTION_OFFSET_IN_RANGE");
+    expect(validateScore(scoreAt(32)).hasBlocking).toBe(true);
+    expect(validateScore(scoreAt(31)).hasBlocking).toBe(false);
+  });
+
   it("flags DUPLICATE_ID across measures/events", () => {
     const a = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
     const b = measure("m1", 1, [qn("dup", 1, "D", 4, "whole")], false); // duplicate measure id

@@ -185,6 +185,23 @@ async function cmdAnalyze(inputPath: string | undefined, nameArg: string | undef
   }
   if (!(await exists(inputPath))) throw new Error(`입력 파일 없음: ${inputPath}`);
 
+  const stat = await fs.stat(inputPath);
+  if (!stat.isFile()) throw new Error(`파일이 아닙니다: ${inputPath}`);
+  if (stat.size === 0) throw new Error("빈 파일입니다");
+  if (stat.size > 50 * 1024 * 1024) throw new Error(`파일이 너무 큽니다(${stat.size} bytes > 50MB)`);
+  const head = Buffer.alloc(8);
+  const fh = await fs.open(inputPath, "r");
+  try {
+    await fh.read(head, 0, 8, 0);
+  } finally {
+    await fh.close();
+  }
+  const okMagic =
+    (ext === ".pdf" && head.subarray(0, 4).toString("latin1") === "%PDF") ||
+    (ext === ".png" && head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47) ||
+    ((ext === ".jpg" || ext === ".jpeg") && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff);
+  if (!okMagic) throw new Error(`파일 내용이 ${ext} 형식과 일치하지 않습니다(매직바이트 불일치)`);
+
   const base = nameArg ?? path.basename(inputPath, path.extname(inputPath));
   const name = base.replace(/[^\w가-힣.-]+/g, "_");
   const dir = path.join(SCORES_DIR, name);

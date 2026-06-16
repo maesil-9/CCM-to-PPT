@@ -45,7 +45,12 @@ UI → Application Use Cases → Domain → Provider Interfaces → Infrastructu
 |---|---|---|---|
 | `packages/core` | `@worship-score/core` | Domain | 없음 |
 | `packages/adapters` | `@worship-score/adapters` | Infrastructure | 있음(Verovio, resvg, pptxgenjs, jszip, fast-xml-parser) |
-| `packages/pipeline` | `@worship-score/pipeline` | Milestone 1 러너 | (adapters 경유) |
+| `packages/pipeline` | `@worship-score/pipeline` | 재사용 빌드 엔진(`buildPresentation`) + Milestone 1 러너 | (adapters 경유) |
+| `packages/cli` | `@worship-score/cli` | 폴더-드롭 CLI (`pnpm ws`) | (pipeline 경유) |
+| `apps/web` | `@worship-score/web` | 출력 스타일 에디터 HTTP 서버 (`pnpm web`, ADR-011) | (pipeline 경유) |
+
+> M1 이후 추가됨: CLI(폴더 워크플로)·웹(스타일 에디터, 라이브 미리보기 + PPTX 내보내기). 코드/키/
+> 배경/잉크색/선두께/레이아웃/타이포 옵션, 옵션 영속화, 배경 업로드가 `buildPresentation` 위에 구현됨.
 
 **`@worship-score/core` (Domain) 주요 모듈**
 

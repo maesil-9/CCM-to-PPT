@@ -85,3 +85,34 @@
 ```
 
 전체 스키마는 `pnpm ws schema` → `docs/worship-score/scoreir.schema.json` 으로 내보낼 수 있습니다.
+
+## 분석 후 자가검수 체크리스트 (필수)
+
+작성한 `score.ir.json`을 빌드 전에 다음으로 점검합니다(`pnpm ws validate scores/<이름>`은 기계 검증).
+
+- [ ] 마디 수 = 원본 악보의 마디 수
+- [ ] 조표·박자·음자리표가 원본과 일치
+- [ ] 각 마디의 음표/쉼표 길이 합 = 박자 용량(못갖춘마디는 예외)
+- [ ] 절별 가사 음절 수 = 해당 절 가사가 붙는 음표 수
+- [ ] 타이는 같은 음높이끼리, 시작/끝이 짝을 이룸
+- [ ] 반복(도돌이)·1/2번 괄호 구조가 원본과 일치
+- [ ] 코드 위치(offsetDivisions)가 마디 안
+- [ ] 섹션(절/후렴) 경계와 발표 순서(presentation.order)가 의도대로
+
+## 불확실성 기록 (그럴듯하지만 틀린 음 방지)
+
+판독에 확신이 없는 음표/가사는 **임의로 확정하지 말고** `uncertainties[]`에 기록합니다(PRD §5.1).
+
+```json
+{ "id": "u1", "entityId": "m12-n3", "field": "duration.type", "severity": "high",
+  "status": "open", "candidates": [
+    { "value": "quarter", "confidence": 0.55, "source": "manual" },
+    { "value": "eighth",  "confidence": 0.45, "source": "manual" }],
+  "validationFailures": [] }
+```
+
+## 잇단음표(셋잇단 등)
+
+셋잇단음표가 있으면 `musicalContext.divisions`(및 첫 마디 attributes.divisions)를 **24**로 두고,
+해당 음표에 `duration.timeModification = { actualNotes: 3, normalNotes: 2 }`와
+`tuplet: { start, stop }`을 설정합니다(divisions가 3으로 나눠떨어져야 정수 음가 유지).

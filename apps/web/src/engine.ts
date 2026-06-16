@@ -1,10 +1,15 @@
 /**
- * Server-side build engine: a singleton Verovio renderer + PptxGenJS builder are
- * reused across requests for fast previews. Verovio's toolkit is stateful, so all
- * engine calls are serialized through a mutex.
+ * Server-side build engine: a Verovio renderer + PptxGenJS builder are reused
+ * across requests for fast previews.
+ *
+ * Concurrency: a single Verovio toolkit is stateful, so by default engine calls
+ * are serialized through a mutex. Set `WS_RENDER_WORKERS=N` (N>0) to use a pool
+ * of N worker-thread renderers instead — each owns its own toolkit, so renders
+ * run truly in parallel and the mutex is dropped (a fresh PptxGenJS builder is
+ * used per call so concurrent exports stay independent).
  */
 import { buildPresentation } from "@worship-score/pipeline";
-import { PptxGenJsBuilder, VerovioRenderer } from "@worship-score/adapters";
+import { PptxGenJsBuilder, VerovioRenderer, VerovioRendererPool } from "@worship-score/adapters";
 import type {
   BuildOptions,
   PresentationProfile,
@@ -13,11 +18,19 @@ import type {
   ScoreValidationResult,
 } from "@worship-score/core";
 
+/** Pool size from env; 0 (default) keeps the single-toolkit + mutex behavior. */
+const RENDER_WORKERS = (() => {
+  const n = Number.parseInt(process.env.WS_RENDER_WORKERS ?? "", 10);
+  return Number.isInteger(n) && n > 0 ? Math.min(n, 8) : 0;
+})();
+
 let rendererPromise: Promise<RendererProvider> | undefined;
 let builder: PptxGenJsBuilder | undefined;
 
 function getRenderer(): Promise<RendererProvider> {
-  rendererPromise ??= VerovioRenderer.create();
+  rendererPromise ??= RENDER_WORKERS > 0
+    ? VerovioRendererPool.create(RENDER_WORKERS)
+    : VerovioRenderer.create();
   return rendererPromise;
 }
 
@@ -36,10 +49,13 @@ export async function getReadiness(): Promise<boolean> {
 
 /** Awaits any in-flight engine task — used for graceful shutdown. */
 export function drain(): Promise<unknown> {
-  return tail;
+  return Promise.allSettled([tail, ...inFlight]);
 }
 
 function getBuilder(): PptxGenJsBuilder {
+  // Pool mode runs builds concurrently, so hand out a fresh builder per call to
+  // keep concurrent exports independent. Single mode reuses one (serialized).
+  if (RENDER_WORKERS > 0) return new PptxGenJsBuilder();
   builder ??= new PptxGenJsBuilder();
   return builder;
 }
@@ -52,6 +68,19 @@ function withLock<T>(fn: () => Promise<T>): Promise<T> {
     () => undefined,
     () => undefined,
   );
+  return run;
+}
+
+// In-flight tracker for pool mode (renders run concurrently, no mutex).
+const inFlight = new Set<Promise<unknown>>();
+
+/** Serialize via the mutex (single toolkit) or run concurrently (worker pool). */
+function runEngine<T>(fn: () => Promise<T>): Promise<T> {
+  if (RENDER_WORKERS === 0) return withLock(fn);
+  const run = fn();
+  const tracked = run.then(() => undefined, () => undefined);
+  inFlight.add(tracked);
+  void tracked.finally(() => inFlight.delete(tracked));
   return run;
 }
 
@@ -76,7 +105,7 @@ export function renderPreview(
   options: Partial<BuildOptions>,
   profile?: PresentationProfile,
 ): Promise<PreviewResult> {
-  return withLock(async () => {
+  return runEngine(async () => {
     const renderer = await getRenderer();
     const result = await buildPresentation({
       score,
@@ -113,7 +142,7 @@ export function exportPptx(
   options: Partial<BuildOptions>,
   profile?: PresentationProfile,
 ): Promise<Uint8Array> {
-  return withLock(async () => {
+  return runEngine(async () => {
     const renderer = await getRenderer();
     const result = await buildPresentation({
       score,

@@ -212,6 +212,7 @@ function compose() {
     if (s.png) {
       const img = document.createElement("img");
       img.className = "slide-score";
+      img.alt = (s.title || s.sectionLabel ? `${s.title ?? ""} ${s.sectionLabel ?? ""} 악보`.trim() : `슬라이드 ${s.index + 1} 악보`);
       img.src = "data:image/png;base64," + s.png;
       place(img, L.fit);
       slide.appendChild(img);
@@ -253,6 +254,7 @@ async function serverRender() {
   if (!state.id) return;
   const opts = readOptions();
   setStatus("렌더 중…");
+  $("preview").setAttribute("aria-busy", "true");
   try {
     const res = await fetch("/api/preview", {
       method: "POST",
@@ -267,6 +269,8 @@ async function serverRender() {
     compose();
   } catch (e) {
     setStatus("오류: " + e.message, "err");
+  } finally {
+    $("preview").setAttribute("aria-busy", "false");
   }
 }
 
@@ -342,6 +346,22 @@ function initTooltip() {
   });
   document.addEventListener("mouseout", (e) => {
     if (e.target.closest("[data-hint]")) tip.hidden = true;
+  });
+  // Keyboard access: show the hint on focus, hide on blur / Escape.
+  document.addEventListener("focusin", (e) => {
+    const el = e.target.closest?.("[data-hint]");
+    if (!el) return;
+    tip.textContent = el.getAttribute("data-hint");
+    const r = el.getBoundingClientRect();
+    tip.style.left = Math.min(r.left, window.innerWidth - 260) + "px";
+    tip.style.top = Math.min(r.bottom + 6, window.innerHeight - 60) + "px";
+    tip.hidden = false;
+  });
+  document.addEventListener("focusout", () => {
+    tip.hidden = true;
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") tip.hidden = true;
   });
 }
 

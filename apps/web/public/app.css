@@ -5,8 +5,8 @@
   --panel-2: #1b212b;
   --line: #262d39;
   --text: #d8dee8;
-  --dim: #8a94a6;
-  --dimmer: #5b6473;
+  --dim: #9aa4b5;
+  --dimmer: #8a93a3;
   --accent: #6ea8fe;
   --danger: #e5808a;
   --ok: #79c08a;
@@ -251,6 +251,24 @@ input[type="range"] {
   color: var(--dim);
   margin: auto;
   font-size: 13px;
+}
+
+/* Narrow screens (laptops, tablets, second monitors): stack controls above. */
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 42vh) 1fr;
+  }
+  .controls {
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }
 
 /* Hover guidance tooltip (user-facing copy, no technical terms) */

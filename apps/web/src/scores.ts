@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { parseScoreIr, type BuildOptions, type ScoreIR } from "@worship-score/core";
+import { badRequest, notFound, unprocessable } from "./errors.js";
 
 // Resolve scores/ relative to the repo root (apps/web/src → ../../../) so the
 // server works regardless of launch cwd; WS_SCORES_DIR overrides it.
@@ -14,7 +15,7 @@ const SCORES_DIR = process.env.WS_SCORES_DIR
 
 function safeId(id: string): string {
   if (!/^[\w가-힣.-]{1,64}$/.test(id) || id.includes("..")) {
-    throw new Error(`잘못된 악보 id: ${id}`);
+    throw badRequest(`잘못된 악보 id: ${id}`);
   }
   return id;
 }
@@ -60,8 +61,17 @@ export async function listScores(): Promise<ScoreSummary[]> {
 
 export async function readScore(id: string): Promise<ScoreIR> {
   safeId(id);
-  const raw = await fs.readFile(path.join(SCORES_DIR, id, "score.ir.json"), "utf8");
-  return parseScoreIr(JSON.parse(raw));
+  let raw: string;
+  try {
+    raw = await fs.readFile(path.join(SCORES_DIR, id, "score.ir.json"), "utf8");
+  } catch {
+    throw notFound(`악보를 찾을 수 없습니다: ${id}`);
+  }
+  try {
+    return parseScoreIr(JSON.parse(raw));
+  } catch {
+    throw unprocessable(`악보 데이터(score.ir.json)가 올바르지 않습니다: ${id}`);
+  }
 }
 
 export async function readBackground(id: string): Promise<Uint8Array | null> {

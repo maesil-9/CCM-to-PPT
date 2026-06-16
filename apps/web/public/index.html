@@ -13,7 +13,7 @@
         <span>곡</span>
         <select id="score-select"></select>
       </label>
-      <span id="status" class="status"></span>
+      <span id="status" class="status" role="status" aria-live="polite"></span>
       <span class="spacer"></span>
       <button id="export" class="primary" data-hint="지금 화면의 설정 그대로 발표용 파일을 내려받습니다.">
         내보내기
@@ -21,7 +21,7 @@
     </header>
 
     <main class="layout">
-      <aside class="controls">
+      <aside class="controls" aria-label="스타일 설정">
         <section class="group">
           <h2 class="group-title">악보</h2>
           <label class="row" data-hint="오선과 음표, 가사의 색입니다.">
@@ -43,9 +43,9 @@
           <label class="row" data-hint="곡 전체의 조를 반음 단위로 올리거나 내립니다. 0은 원래 조입니다.">
             <span class="row-label">조옮김</span>
             <span class="stepper">
-              <button type="button" data-step="-1" id="transpose-down">−</button>
-              <input type="number" id="transpose" min="-12" max="12" step="1" value="0" />
-              <button type="button" data-step="1" id="transpose-up">+</button>
+              <button type="button" data-step="-1" id="transpose-down" aria-label="조 반음 내림">−</button>
+              <input type="number" id="transpose" min="-12" max="12" step="1" value="0" aria-label="조옮김 반음 수" />
+              <button type="button" data-step="1" id="transpose-up" aria-label="조 반음 올림">+</button>
             </span>
           </label>
         </section>
@@ -111,7 +111,7 @@
         </section>
       </aside>
 
-      <section class="preview" id="preview"></section>
+      <section class="preview" id="preview" aria-label="슬라이드 미리보기" aria-busy="false"></section>
     </main>
 
     <div id="tooltip" class="tooltip" hidden></div>

@@ -15,6 +15,24 @@ function getRenderer(): Promise<RendererProvider> {
   return rendererPromise;
 }
 
+/** Readiness probe: healthy renderer? Drops a broken instance so it is recreated. */
+export async function getReadiness(): Promise<boolean> {
+  try {
+    const r = await getRenderer();
+    const h = await r.healthCheck();
+    if (!h.ok) rendererPromise = undefined;
+    return h.ok;
+  } catch {
+    rendererPromise = undefined;
+    return false;
+  }
+}
+
+/** Awaits any in-flight engine task — used for graceful shutdown. */
+export function drain(): Promise<unknown> {
+  return tail;
+}
+
 function getBuilder(): PptxGenJsBuilder {
   builder ??= new PptxGenJsBuilder();
   return builder;

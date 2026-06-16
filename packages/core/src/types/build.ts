@@ -57,11 +57,23 @@ export interface StyleOptions {
   card?: CardStyle;
 }
 
+/**
+ * Score (staff/notes) appearance — the engraved ink itself, not the slide chrome.
+ * Affects the Verovio render (so changing it re-renders the score).
+ */
+export interface ScoreAppearance {
+  /** Ink colour for staff, notes, stems, lyrics (hex, no '#'). Default black. */
+  inkColor?: string;
+  /** Line-weight scale (1 = Verovio default); affects staff/stem/barline width. */
+  lineThickness?: number;
+}
+
 export interface BuildOptions {
   chords: ChordOptions;
   key: KeyOptions;
   background?: BackgroundImageOptions;
   style?: StyleOptions;
+  score?: ScoreAppearance;
 }
 
 export const DEFAULT_BUILD_OPTIONS: BuildOptions = {

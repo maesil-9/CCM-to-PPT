@@ -53,8 +53,29 @@ function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
     header: "none",
     footer: "none",
     svgViewBox: true,
+    ...(options?.lineThickness
+      ? {
+          staffLineWidth: 0.15 * options.lineThickness,
+          stemWidth: 0.2 * options.lineThickness,
+          barLineWidth: 0.3 * options.lineThickness,
+        }
+      : {}),
     ...(options?.rendererOptions ?? {}),
   };
+}
+
+/**
+ * Recolours the whole engraving. Verovio's definition-scale `<svg>` carries
+ * `color="black"` and its stylesheet sets `stroke: currentColor` (staff lines,
+ * stems, barlines) — but NOT fill, so filled glyphs (noteheads, clef, lyrics)
+ * stay black. We point `color` at the ink AND add `fill="currentColor"` on the
+ * root so fill inherits down to glyphs and text too.
+ */
+function recolorSvg(svg: string, inkColor: string | undefined): string {
+  if (!inkColor) return svg;
+  return svg
+    .replace('color="black"', `color="#${inkColor}"`)
+    .replace('class="definition-scale"', 'class="definition-scale" fill="currentColor"');
 }
 
 function resvgFontConfig(options?: RenderOptions): ResvgRenderOptions["font"] {
@@ -128,7 +149,7 @@ export class VerovioRenderer implements RendererProvider {
       );
     }
 
-    const svg = this.toolkit.renderToSVG(1);
+    const svg = recolorSvg(this.toolkit.renderToSVG(1), input.options?.inkColor);
     const pages: RenderedPage[] = [];
 
     if (input.outputMode === "svg") {

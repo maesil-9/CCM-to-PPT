@@ -1,0 +1,17 @@
+{
+  "name": "@worship-score/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "WorshipScore AI web — output styling editor with live slide preview and PPTX export.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts"
+  },
+  "dependencies": {
+    "@worship-score/core": "workspace:*",
+    "@worship-score/adapters": "workspace:*",
+    "@worship-score/pipeline": "workspace:*",
+    "zod": "^3.23.8"
+  }
+}

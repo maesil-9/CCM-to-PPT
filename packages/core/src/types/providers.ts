@@ -31,6 +31,10 @@ export interface RenderOptions {
   adjustPageHeight?: boolean;
   /** Minimum staff size hint. */
   minStaffSize?: number;
+  /** Ink colour for staff/notes/text (hex, no '#'); default engine black. */
+  inkColor?: string;
+  /** Line-weight scale (1 = engine default) for staff/stem/barline widths. */
+  lineThickness?: number;
   /** Pin the text (lyric/chord) font family for deterministic rasterization. */
   textFontFamily?: string;
   /**

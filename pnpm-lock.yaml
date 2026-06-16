@@ -21,6 +21,21 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.19.21)
 
+  apps/web:
+    dependencies:
+      '@worship-score/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
+      '@worship-score/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@worship-score/pipeline':
+        specifier: workspace:*
+        version: link:../../packages/pipeline
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+
   packages/adapters:
     dependencies:
       '@resvg/resvg-js':

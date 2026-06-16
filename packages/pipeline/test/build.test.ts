@@ -41,4 +41,20 @@ describe("buildPresentation (chords + transpose + background)", () => {
     },
     60_000,
   );
+
+  it(
+    "applies score appearance (ink colour recolours the SVG)",
+    async () => {
+      const result = await buildPresentation({
+        score: buildDemoScore(),
+        options: { score: { inkColor: "FF3366", lineThickness: 1.8 } },
+      });
+      expect(result.validation.ok).toBe(true);
+      expect(result.assets[0]?.svg).toContain('color="#FF3366"');
+      expect(result.assets[0]?.svg).not.toContain('color="black"');
+      // fill must inherit too, so filled glyphs/lyrics recolour (not just strokes).
+      expect(result.assets[0]?.svg).toContain('class="definition-scale" fill="currentColor"');
+    },
+    60_000,
+  );
 });

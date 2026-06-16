@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@worship-score/core": ["../../packages/core/src/index.ts"],
+      "@worship-score/core/*": ["../../packages/core/src/*"],
+      "@worship-score/adapters": ["../../packages/adapters/src/index.ts"],
+      "@worship-score/adapters/*": ["../../packages/adapters/src/*"],
+      "@worship-score/pipeline": ["../../packages/pipeline/src/index.ts"],
+      "@worship-score/pipeline/*": ["../../packages/pipeline/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WorshipScore — 스타일</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <span class="brand">WorshipScore</span>
+      <label class="bar-field" data-hint="편집할 곡을 고릅니다.">
+        <span>곡</span>
+        <select id="score-select"></select>
+      </label>
+      <span id="status" class="status"></span>
+      <span class="spacer"></span>
+      <button id="export" class="primary" data-hint="지금 화면의 설정 그대로 발표용 파일을 내려받습니다.">
+        내보내기
+      </button>
+    </header>
+
+    <main class="layout">
+      <aside class="controls">
+        <section class="group">
+          <h2 class="group-title">악보</h2>
+          <label class="row" data-hint="오선과 음표, 가사의 색입니다.">
+            <span class="row-label">색</span>
+            <input type="color" id="ink-color" value="#1a1a1a" />
+          </label>
+          <label class="row" data-hint="오선·음표 기둥·마디선의 굵기입니다. 멀리서도 잘 보이게 굵게 할 수 있습니다.">
+            <span class="row-label">선 두께</span>
+            <input type="range" id="line-thickness" min="0.6" max="2.4" step="0.1" value="1" />
+          </label>
+        </section>
+
+        <section class="group">
+          <h2 class="group-title">표시</h2>
+          <label class="row" data-hint="음표 위에 코드 기호를 함께 보여 줍니다. 끄면 멜로디와 가사만 남습니다.">
+            <span class="row-label">코드</span>
+            <input type="checkbox" id="chords-visible" />
+          </label>
+          <label class="row" data-hint="곡 전체의 조를 반음 단위로 올리거나 내립니다. 0은 원래 조입니다.">
+            <span class="row-label">조옮김</span>
+            <span class="stepper">
+              <button type="button" data-step="-1" id="transpose-down">−</button>
+              <input type="number" id="transpose" min="-12" max="12" step="1" value="0" />
+              <button type="button" data-step="1" id="transpose-up">+</button>
+            </span>
+          </label>
+        </section>
+
+        <section class="group">
+          <h2 class="group-title">배경</h2>
+          <label class="row" data-hint="곡마다 공통으로 깔리는 배경 그림을 사용합니다.">
+            <span class="row-label">배경 그림</span>
+            <input type="checkbox" id="bg-enabled" />
+          </label>
+          <label class="row" data-hint="배경 그림이 없을 때의 바탕 색입니다.">
+            <span class="row-label">바탕 색</span>
+            <input type="color" id="bg-color" value="#ffffff" />
+          </label>
+        </section>
+
+        <section class="group">
+          <h2 class="group-title">가독성 바탕</h2>
+          <label class="row" data-hint="악보 뒤에 깔아 글씨가 잘 보이게 하는 바탕의 색입니다.">
+            <span class="row-label">색</span>
+            <input type="color" id="card-color" value="#ffffff" />
+          </label>
+          <label class="row" data-hint="악보 뒤 바탕의 진하기입니다. 배경이 많이 비치게 하려면 낮춥니다.">
+            <span class="row-label">진하기</span>
+            <input type="range" id="card-opacity" min="0" max="1" step="0.02" value="0.84" />
+          </label>
+        </section>
+
+        <section class="group">
+          <h2 class="group-title">제목</h2>
+          <label class="row" data-hint="제목에 쓰는 글꼴입니다.">
+            <span class="row-label">글꼴</span>
+            <select id="title-font" class="font-select"></select>
+          </label>
+          <label class="row" data-hint="제목 글씨의 크기입니다.">
+            <span class="row-label">크기</span>
+            <input type="number" id="title-size" min="8" max="80" step="1" value="26" />
+          </label>
+          <label class="row" data-hint="제목 글씨의 색입니다.">
+            <span class="row-label">색</span>
+            <input type="color" id="title-color" value="#ffffff" />
+          </label>
+          <label class="row" data-hint="제목을 굵게 표시합니다.">
+            <span class="row-label">굵게</span>
+            <input type="checkbox" id="title-bold" checked />
+          </label>
+        </section>
+
+        <section class="group">
+          <h2 class="group-title">절 이름</h2>
+          <label class="row" data-hint="‘1절’, ‘후렴’ 같은 이름에 쓰는 글꼴입니다.">
+            <span class="row-label">글꼴</span>
+            <select id="label-font" class="font-select"></select>
+          </label>
+          <label class="row" data-hint="절 이름 글씨의 크기입니다.">
+            <span class="row-label">크기</span>
+            <input type="number" id="label-size" min="8" max="60" step="1" value="16" />
+          </label>
+          <label class="row" data-hint="절 이름 글씨의 색입니다.">
+            <span class="row-label">색</span>
+            <input type="color" id="label-color" value="#e8ecf7" />
+          </label>
+        </section>
+      </aside>
+
+      <section class="preview" id="preview"></section>
+    </main>
+
+    <div id="tooltip" class="tooltip" hidden></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

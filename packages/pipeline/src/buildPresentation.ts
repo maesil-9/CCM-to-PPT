@@ -78,6 +78,7 @@ function resolveOptions(options?: Partial<BuildOptions>): BuildOptions {
     key: { ...DEFAULT_BUILD_OPTIONS.key, ...options?.key },
     ...(options?.background ? { background: options.background } : {}),
     ...(options?.style ? { style: options.style } : {}),
+    ...(options?.score ? { score: options.score } : {}),
   };
 }
 
@@ -97,10 +98,16 @@ function toPptxProfile(profile: PresentationProfile, options: BuildOptions): Ppt
   return p;
 }
 
-function renderOptionsFor(profile: PresentationProfile, fonts?: FontConfig): RenderOptions {
+function renderOptionsFor(
+  profile: PresentationProfile,
+  options: BuildOptions,
+  fonts?: FontConfig,
+): RenderOptions {
   return {
     scale: 2,
     ...(profile.minimumStaffSize ? { minStaffSize: profile.minimumStaffSize } : {}),
+    ...(options.score?.inkColor ? { inkColor: options.score.inkColor } : {}),
+    ...(options.score?.lineThickness ? { lineThickness: options.score.lineThickness } : {}),
     ...(fonts?.textFontFamily ? { textFontFamily: fonts.textFontFamily } : {}),
     ...(fonts?.fontFiles ? { fontFiles: fonts.fontFiles } : {}),
   };
@@ -126,7 +133,7 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
 
   const slidePlan = planPresentation(resolvedScore, profile);
   const prepared = prepareScore(resolvedScore);
-  const renderOptions = renderOptionsFor(profile, input.fonts);
+  const renderOptions = renderOptionsFor(profile, options, input.fonts);
 
   const ownsRenderer = !input.renderer;
   let renderer = input.renderer;

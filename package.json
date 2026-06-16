@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "m1": "pnpm --filter @worship-score/pipeline run m1",
-    "ws": "tsx packages/cli/src/index.ts"
+    "ws": "tsx packages/cli/src/index.ts",
+    "web": "tsx apps/web/src/server.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

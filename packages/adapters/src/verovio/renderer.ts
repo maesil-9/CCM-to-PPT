@@ -115,6 +115,8 @@ function svgPixelSize(svg: string): { width: number; height: number } {
 
 export class VerovioRenderer implements RendererProvider {
   readonly providerName = PROVIDER_NAME;
+  /** One stateful WASM toolkit → renders must serialize. */
+  readonly maxConcurrency = 1;
   readonly providerVersion: string;
   private readonly toolkit: VerovioToolkit;
 

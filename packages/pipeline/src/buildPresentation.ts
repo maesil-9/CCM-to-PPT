@@ -129,6 +129,23 @@ function renderOptionsFor(
   };
 }
 
+/** Map items through `fn` with at most `limit` in flight, preserving order. */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    for (let i = next++; i < items.length; i = next++) {
+      results[i] = await fn(items[i]!, i);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker));
+  return results;
+}
+
 export async function buildPresentation(input: BuildPresentationInput): Promise<BuildPresentationResult> {
   const options = resolveOptions(input.options);
   const profile = input.profile ?? DEFAULT_PRESENTATION_PROFILE;
@@ -167,12 +184,13 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
     const { VerovioRenderer } = await import("@worship-score/adapters");
     renderer = await VerovioRenderer.create();
   }
+  const activeRenderer = renderer;
 
   try {
-    const assets: SlideAsset[] = [];
-    const slideSpecs: PptxSlideSpec[] = [];
-
-    for (const slide of slidePlan.slides) {
+    // Render slides in parallel up to the renderer's safe concurrency (1 for a
+    // single toolkit, pool size for a worker pool) — preserving slide order.
+    const concurrency = Math.max(1, activeRenderer.maxConcurrency ?? 1);
+    const rendered = await mapWithConcurrency(slidePlan.slides, concurrency, async (slide) => {
       const xml = serializeMusicXml(resolvedScore, {
         prepared,
         measureIds: slide.measureIds,
@@ -185,26 +203,29 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
           : { systemBreakEvery: profile.measuresPerSystem }),
         ...(slide.verse !== undefined ? { verses: [slide.verse] } : {}),
       });
-
       // One loadData → both PNG (embedded) and SVG (asset).
-      const rendered = await renderer.renderScore({ musicXml: xml, outputMode: "png", options: renderOptions });
-      const page = rendered.pages[0];
+      const result = await activeRenderer.renderScore({ musicXml: xml, outputMode: "png", options: renderOptions });
+      const page = result.pages[0];
       if (!page?.png) throw new Error(`슬라이드 ${slide.index} PNG 렌더 실패`);
+      return { slide, xml, png: page.png, svg: page.svg ?? "", widthPx: page.widthPx, heightPx: page.heightPx };
+    });
 
+    const assets: SlideAsset[] = [];
+    const slideSpecs: PptxSlideSpec[] = [];
+    for (const { slide, xml, png, svg, widthPx, heightPx } of rendered) {
       assets.push({
         index: slide.index,
-        png: page.png,
-        svg: page.svg ?? "",
+        png,
+        svg,
         musicXml: xml,
-        widthPx: page.widthPx,
-        heightPx: page.heightPx,
+        widthPx,
+        heightPx,
         ...(slide.sectionLabel ? { sectionLabel: slide.sectionLabel } : {}),
         ...(slide.verse !== undefined ? { verse: slide.verse } : {}),
       });
-
       const spec: PptxSlideSpec = {
         index: slide.index,
-        image: { data: page.png, mime: "image/png", widthPx: page.widthPx, heightPx: page.heightPx },
+        image: { data: png, mime: "image/png", widthPx, heightPx },
       };
       if (slide.title) spec.title = slide.title;
       if (slide.sectionLabel) spec.sectionLabel = slide.sectionLabel;

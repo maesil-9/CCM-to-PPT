@@ -73,6 +73,8 @@ export function defaultPoolSize(): number {
 export class VerovioRendererPool implements RendererProvider {
   readonly providerName = "verovio-pool";
   providerVersion = "unknown";
+  /** Each worker owns its own toolkit, so the pool renders `size` in parallel. */
+  readonly maxConcurrency: number;
 
   private readonly handles: WorkerHandle[] = [];
   private readonly idle: WorkerHandle[] = [];
@@ -80,7 +82,9 @@ export class VerovioRendererPool implements RendererProvider {
   private nextId = 1;
   private disposed = false;
 
-  private constructor(private readonly size: number) {}
+  private constructor(private readonly size: number) {
+    this.maxConcurrency = size;
+  }
 
   /** Spawn `size` workers and resolve once every worker's toolkit is ready. */
   static async create(size = defaultPoolSize()): Promise<VerovioRendererPool> {

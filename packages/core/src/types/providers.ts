@@ -83,6 +83,11 @@ export interface RenderSystemResult extends RenderScoreResult {}
 export interface RendererProvider {
   readonly providerName: string;
   readonly providerVersion: string;
+  /**
+   * How many renders may run in parallel safely. A single WASM toolkit is
+   * stateful → 1 (default); a worker pool can run its size concurrently.
+   */
+  readonly maxConcurrency?: number;
   renderScore(input: RenderScoreInput): Promise<RenderScoreResult>;
   renderSystem(input: RenderSystemInput): Promise<RenderSystemResult>;
   healthCheck(): Promise<ProviderHealth>;

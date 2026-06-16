@@ -8,6 +8,7 @@
  * run truly in parallel and the mutex is dropped (a fresh PptxGenJS builder is
  * used per call so concurrent exports stay independent).
  */
+import { cpus } from "node:os";
 import { buildPresentation } from "@worship-score/pipeline";
 import { PptxGenJsBuilder, VerovioRenderer, VerovioRendererPool } from "@worship-score/adapters";
 import type {
@@ -18,9 +19,17 @@ import type {
   ScoreValidationResult,
 } from "@worship-score/core";
 
-/** Pool size from env; 0 (default) keeps the single-toolkit + mutex behavior. */
+/**
+ * Render concurrency. Default: a small worker pool so a multi-slide preview
+ * renders its slides in parallel (the main source of preview lag). Set
+ * WS_RENDER_WORKERS=N to override, or =0 to force the single-toolkit + mutex.
+ */
 const RENDER_WORKERS = (() => {
-  const n = Number.parseInt(process.env.WS_RENDER_WORKERS ?? "", 10);
+  const raw = process.env.WS_RENDER_WORKERS;
+  if (raw === undefined || raw.trim() === "") {
+    return Math.max(1, Math.min(4, (cpus().length || 2) - 1));
+  }
+  const n = Number.parseInt(raw, 10);
   return Number.isInteger(n) && n > 0 ? Math.min(n, 8) : 0;
 })();
 

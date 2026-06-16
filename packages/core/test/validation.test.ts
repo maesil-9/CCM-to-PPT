@@ -100,6 +100,14 @@ describe("validateScore", () => {
     expect(new Set(validateScore(score).issues.map((i) => i.code))).toContain("SECTION_MEASURE_REF_VALID");
   });
 
+  it("flags an unterminated 1/2 ending bracket", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.barlines = [{ location: "left", style: "heavy-light", ending: { numbers: [1], type: "start" } }];
+    const result = validateScore(scoreOf([m]));
+    expect(result.hasBlocking).toBe(true);
+    expect(new Set(result.issues.map((i) => i.code))).toContain("ENDING_REFERENCE_VALID");
+  });
+
   it("flags PRESENTATION_SECTION_REF_VALID for an unknown section in the running order", () => {
     const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
     const score = scoreOf([m], {

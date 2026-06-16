@@ -269,6 +269,10 @@ function validateRepeatsAndEndings(score: ScoreIR, issues: ScoreValidationIssue[
       issue("REPEAT_START_END_BALANCED", "warning", `${openRepeats} forward repeat(s) have no matching backward repeat`, {}),
     );
   }
+  // An ending bracket that opens but never stops would mis-expand the running order.
+  if (endingOpen) {
+    issues.push(issue("ENDING_REFERENCE_VALID", "error", "1/2번 괄호(ending)가 시작되었으나 종료되지 않았습니다", {}));
+  }
 }
 
 function validateSourceRegions(score: ScoreIR, issues: ScoreValidationIssue[]): void {

@@ -110,6 +110,14 @@ export interface NoteConfidence {
   lyric?: number;
 }
 
+/** Ornament symbols (장식음) attached above a note. */
+export type Ornament =
+  | "trill"
+  | "mordent"
+  | "inverted-mordent"
+  | "turn"
+  | "inverted-turn";
+
 export interface Note {
   id: string;
   kind: "note";
@@ -124,6 +132,8 @@ export interface Note {
   tuplet?: { start: boolean; stop: boolean };
   /** Fermata (늘임표) on this note. */
   fermata?: boolean;
+  /** Ornament symbols on this note (trill/mordent/turn …). */
+  ornaments?: Ornament[];
   lyrics?: Lyric[];
   /** Optional per-field confidence (PRD §10.2). Absent on hand-authored data. */
   confidence?: NoteConfidence;
@@ -183,6 +193,55 @@ export interface Barline {
   ending?: Ending;
 }
 
+// ---------------------------------------------------------------------------
+// Directions: dynamics and navigation (D.C./D.S./Coda/Segno/Fine)
+// ---------------------------------------------------------------------------
+
+/** Dynamic markings, softest → loudest, plus common accents. */
+export type DynamicMark =
+  | "pp"
+  | "p"
+  | "mp"
+  | "mf"
+  | "f"
+  | "ff"
+  | "fp"
+  | "sf"
+  | "sfz";
+
+/**
+ * Navigation / repeat-jump direction. Renders as a graphic sign (segno/coda)
+ * and/or as words (D.C., D.S., al Fine, al Coda, Fine), with a best-effort
+ * MusicXML `<sound>` for playback semantics.
+ */
+export interface NavigationDirection {
+  /** Graphic target sign placed in the measure. */
+  sign?: "segno" | "coda";
+  /** Jump instruction back to the start (da-capo) or to the segno (dal-segno). */
+  jump?: "da-capo" | "dal-segno";
+  /** Where the jump terminates: "al Fine" or "al Coda". */
+  target?: "fine" | "coda";
+  /** Standalone Fine marker (end of the piece after a repeat). */
+  fine?: boolean;
+  /** Display words override (e.g. "D.S. al Coda"); derived from the fields if absent. */
+  words?: string;
+}
+
+/**
+ * A positioned direction within a measure (MusicXML `<direction>`). Carries a
+ * dynamic, a navigation marker, and/or free-text words. Position is given as a
+ * division offset from the measure downbeat.
+ */
+export interface Direction {
+  /** Offset within the measure in division units (0 = downbeat). */
+  offsetDivisions?: number;
+  placement?: "above" | "below";
+  dynamics?: DynamicMark;
+  navigation?: NavigationDirection;
+  /** Free-text expression/tempo words (e.g. "rit.", "Slowly"). */
+  words?: string;
+}
+
 /**
  * Chord symbol (harmony) — stored as a separate layer (PRD OMR-004). Recognition
  * failures here must not affect the melody, and chords are hidden by default in
@@ -223,6 +282,8 @@ export interface Measure {
   events: ScoreEvent[];
   /** Optional chord-symbol layer (hidden by default in output). */
   harmonies?: HarmonyChord[];
+  /** Dynamics and navigation markers positioned within the measure. */
+  directions?: Direction[];
   barlines?: Barline[];
   sectionId?: string;
 }

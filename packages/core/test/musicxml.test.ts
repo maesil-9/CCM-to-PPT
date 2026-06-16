@@ -52,4 +52,38 @@ describe("serializeMusicXml", () => {
     expect(xml).not.toContain("first");
     expect(xml).toContain('<lyric number="1">');
   });
+
+  it("emits ornaments inside note notations", () => {
+    const note = qn("m1", 1, "C", 4, "whole", { ornaments: ["trill", "mordent"] });
+    const xml = serializeMusicXml(scoreOf([measure("m1", 0, [note], true)]));
+    expect(xml).toContain("<ornaments>");
+    expect(xml).toContain("<trill-mark/>");
+    expect(xml).toContain("<mordent/>");
+  });
+
+  it("emits a dynamics direction (placement below by default)", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.directions = [{ dynamics: "mf" }];
+    const xml = serializeMusicXml(scoreOf([m]));
+    expect(xml).toContain('<direction placement="below">');
+    expect(xml).toContain("<dynamics>");
+    expect(xml).toContain("<mf/>");
+  });
+
+  it("derives navigation words and the playback sound for D.C. al Fine", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.directions = [{ navigation: { jump: "da-capo", target: "fine" } }];
+    const xml = serializeMusicXml(scoreOf([m]));
+    expect(xml).toContain("<words>D.C. al Fine</words>");
+    expect(xml).toContain('<sound dacapo="yes"/>');
+  });
+
+  it("emits a segno graphic with its sound marker and an offset", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.directions = [{ navigation: { sign: "segno" }, offsetDivisions: 16 }];
+    const xml = serializeMusicXml(scoreOf([m]));
+    expect(xml).toContain("<segno/>");
+    expect(xml).toContain('<sound segno="1"/>');
+    expect(xml).toContain("<offset>16</offset>");
+  });
 });

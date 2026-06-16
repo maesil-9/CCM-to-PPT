@@ -54,6 +54,14 @@ const lyricSchema = z.object({
 
 const tieSchema = z.object({ start: z.boolean(), stop: z.boolean() });
 
+const ornamentSchema = z.enum([
+  "trill",
+  "mordent",
+  "inverted-mordent",
+  "turn",
+  "inverted-turn",
+]);
+
 const noteSchema = z.object({
   id: z.string(),
   kind: z.literal("note"),
@@ -66,6 +74,7 @@ const noteSchema = z.object({
   slur: tieSchema.optional(),
   tuplet: tieSchema.optional(),
   fermata: z.boolean().optional(),
+  ornaments: z.array(ornamentSchema).max(8).optional(),
   lyrics: z.array(lyricSchema).max(8).optional(),
   confidence: z
     .object({
@@ -123,6 +132,24 @@ const harmonySchema = z.object({
   sourceRegionId: z.string().optional(),
 });
 
+const dynamicMarkSchema = z.enum(["pp", "p", "mp", "mf", "f", "ff", "fp", "sf", "sfz"]);
+
+const navigationSchema = z.object({
+  sign: z.enum(["segno", "coda"]).optional(),
+  jump: z.enum(["da-capo", "dal-segno"]).optional(),
+  target: z.enum(["fine", "coda"]).optional(),
+  fine: z.boolean().optional(),
+  words: z.string().max(120).optional(),
+});
+
+const directionSchema = z.object({
+  offsetDivisions: z.number().int().min(0).optional(),
+  placement: z.enum(["above", "below"]).optional(),
+  dynamics: dynamicMarkSchema.optional(),
+  navigation: navigationSchema.optional(),
+  words: z.string().max(200).optional(),
+});
+
 const measureSchema = z.object({
   id: z.string(),
   number: z.number().int(),
@@ -138,6 +165,7 @@ const measureSchema = z.object({
     .optional(),
   events: z.array(eventSchema).max(512),
   harmonies: z.array(harmonySchema).max(128).optional(),
+  directions: z.array(directionSchema).max(64).optional(),
   barlines: z.array(barlineSchema).max(8).optional(),
   sectionId: z.string().optional(),
 });

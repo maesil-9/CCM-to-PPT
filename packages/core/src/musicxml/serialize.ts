@@ -15,9 +15,12 @@ import { eventDurationDivisions, measureDurationDivisions } from "../duration.js
 import type {
   Barline,
   Clef,
+  Direction,
   HarmonyChord,
   Key,
   Measure,
+  NavigationDirection,
+  Ornament,
   ScoreEvent,
   ScoreIR,
   Time,
@@ -71,6 +74,13 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
 
     if (emittedIndex === 0 && score.musicalContext.tempoBpm) {
       children.push(buildTempo(score.musicalContext.tempoBpm));
+    }
+
+    // Dynamics / navigation markers. Each carries an <offset> from the measure
+    // downbeat, so they can all be emitted up front before the note stream.
+    for (const direction of measure.directions ?? []) {
+      const node = buildDirection(direction);
+      if (node) children.push(node);
     }
 
     // Chord layer: anchor each harmony to the note whose time span contains its
@@ -239,6 +249,9 @@ function buildNote(
     if (event.slur?.start) notations.push(el("slur", { type: "start", number: "1" }));
     if (event.tuplet?.stop) notations.push(el("tuplet", { type: "stop", number: "1" }));
     if (event.tuplet?.start) notations.push(el("tuplet", { type: "start", number: "1" }));
+    if (event.ornaments && event.ornaments.length) {
+      notations.push(el("ornaments", undefined, event.ornaments.map(ornamentNode)));
+    }
     if (event.fermata) notations.push(el("fermata"));
     if (notations.length) kids.push(el("notations", undefined, notations));
 
@@ -272,6 +285,76 @@ function buildTempo(bpm: number): XmlNode {
     ]),
     el("sound", { tempo: value }),
   ]);
+}
+
+/** MusicXML element name for each ornament (trill renders as <trill-mark/>). */
+const ORNAMENT_ELEMENT: Record<Ornament, string> = {
+  trill: "trill-mark",
+  mordent: "mordent",
+  "inverted-mordent": "inverted-mordent",
+  turn: "turn",
+  "inverted-turn": "inverted-turn",
+};
+
+function ornamentNode(ornament: Ornament): XmlNode {
+  return el(ORNAMENT_ELEMENT[ornament]);
+}
+
+/** Words for a navigation jump (e.g. "D.S. al Coda"). Pure signs return undefined. */
+function deriveNavigationWords(nav: NavigationDirection): string | undefined {
+  if (nav.words) return nav.words;
+  const suffix = nav.target === "fine" ? " al Fine" : nav.target === "coda" ? " al Coda" : "";
+  if (nav.jump === "da-capo") return `D.C.${suffix}`;
+  if (nav.jump === "dal-segno") return `D.S.${suffix}`;
+  if (nav.fine) return "Fine";
+  return undefined;
+}
+
+/**
+ * Build a MusicXML <direction> for a dynamic and/or navigation marker. Returns
+ * null when the direction carries no renderable content. Element order follows
+ * the content model: direction-type+, offset?, sound?.
+ */
+function buildDirection(dir: Direction): XmlNode | null {
+  const typeNodes: XmlNode[] = [];
+  const soundAttrs: Record<string, string> = {};
+
+  if (dir.dynamics) {
+    typeNodes.push(el("direction-type", undefined, [el("dynamics", undefined, [el(dir.dynamics)])]));
+  }
+
+  const nav = dir.navigation;
+  if (nav) {
+    if (nav.sign === "segno") {
+      typeNodes.push(el("direction-type", undefined, [el("segno")]));
+      soundAttrs.segno = "1";
+    }
+    if (nav.sign === "coda") {
+      typeNodes.push(el("direction-type", undefined, [el("coda")]));
+      soundAttrs.coda = "1";
+    }
+    const words = deriveNavigationWords(nav);
+    if (words) {
+      typeNodes.push(el("direction-type", undefined, [el("words", undefined, [words])]));
+    }
+    if (nav.jump === "da-capo") soundAttrs.dacapo = "yes";
+    if (nav.jump === "dal-segno") soundAttrs.dalsegno = "1";
+    if (nav.fine) soundAttrs.fine = "yes";
+  }
+
+  if (dir.words) {
+    typeNodes.push(el("direction-type", undefined, [el("words", undefined, [dir.words])]));
+  }
+
+  if (typeNodes.length === 0) return null;
+
+  const placement = dir.placement ?? (dir.dynamics ? "below" : "above");
+  const kids: XmlChild[] = [...typeNodes];
+  if (dir.offsetDivisions && dir.offsetDivisions !== 0) {
+    kids.push(el("offset", undefined, [String(dir.offsetDivisions)]));
+  }
+  if (Object.keys(soundAttrs).length) kids.push(el("sound", soundAttrs));
+  return el("direction", { placement }, kids);
 }
 
 function buildHarmony(h: HarmonyChord, offsetDivisions: number): XmlNode {

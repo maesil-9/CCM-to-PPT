@@ -83,6 +83,20 @@ describe("validateScore", () => {
     expect(validateScore(scoreOf([m])).hasBlocking).toBe(false);
   });
 
+  it("flags DIRECTION_OFFSET_IN_RANGE when a direction offset is outside the measure", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true); // capacity 32
+    m.directions = [{ dynamics: "f", offsetDivisions: 999 }];
+    const result = validateScore(scoreOf([m]));
+    expect(result.hasBlocking).toBe(true);
+    expect(codes(scoreOf([m]))).toContain("DIRECTION_OFFSET_IN_RANGE");
+  });
+
+  it("accepts an in-range direction (default offset 0)", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.directions = [{ navigation: { jump: "dal-segno", target: "coda" } }];
+    expect(validateScore(scoreOf([m])).hasBlocking).toBe(false);
+  });
+
   it("flags DUPLICATE_ID across measures/events", () => {
     const a = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
     const b = measure("m1", 1, [qn("dup", 1, "D", 4, "whole")], false); // duplicate measure id

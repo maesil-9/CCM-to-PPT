@@ -30,7 +30,11 @@
 - **measures[]**: 각 마디의 `events[]`(note/rest), 첫 마디(또는 변경 시)의 `attributes`, `barlines`(반복/마침),
   필요 시 `harmonies[]`(코드)
 - **note**: `pitch`{step:A–G, alter:-2..2, octave}, `duration`{type:whole|half|quarter|eighth|16th|32nd, dots},
-  `tie`{start,stop}, `lyrics`[{verse,text,syllabic:single|begin|middle|end, extend?}]
+  `tie`{start,stop}, `fermata`, `ornaments`[trill|mordent|inverted-mordent|turn|inverted-turn],
+  `lyrics`[{verse,text,syllabic:single|begin|middle|end, extend?}]
+- **measure.directions[]**: 다이내믹·내비게이션 표기. `offsetDivisions`(마디 내 위치), `placement`(above/below),
+  `dynamics`(pp|p|mp|mf|f|ff|fp|sf|sfz), `navigation`{sign:segno|coda, jump:da-capo|dal-segno,
+  target:fine|coda, fine, words?}, `words`(자유 표현어). D.C./D.S./Fine는 `navigation`으로 표현하면 표기어가 자동 생성됩니다.
 - **sections[]**: intro/verse/preChorus/chorus/bridge/interlude/tag/ending/custom + start/end 마디
 - **presentation.order[]**: 절·후렴 진행 순서(섹션 + verse 번호 + 반복)
 
@@ -116,3 +120,17 @@
 셋잇단음표가 있으면 `musicalContext.divisions`(및 첫 마디 attributes.divisions)를 **24**로 두고,
 해당 음표에 `duration.timeModification = { actualNotes: 3, normalNotes: 2 }`와
 `tuplet: { start, stop }`을 설정합니다(divisions가 3으로 나눠떨어져야 정수 음가 유지).
+
+## 다이내믹·장식음·내비게이션(D.C./D.S./Coda/Segno/Fine)
+
+- **다이내믹**은 `measure.directions[]`에 `{ dynamics: "mf", offsetDivisions, placement }`로 기록합니다
+  (기본 placement는 보표 아래). 강약 글리프가 해당 위치 음표 아래에 그려집니다.
+- **장식음**은 음표의 `ornaments`에 배열로 기록합니다(예: `["trill"]`). MusicXML `<ornaments>`로 직렬화되어
+  떨림표/꾸밈음 기호가 음표 위에 붙습니다.
+- **반복 진행 표기**는 `directions[].navigation`으로 기록합니다.
+  - `{ sign: "segno" }` / `{ sign: "coda" }` → 세뇨·코다 기호.
+  - `{ jump: "da-capo", target: "fine" }` → "D.C. al Fine" 표기어 자동 생성.
+  - `{ jump: "dal-segno", target: "coda" }` → "D.S. al Coda".
+  - `{ fine: true }` → "Fine".
+  - `words`를 직접 주면 자동 생성을 덮어씁니다.
+- `offsetDivisions`는 마디 용량 안이어야 합니다(`DIRECTION_OFFSET_IN_RANGE`).

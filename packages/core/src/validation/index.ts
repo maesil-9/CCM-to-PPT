@@ -123,6 +123,20 @@ export function validateScore(score: ScoreIR): ScoreValidationResult {
         );
       }
     }
+
+    // Direction offsets (dynamics / navigation) must land inside the measure.
+    (measure.directions ?? []).forEach((d, di) => {
+      const off = d.offsetDivisions ?? 0;
+      if (!Number.isInteger(off) || off < 0 || off >= expected) {
+        issues.push(
+          issue("DIRECTION_OFFSET_IN_RANGE", "error", `Direction #${di} offset ${off} is outside [0, ${expected}) for measure ${measure.id}`, {
+            measureId: measure.id,
+            repairable: true,
+            suggestedActions: [{ kind: "clamp_offset", description: "Move the direction to a valid in-measure position" }],
+          }),
+        );
+      }
+    });
   });
 
   // --- PITCH_RANGE_REASONABLE / ACCIDENTAL_SCOPE_VALID ---

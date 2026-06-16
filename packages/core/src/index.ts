@@ -1,0 +1,38 @@
+/**
+ * @worship-score/core — domain layer barrel.
+ * No external engine or infrastructure imports live in this package.
+ */
+
+// Types
+export * from "./types/scoreir.js";
+export * from "./types/validation.js";
+export * from "./types/presentation.js";
+export * from "./types/providers.js";
+
+// Musical context + durations
+export {
+  computeActiveAttributes,
+  orderedMeasures,
+  type ActiveAttributes,
+} from "./context.js";
+export {
+  DEFAULT_DIVISIONS,
+  eventDurationDivisions,
+  measureDurationDivisions,
+} from "./duration.js";
+
+// Validation
+export { validateScore } from "./validation/index.js";
+
+// MusicXML
+export { serializeMusicXml, type SerializeOptions } from "./musicxml/serialize.js";
+
+// Presentation
+export {
+  DEFAULT_PRESENTATION_PROFILE,
+  PRESENTATION_PROFILE_VERSION,
+} from "./presentation/profile.js";
+export { planPresentation, SLIDE_PLAN_VERSION } from "./presentation/slidePlan.js";
+
+// Schema
+export { scoreIrSchema, parseScoreIr, safeParseScoreIr } from "./schema/scoreir.schema.js";

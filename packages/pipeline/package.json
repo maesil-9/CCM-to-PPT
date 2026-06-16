@@ -1,0 +1,19 @@
+{
+  "name": "@worship-score/pipeline",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Milestone 1 deterministic output chain runner: ScoreIR -> validation -> MusicXML -> renderer -> slide plan -> PPTX -> validation.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "m1": "tsx src/m1.ts"
+  },
+  "dependencies": {
+    "@worship-score/core": "workspace:*",
+    "@worship-score/adapters": "workspace:*"
+  }
+}

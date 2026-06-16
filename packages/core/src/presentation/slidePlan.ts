@@ -10,7 +10,7 @@
  * Deterministic: same (score, profile) -> same plan.
  */
 import { orderedMeasures } from "../context.js";
-import type { ScoreIR, ScoreSection } from "../types/scoreir.js";
+import type { Measure, ScoreIR, ScoreSection } from "../types/scoreir.js";
 import type {
   PresentationProfile,
   SlidePlan,
@@ -72,7 +72,43 @@ export function planPresentation(score: ScoreIR, profile: PresentationProfile): 
     return ordered.filter((m) => m.index >= lo && m.index <= hi);
   };
 
+  const projection = profile.layout === "projection";
   const perSlide = Math.max(1, profile.measuresPerSystem * profile.maxSystemsPerSlide);
+  // Projection: each slide holds up to this many sung lines (phrases).
+  const linesPerSlide = Math.max(1, profile.maxSystemsPerSlide);
+
+  /** Split a section's measures into slide chunks (+ per-line system breaks). */
+  const chunksFor = (measures: Measure[]): { ids: string[]; breaks: string[] }[] => {
+    if (!projection) {
+      const out: { ids: string[]; breaks: string[] }[] = [];
+      for (let o = 0; o < measures.length; o += perSlide) {
+        out.push({ ids: measures.slice(o, o + perSlide).map((m) => m.id), breaks: [] });
+      }
+      return out;
+    }
+    // Group measures into lines at `systemBreak` markers (last measure also ends
+    // a line); then pack `linesPerSlide` lines per slide.
+    const lines: Measure[][] = [];
+    let cur: Measure[] = [];
+    for (const m of measures) {
+      cur.push(m);
+      if (m.systemBreak) {
+        lines.push(cur);
+        cur = [];
+      }
+    }
+    if (cur.length) lines.push(cur);
+    const out: { ids: string[]; breaks: string[] }[] = [];
+    for (let i = 0; i < lines.length; i += linesPerSlide) {
+      const group = lines.slice(i, i + linesPerSlide);
+      out.push({
+        ids: group.flat().map((m) => m.id),
+        breaks: group.slice(1).map((line) => line[0]!.id),
+      });
+    }
+    return out;
+  };
+
   const slides: SlidePlanSlide[] = [];
   let slideIndex = 0;
   let titleEmitted = false;
@@ -85,12 +121,12 @@ export function planPresentation(score: ScoreIR, profile: PresentationProfile): 
 
     const repeats = Math.max(1, item.repeatCount ?? 1);
     for (let r = 0; r < repeats; r++) {
-      for (let offset = 0; offset < measures.length; offset += perSlide) {
-        const chunk = measures.slice(offset, offset + perSlide);
+      for (const chunk of chunksFor(measures)) {
         const slide: SlidePlanSlide = {
           index: slideIndex++,
-          measureIds: chunk.map((m) => m.id),
+          measureIds: chunk.ids,
         };
+        if (chunk.breaks.length > 0) slide.systemBreakMeasureIds = chunk.breaks;
         if (item.verse !== undefined) slide.verse = item.verse;
         if (profile.sectionLabelVisibility) {
           slide.sectionLabel = item.label ?? sectionLabel(section, item.verse, ko);

@@ -49,6 +49,11 @@ export interface SerializeOptions {
   includeChords?: boolean;
   /** Force a new system (staff line) every N emitted measures (encoded breaks). */
   systemBreakEvery?: number;
+  /**
+   * Measure ids that must begin a new staff system (phrase-based breaks for
+   * projection layout). Takes precedence over {@link systemBreakEvery}.
+   */
+  systemBreakBefore?: string[];
   /** Reuse precomputed score data (see {@link prepareScore}). */
   prepared?: PreparedScore;
 }
@@ -57,15 +62,19 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
   const { active, ordered } = options.prepared ?? prepareScore(score);
   const idSet = options.measureIds ? new Set(options.measureIds) : null;
   const selected = idSet ? ordered.filter((m) => idSet.has(m.id)) : ordered;
+  const breakBefore = options.systemBreakBefore ? new Set(options.systemBreakBefore) : null;
 
   const measureNodes: XmlNode[] = selected.map((measure, emittedIndex) => {
     const ctx = active.get(measure.id);
     if (!ctx) throw new Error(`No active attributes for measure ${measure.id}`);
     const children: XmlChild[] = [];
 
-    // Encoded system break: start a new staff line every N measures so a slide
-    // shows multiple rows and fills its vertical space (readability).
-    if (options.systemBreakEvery && emittedIndex > 0 && emittedIndex % options.systemBreakEvery === 0) {
+    // Encoded system break. Explicit phrase breaks (projection) take precedence;
+    // otherwise wrap every N measures so a leadsheet slide fills its height.
+    const breakHere = breakBefore
+      ? emittedIndex > 0 && breakBefore.has(measure.id)
+      : !!options.systemBreakEvery && emittedIndex > 0 && emittedIndex % options.systemBreakEvery === 0;
+    if (breakHere) {
       children.push(el("print", { "new-system": "yes" }));
     }
 

@@ -33,6 +33,8 @@ export interface RenderOptions {
   encodedBreaks?: boolean;
   /** Minimum staff size hint. */
   minStaffSize?: number;
+  /** Lyric font size in Verovio points (2–8). Large for projection subtitles. */
+  lyricSize?: number;
   /** Ink colour for staff/notes/text (hex, no '#'); default engine black. */
   inkColor?: string;
   /** Line-weight scale (1 = engine default) for staff/stem/barline widths. */

@@ -46,10 +46,13 @@ describe("web scores", () => {
     await expect(scores.resolveBuildOptions("song1", { bogus: 1 })).rejects.toThrow();
   });
 
-  it("builds a profile override from layout", () => {
-    const p = scores.resolveProfile({ layout: { measuresPerSystem: 1 } });
-    expect(p?.measuresPerSystem).toBe(1);
-    expect(scores.resolveProfile({})).toBeUndefined();
+  it("resolves the projection profile by default and leadsheet on request", () => {
+    // Default (no layout) → projection (worship subtitle) layout.
+    expect(scores.resolveProfile({}).layout).toBe("projection");
+    // Explicit leadsheet mode → printed score layout, with overrides applied.
+    const lead = scores.resolveProfile({ layout: { mode: "leadsheet", measuresPerSystem: 1 } });
+    expect(lead.layout).not.toBe("projection");
+    expect(lead.measuresPerSystem).toBe(1);
   });
 
   it("saves and reloads ui options", async () => {

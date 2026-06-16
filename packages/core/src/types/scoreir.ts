@@ -286,6 +286,12 @@ export interface Measure {
   directions?: Direction[];
   barlines?: Barline[];
   sectionId?: string;
+  /**
+   * Marks the end of a lyric line / musical phrase. In projection layout this
+   * forces a new staff system after this measure, so each rendered line is one
+   * sung phrase (and slides chunk by phrase, not by a fixed measure count).
+   */
+  systemBreak?: boolean;
 }
 
 // ---------------------------------------------------------------------------

@@ -41,6 +41,7 @@ export { deriveChordText, deriveChordSuffix } from "./chord.js";
 // Presentation
 export {
   DEFAULT_PRESENTATION_PROFILE,
+  PROJECTION_PRESENTATION_PROFILE,
   PRESENTATION_PROFILE_VERSION,
 } from "./presentation/profile.js";
 export { planPresentation, SLIDE_PLAN_VERSION } from "./presentation/slidePlan.js";

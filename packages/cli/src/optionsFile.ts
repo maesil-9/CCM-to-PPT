@@ -4,6 +4,7 @@ import path from "node:path";
 import { z } from "zod";
 import {
   DEFAULT_PRESENTATION_PROFILE,
+  PROJECTION_PRESENTATION_PROFILE,
   type BuildOptions,
   type PresentationProfile,
   type StyleOptions,
@@ -32,6 +33,8 @@ const optionsFileSchema = z
       .optional(),
     layout: z
       .object({
+        // "projection" (default) = worship subtitle slides; "leadsheet" = printed score.
+        mode: z.enum(["projection", "leadsheet"]).optional(),
         measuresPerSystem: z.number().int().min(1).max(4).optional(),
         maxSystemsPerSlide: z.number().int().min(1).max(6).optional(),
       })
@@ -93,14 +96,14 @@ export async function loadBuildOptions(scoreDir: string): Promise<LoadedOptions>
   if (v.style) options.style = v.style as StyleOptions;
   if (v.score) options.score = v.score;
 
-  let profile: PresentationProfile | undefined;
-  if (v.layout) {
-    profile = {
-      ...DEFAULT_PRESENTATION_PROFILE,
-      ...(v.layout.measuresPerSystem ? { measuresPerSystem: v.layout.measuresPerSystem } : {}),
-      ...(v.layout.maxSystemsPerSlide ? { maxSystemsPerSlide: v.layout.maxSystemsPerSlide } : {}),
-    };
-  }
+  // Default to the projection (worship subtitle) layout; opt into the printed
+  // leadsheet with layout.mode = "leadsheet".
+  const base = v.layout?.mode === "leadsheet" ? DEFAULT_PRESENTATION_PROFILE : PROJECTION_PRESENTATION_PROFILE;
+  const profile: PresentationProfile = {
+    ...base,
+    ...(v.layout?.measuresPerSystem ? { measuresPerSystem: v.layout.measuresPerSystem } : {}),
+    ...(v.layout?.maxSystemsPerSlide ? { maxSystemsPerSlide: v.layout.maxSystemsPerSlide } : {}),
+  };
 
   let backgroundPath: string | undefined;
   if (v.background?.image) {

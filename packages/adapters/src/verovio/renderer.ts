@@ -53,6 +53,8 @@ function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
     header: "none",
     footer: "none",
     svgViewBox: true,
+    // Large lyrics for projection subtitles (Verovio clamps to its 2–8 range).
+    ...(options?.lyricSize ? { lyricSize: Math.max(2, Math.min(8, options.lyricSize)) } : {}),
     // Use Bravura (the SMuFL reference font) for the engraving. Verovio renders
     // some glyphs as <text font-family="Bravura"> (metronome note, chord-symbol
     // accidentals); resvg can't read Verovio's embedded font, so we also bundle

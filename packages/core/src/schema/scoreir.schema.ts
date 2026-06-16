@@ -168,6 +168,7 @@ const measureSchema = z.object({
   directions: z.array(directionSchema).max(64).optional(),
   barlines: z.array(barlineSchema).max(8).optional(),
   sectionId: z.string().optional(),
+  systemBreak: z.boolean().optional(),
 });
 
 const sectionSchema = z.object({

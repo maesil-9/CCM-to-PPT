@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import {
   DEFAULT_PRESENTATION_PROFILE,
+  PROJECTION_PRESENTATION_PROFILE,
   parseScoreIr,
   type BuildOptions,
   type PresentationProfile,
@@ -130,6 +131,7 @@ export const uiOptionsSchema = z
     backgroundEnabled: z.boolean().optional(),
     layout: z
       .object({
+        mode: z.enum(["projection", "leadsheet"]).optional(),
         measuresPerSystem: z.number().int().min(1).max(4).optional(),
         maxSystemsPerSlide: z.number().int().min(1).max(6).optional(),
       })
@@ -170,14 +172,17 @@ export async function resolveBuildOptions(id: string, ui: unknown): Promise<Part
   return options;
 }
 
-/** Builds a presentation-profile override from the UI layout controls, if any. */
-export function resolveProfile(ui: unknown): PresentationProfile | undefined {
+/**
+ * Resolve the presentation profile. Defaults to the projection (worship
+ * subtitle) layout; `layout.mode = "leadsheet"` selects the printed score.
+ */
+export function resolveProfile(ui: unknown): PresentationProfile {
   const v = uiOptionsSchema.parse(ui);
-  if (!v.layout) return undefined;
+  const base = v.layout?.mode === "leadsheet" ? DEFAULT_PRESENTATION_PROFILE : PROJECTION_PRESENTATION_PROFILE;
   return {
-    ...DEFAULT_PRESENTATION_PROFILE,
-    ...(v.layout.measuresPerSystem ? { measuresPerSystem: v.layout.measuresPerSystem } : {}),
-    ...(v.layout.maxSystemsPerSlide ? { maxSystemsPerSlide: v.layout.maxSystemsPerSlide } : {}),
+    ...base,
+    ...(v.layout?.measuresPerSystem ? { measuresPerSystem: v.layout.measuresPerSystem } : {}),
+    ...(v.layout?.maxSystemsPerSlide ? { maxSystemsPerSlide: v.layout.maxSystemsPerSlide } : {}),
   };
 }
 

@@ -20,3 +20,26 @@ export const DEFAULT_PRESENTATION_PROFILE: PresentationProfile = {
   slideWidthInches: 13.333,
   slideHeightInches: 7.5,
 };
+
+/**
+ * Worship projection profile: big congregation lyrics over a small melody
+ * guide, chunked by sung phrase (`systemBreak`), two lines per slide, no chords,
+ * title on every slide. The format congregations read off the screen.
+ */
+export const PROJECTION_PRESENTATION_PROFILE: PresentationProfile = {
+  version: PRESENTATION_PROFILE_VERSION,
+  ratio: "16:9",
+  layout: "projection",
+  lyricSize: 6,
+  chordVisibility: "hidden",
+  // In projection, maxSystemsPerSlide = sung lines per slide (reference: 2).
+  maxSystemsPerSlide: 2,
+  measuresPerSystem: 2,
+  minimumStaffSize: 28,
+  safeMarginInches: 0.4,
+  titleVisibility: "every-slide",
+  sectionLabelVisibility: true,
+  outputMode: "svg",
+  slideWidthInches: 13.333,
+  slideHeightInches: 7.5,
+};

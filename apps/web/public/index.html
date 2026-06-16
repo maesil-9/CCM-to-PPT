@@ -15,6 +15,7 @@
       </label>
       <span id="status" class="status" role="status" aria-live="polite"></span>
       <span class="spacer"></span>
+      <button id="reset" data-hint="모든 설정을 처음 기본값으로 되돌립니다.">기본값</button>
       <button id="save" data-hint="지금 설정을 이 곡에 저장합니다. 다음에 같은 곡을 열면 그대로 불러옵니다.">
         저장
       </button>
@@ -134,6 +135,10 @@
           <label class="row" data-hint="절 이름 글씨의 색입니다.">
             <span class="row-label">색</span>
             <input type="color" id="label-color" value="#e8ecf7" />
+          </label>
+          <label class="row" data-hint="절 이름을 굵게 표시합니다.">
+            <span class="row-label">굵게</span>
+            <input type="checkbox" id="label-bold" checked />
           </label>
         </section>
       </aside>

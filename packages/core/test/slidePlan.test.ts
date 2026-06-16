@@ -45,6 +45,27 @@ describe("planPresentation", () => {
     expect(second?.sectionLabel).toBe("Chorus");
   });
 
+  it("auto-labels sections in Korean when metadata.language is ko", () => {
+    const koSections: ScoreSection[] = [
+      { id: "sec-v", kind: "verse", startMeasureId: "m1", endMeasureId: "m4" },
+      { id: "sec-c", kind: "chorus", startMeasureId: "m5", endMeasureId: "m8" },
+    ];
+    const koScore = scoreOf(measures, {
+      metadata: { title: "제목", language: "ko" },
+      sections: koSections,
+      presentation: {
+        chordVisibility: "hidden",
+        order: [
+          { id: "p1", sectionId: "sec-v", verse: 1 },
+          { id: "p2", sectionId: "sec-c" },
+        ],
+      },
+    });
+    const plan = planPresentation(koScore, DEFAULT_PRESENTATION_PROFILE);
+    expect(plan.slides[0]?.sectionLabel).toBe("1절");
+    expect(plan.slides[1]?.sectionLabel).toBe("후렴");
+  });
+
   it("splits a section across slides when it exceeds the per-slide budget", () => {
     const plan = planPresentation(score, { ...DEFAULT_PRESENTATION_PROFILE, measuresPerSystem: 2, maxSystemsPerSlide: 1 });
     // perSlide = 2 → verse(4) -> 2 slides, chorus(4) -> 2 slides

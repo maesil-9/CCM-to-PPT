@@ -949,14 +949,12 @@
     {
       "id": "sec-verse",
       "kind": "verse",
-      "label": "Verse",
       "startMeasureId": "m1",
       "endMeasureId": "m4"
     },
     {
       "id": "sec-chorus",
       "kind": "chorus",
-      "label": "Chorus",
       "startMeasureId": "m5",
       "endMeasureId": "m8"
     }
@@ -969,26 +967,22 @@
       {
         "id": "p1",
         "sectionId": "sec-verse",
-        "verse": 1,
-        "label": "Verse 1"
+        "verse": 1
       },
       {
         "id": "p2",
         "sectionId": "sec-chorus",
-        "verse": 1,
-        "label": "Chorus"
+        "verse": 1
       },
       {
         "id": "p3",
         "sectionId": "sec-verse",
-        "verse": 2,
-        "label": "Verse 2"
+        "verse": 2
       },
       {
         "id": "p4",
         "sectionId": "sec-chorus",
-        "verse": 1,
-        "label": "Chorus"
+        "verse": 1
       }
     ]
   }

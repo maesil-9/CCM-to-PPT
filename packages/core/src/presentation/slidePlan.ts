@@ -31,15 +31,34 @@ const SECTION_KIND_LABEL: Record<ScoreSection["kind"], string> = {
   custom: "Section",
 };
 
-function sectionLabel(section: ScoreSection | undefined, verse: number | undefined): string {
-  if (!section) return "Section";
-  const base = section.label ?? SECTION_KIND_LABEL[section.kind];
+const SECTION_KIND_LABEL_KO: Record<ScoreSection["kind"], string> = {
+  intro: "전주",
+  verse: "절",
+  preChorus: "프리코러스",
+  chorus: "후렴",
+  bridge: "브릿지",
+  interlude: "간주",
+  tag: "태그",
+  ending: "후주",
+  custom: "파트",
+};
+
+function sectionLabel(section: ScoreSection | undefined, verse: number | undefined, ko: boolean): string {
+  if (!section) return ko ? "파트" : "Section";
+  if (section.label) return section.label;
   const num = section.number ?? (section.kind === "verse" ? verse : undefined);
+  if (ko) {
+    if (section.kind === "verse" && num !== undefined) return `${num}절`;
+    const base = SECTION_KIND_LABEL_KO[section.kind];
+    return num !== undefined ? `${base} ${num}` : base;
+  }
+  const base = SECTION_KIND_LABEL[section.kind];
   return num !== undefined ? `${base} ${num}` : base;
 }
 
 export function planPresentation(score: ScoreIR, profile: PresentationProfile): SlidePlan {
   const ordered = orderedMeasures(score);
+  const ko = score.metadata.language?.toLowerCase().startsWith("ko") ?? false;
   const indexById = new Map(ordered.map((m) => [m.id, m.index] as const));
   const sectionById = new Map(score.sections.map((s) => [s.id, s] as const));
 
@@ -74,7 +93,7 @@ export function planPresentation(score: ScoreIR, profile: PresentationProfile): 
         };
         if (item.verse !== undefined) slide.verse = item.verse;
         if (profile.sectionLabelVisibility) {
-          slide.sectionLabel = item.label ?? sectionLabel(section, item.verse);
+          slide.sectionLabel = item.label ?? sectionLabel(section, item.verse, ko);
         }
         if (profile.titleVisibility === "every-slide" || (profile.titleVisibility === "first-slide" && !titleEmitted)) {
           if (score.metadata.title) slide.title = score.metadata.title;

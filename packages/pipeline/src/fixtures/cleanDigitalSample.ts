@@ -192,18 +192,19 @@ export function buildCleanDigitalSample(): ScoreIR {
     parts: [{ id: "P1", name: "Melody", staffCount: 1 }],
     measures,
     sections: [
-      { id: "sec-verse", kind: "verse", label: "Verse", startMeasureId: "m1", endMeasureId: "m4" },
-      { id: "sec-chorus", kind: "chorus", label: "Chorus", startMeasureId: "m5", endMeasureId: "m8" },
+      { id: "sec-verse", kind: "verse", startMeasureId: "m1", endMeasureId: "m4" },
+      { id: "sec-chorus", kind: "chorus", startMeasureId: "m5", endMeasureId: "m8" },
     ],
     sourceRegions: [],
     uncertainties: [],
     presentation: {
       chordVisibility: "hidden",
+      // Labels are auto-generated per metadata.language (ko → "1절", "후렴").
       order: [
-        { id: "p1", sectionId: "sec-verse", verse: 1, label: "Verse 1" },
-        { id: "p2", sectionId: "sec-chorus", verse: 1, label: "Chorus" },
-        { id: "p3", sectionId: "sec-verse", verse: 2, label: "Verse 2" },
-        { id: "p4", sectionId: "sec-chorus", verse: 1, label: "Chorus" },
+        { id: "p1", sectionId: "sec-verse", verse: 1 },
+        { id: "p2", sectionId: "sec-chorus", verse: 1 },
+        { id: "p3", sectionId: "sec-verse", verse: 2 },
+        { id: "p4", sectionId: "sec-chorus", verse: 1 },
       ],
     },
   };

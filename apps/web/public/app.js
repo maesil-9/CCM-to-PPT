@@ -68,6 +68,7 @@ function readOptions() {
       fontFace: $("label-font").value,
       fontSize: clampInt($("label-size").value, 8, 60),
       color: toHex($("label-color").value),
+      bold: $("label-bold").checked,
     },
     card: { color: toHex($("card-color").value), opacity: parseFloat($("card-opacity").value) },
   };
@@ -100,6 +101,7 @@ function applyOptions(ui) {
     if (ui.style.sectionLabel.fontFace) $("label-font").value = ui.style.sectionLabel.fontFace;
     if (ui.style.sectionLabel.fontSize) $("label-size").value = String(ui.style.sectionLabel.fontSize);
     if (ui.style.sectionLabel.color) setColor($("label-color"), ui.style.sectionLabel.color);
+    $("label-bold").checked = ui.style.sectionLabel.bold !== false;
   }
   if (ui.style?.card) {
     if (ui.style.card.color) setColor($("card-color"), ui.style.card.color);
@@ -255,7 +257,7 @@ function compose() {
       sec.style.fontFamily = ui.style.sectionLabel.fontFace;
       sec.style.fontSize = ptToCqw(ui.style.sectionLabel.fontSize).toFixed(3) + "cqw";
       sec.style.color = "#" + ui.style.sectionLabel.color;
-      sec.style.fontWeight = "600";
+      sec.style.fontWeight = ui.style.sectionLabel.bold === false ? "400" : "700";
       sec.style.textShadow = shadow;
       slide.appendChild(sec);
     }
@@ -344,6 +346,28 @@ async function exportPptx() {
   }
 }
 
+function resetDefaults() {
+  setColor($("ink-color"), "1A1A1A");
+  $("line-thickness").value = "1";
+  $("chords-visible").checked = false;
+  $("transpose").value = "0";
+  $("measures-per-system").value = "2";
+  $("max-systems").value = "4";
+  $("bg-enabled").checked = false;
+  setColor($("bg-color"), "FFFFFF");
+  setColor($("card-color"), "FFFFFF");
+  $("card-opacity").value = "0.84";
+  $("title-font").value = "Malgun Gothic";
+  $("title-size").value = "26";
+  setColor($("title-color"), "FFFFFF");
+  $("title-bold").checked = true;
+  $("label-font").value = "Malgun Gothic";
+  $("label-size").value = "16";
+  setColor($("label-color"), "E8ECF7");
+  $("label-bold").checked = true;
+  onAnyChange();
+}
+
 async function saveOptions() {
   if (!state.id) return;
   const btn = $("save");
@@ -412,6 +436,7 @@ async function init() {
   $("transpose-up").addEventListener("click", () => stepTranspose(1));
   $("export").addEventListener("click", exportPptx);
   $("save").addEventListener("click", saveOptions);
+  $("reset").addEventListener("click", resetDefaults);
   $("score-select").addEventListener("change", (e) => loadScore(e.target.value));
 
   const res = await fetch("/api/scores");

@@ -35,6 +35,24 @@ function dirname(path: string): string {
   return i === -1 ? "" : path.slice(0, i);
 }
 
+/** Upper bound on zip parts (defense against zip bombs on untrusted input). */
+const MAX_PARTS = 5000;
+
+function isImageSignature(bytes: Uint8Array): boolean {
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  ) {
+    return true;
+  }
+  // JPEG: FF D8 FF
+  return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+}
+
 interface Relationship {
   target: string;
   mode: string | undefined;
@@ -71,6 +89,7 @@ export async function validatePptxOoxml(
   const files = Object.keys(zip.files);
   const has = (name: string) => files.includes(name);
 
+  add("entry_count_sane", files.length <= MAX_PARTS, `${files.length} parts`);
   add("content_types_present", has("[Content_Types].xml"));
   add("root_rels_present", has("_rels/.rels"));
   add("presentation_xml_present", has("ppt/presentation.xml"));
@@ -91,10 +110,33 @@ export async function validatePptxOoxml(
   add("slide_master_present", files.some((f) => /^ppt\/slideMasters\/slideMaster\d+\.xml$/.test(f)));
   add("slide_layout_present", files.some((f) => /^ppt\/slideLayouts\/slideLayout\d+\.xml$/.test(f)));
 
-  const media = files.filter((f) => /^ppt\/media\//.test(f));
+  const media = files.filter((f) => /^ppt\/media\//.test(f) && !zip.files[f]?.dir);
   add("media_present", media.length > 0, `${media.length} media file(s)`);
 
-  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
+  // Every media part must be non-empty and a real PNG/JPEG (a 0-byte or bogus
+  // background must not pass validation just because the OOXML structure is ok).
+  let mediaValid = media.length > 0;
+  let mediaDetail: string | undefined;
+  for (const m of media) {
+    const file = zip.file(m);
+    if (!file) {
+      mediaValid = false;
+      mediaDetail = `${m} unreadable`;
+      break;
+    }
+    const bytes = await file.async("uint8array");
+    if (bytes.length === 0 || !isImageSignature(bytes)) {
+      mediaValid = false;
+      mediaDetail = `${m} empty or not PNG/JPEG`;
+      break;
+    }
+  }
+  add("media_valid_signature", mediaValid, mediaDetail);
+
+  // processEntities:false disables internal/external entity expansion (defense in
+  // depth — this validator may run on untrusted PPTX in later milestones; pair
+  // with a streaming size cap there).
+  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_", processEntities: false });
 
   // Well-formedness of every XML part + content-types parseable.
   let wellFormed = true;

@@ -109,6 +109,20 @@ export function validateScore(score: ScoreIR): ScoreValidationResult {
         }),
       );
     }
+
+    // Chord offsets must land inside the measure.
+    for (const h of measure.harmonies ?? []) {
+      if (!Number.isInteger(h.offsetDivisions) || h.offsetDivisions < 0 || h.offsetDivisions >= expected) {
+        issues.push(
+          issue("HARMONY_OFFSET_IN_RANGE", "error", `Harmony ${h.id} offset ${h.offsetDivisions} is outside [0, ${expected}) for measure ${measure.id}`, {
+            entityId: h.id,
+            measureId: measure.id,
+            repairable: true,
+            suggestedActions: [{ kind: "clamp_offset", description: "Move the chord to a valid in-measure position" }],
+          }),
+        );
+      }
+    }
   });
 
   // --- PITCH_RANGE_REASONABLE / ACCIDENTAL_SCOPE_VALID ---

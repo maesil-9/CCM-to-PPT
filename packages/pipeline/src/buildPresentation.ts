@@ -4,11 +4,16 @@
  * (chords on/off, transpose, background image, output styling), it runs the
  * full deterministic chain and returns the PPTX, its validation, the slide
  * plan, and per-slide assets.
+ *
+ * One Verovio loadData per slide produces both SVG and PNG. Adapters are loaded
+ * lazily, so a web caller that injects its own renderer/builder never pulls the
+ * Node-only engines.
  */
 import {
   DEFAULT_BUILD_OPTIONS,
   DEFAULT_PRESENTATION_PROFILE,
   planPresentation,
+  prepareScore,
   serializeMusicXml,
   transposeScore,
   validateScore,
@@ -19,11 +24,11 @@ import {
   type PptxSlideSpec,
   type PresentationProfile,
   type RendererProvider,
+  type RenderOptions,
   type ScoreIR,
   type ScoreValidationResult,
   type SlidePlan,
 } from "@worship-score/core";
-import { PptxGenJsBuilder, VerovioRenderer } from "@worship-score/adapters";
 
 export interface SlideAsset {
   index: number;
@@ -36,10 +41,20 @@ export interface SlideAsset {
   verse?: number;
 }
 
+export interface FontConfig {
+  /** Pin the lyric/chord text font for deterministic rasterization. */
+  textFontFamily?: string;
+  /** Embeddable font files; when set, rasterization is cross-machine deterministic. */
+  fontFiles?: string[];
+}
+
 export interface BuildPresentationInput {
   score: ScoreIR;
   options?: Partial<BuildOptions>;
   profile?: PresentationProfile;
+  fonts?: FontConfig;
+  /** Emit the full-score MusicXML in the result (CLI writes it). Default true. */
+  emitFullMusicXml?: boolean;
   /** Reuse a renderer/builder across many builds (e.g. a web server). */
   renderer?: RendererProvider;
   builder?: PptxBuilder;
@@ -51,6 +66,7 @@ export interface BuildPresentationResult {
   scoreValidation: ScoreValidationResult;
   slidePlan: SlidePlan;
   assets: SlideAsset[];
+  /** Present when emitFullMusicXml !== false. */
   musicXml: string;
   /** The score after transpose was applied (or the input if none). */
   resolvedScore: ScoreIR;
@@ -72,19 +88,28 @@ function toPptxProfile(profile: PresentationProfile, options: BuildOptions): Ppt
     safeMarginInches: profile.safeMarginInches,
   };
   if (options.style?.backgroundColor) p.background = options.style.backgroundColor;
-  if (options.style?.cardColor) p.cardColor = options.style.cardColor;
+  if (options.style?.card) p.card = options.style.card;
   if (options.style?.title) p.title = options.style.title;
   if (options.style?.sectionLabel) p.sectionLabel = options.style.sectionLabel;
   if (options.background) {
     p.backgroundImage = { data: options.background.data, mime: options.background.mime };
-    p.scoreScrim = options.background.scrim;
   }
   return p;
+}
+
+function renderOptionsFor(profile: PresentationProfile, fonts?: FontConfig): RenderOptions {
+  return {
+    scale: 2,
+    ...(profile.minimumStaffSize ? { minStaffSize: profile.minimumStaffSize } : {}),
+    ...(fonts?.textFontFamily ? { textFontFamily: fonts.textFontFamily } : {}),
+    ...(fonts?.fontFiles ? { fontFiles: fonts.fontFiles } : {}),
+  };
 }
 
 export async function buildPresentation(input: BuildPresentationInput): Promise<BuildPresentationResult> {
   const options = resolveOptions(input.options);
   const profile = input.profile ?? DEFAULT_PRESENTATION_PROFILE;
+  const emitFullMusicXml = input.emitFullMusicXml ?? true;
 
   const resolvedScore =
     options.key.transposeSemitones !== 0
@@ -100,62 +125,76 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
   }
 
   const slidePlan = planPresentation(resolvedScore, profile);
-  const renderer = input.renderer ?? (await VerovioRenderer.create());
+  const prepared = prepareScore(resolvedScore);
+  const renderOptions = renderOptionsFor(profile, input.fonts);
 
-  const assets: SlideAsset[] = [];
-  const slideSpecs: PptxSlideSpec[] = [];
-
-  for (const slide of slidePlan.slides) {
-    const xml = serializeMusicXml(resolvedScore, {
-      measureIds: slide.measureIds,
-      includeChords: options.chords.visible,
-      ...(slide.verse !== undefined ? { verses: [slide.verse] } : {}),
-    });
-
-    const png = await renderer.renderScore({ musicXml: xml, outputMode: "png", options: { scale: 2 } });
-    const page = png.pages[0];
-    if (!page?.png) throw new Error(`슬라이드 ${slide.index} PNG 렌더 실패`);
-    const svgResult = await renderer.renderScore({ musicXml: xml, outputMode: "svg" });
-    const svg = svgResult.pages[0]?.svg ?? "";
-
-    assets.push({
-      index: slide.index,
-      png: page.png,
-      svg,
-      musicXml: xml,
-      widthPx: page.widthPx,
-      heightPx: page.heightPx,
-      ...(slide.sectionLabel ? { sectionLabel: slide.sectionLabel } : {}),
-      ...(slide.verse !== undefined ? { verse: slide.verse } : {}),
-    });
-
-    const spec: PptxSlideSpec = {
-      index: slide.index,
-      image: { data: page.png, mime: "image/png", widthPx: page.widthPx, heightPx: page.heightPx },
-    };
-    if (slide.title) spec.title = slide.title;
-    if (slide.sectionLabel) spec.sectionLabel = slide.sectionLabel;
-    slideSpecs.push(spec);
+  const ownsRenderer = !input.renderer;
+  let renderer = input.renderer;
+  if (!renderer) {
+    const { VerovioRenderer } = await import("@worship-score/adapters");
+    renderer = await VerovioRenderer.create();
   }
 
-  const builder = input.builder ?? new PptxGenJsBuilder();
-  const pptx = await builder.generate({
-    metadata: {
-      ...(resolvedScore.metadata.title ? { title: resolvedScore.metadata.title } : {}),
-      ...(resolvedScore.metadata.copyright ? { copyright: resolvedScore.metadata.copyright } : {}),
-    },
-    profile: toPptxProfile(profile, options),
-    slides: slideSpecs,
-  });
-  const validation = await builder.validate({ buffer: pptx.buffer, expectedSlideCount: pptx.slideCount });
+  try {
+    const assets: SlideAsset[] = [];
+    const slideSpecs: PptxSlideSpec[] = [];
 
-  return {
-    pptx,
-    validation,
-    scoreValidation,
-    slidePlan,
-    assets,
-    musicXml: serializeMusicXml(resolvedScore, { includeChords: options.chords.visible }),
-    resolvedScore,
-  };
+    for (const slide of slidePlan.slides) {
+      const xml = serializeMusicXml(resolvedScore, {
+        prepared,
+        measureIds: slide.measureIds,
+        includeChords: options.chords.visible,
+        ...(slide.verse !== undefined ? { verses: [slide.verse] } : {}),
+      });
+
+      // One loadData → both PNG (embedded) and SVG (asset).
+      const rendered = await renderer.renderScore({ musicXml: xml, outputMode: "png", options: renderOptions });
+      const page = rendered.pages[0];
+      if (!page?.png) throw new Error(`슬라이드 ${slide.index} PNG 렌더 실패`);
+
+      assets.push({
+        index: slide.index,
+        png: page.png,
+        svg: page.svg ?? "",
+        musicXml: xml,
+        widthPx: page.widthPx,
+        heightPx: page.heightPx,
+        ...(slide.sectionLabel ? { sectionLabel: slide.sectionLabel } : {}),
+        ...(slide.verse !== undefined ? { verse: slide.verse } : {}),
+      });
+
+      const spec: PptxSlideSpec = {
+        index: slide.index,
+        image: { data: page.png, mime: "image/png", widthPx: page.widthPx, heightPx: page.heightPx },
+      };
+      if (slide.title) spec.title = slide.title;
+      if (slide.sectionLabel) spec.sectionLabel = slide.sectionLabel;
+      slideSpecs.push(spec);
+    }
+
+    const builder = input.builder ?? new (await import("@worship-score/adapters")).PptxGenJsBuilder();
+    const pptx = await builder.generate({
+      metadata: {
+        ...(resolvedScore.metadata.title ? { title: resolvedScore.metadata.title } : {}),
+        ...(resolvedScore.metadata.copyright ? { copyright: resolvedScore.metadata.copyright } : {}),
+      },
+      profile: toPptxProfile(profile, options),
+      slides: slideSpecs,
+    });
+    const validation = await builder.validate({ buffer: pptx.buffer, expectedSlideCount: pptx.slideCount });
+
+    return {
+      pptx,
+      validation,
+      scoreValidation,
+      slidePlan,
+      assets,
+      musicXml: emitFullMusicXml
+        ? serializeMusicXml(resolvedScore, { prepared, includeChords: options.chords.visible })
+        : "",
+      resolvedScore,
+    };
+  } finally {
+    if (ownsRenderer) await renderer.dispose?.();
+  }
 }

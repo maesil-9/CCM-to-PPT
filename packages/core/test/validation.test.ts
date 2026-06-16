@@ -68,4 +68,18 @@ describe("validateScore", () => {
     expect(result.issues.some((i) => i.code === "PITCH_RANGE_REASONABLE" && i.severity === "warning")).toBe(true);
     expect(result.hasBlocking).toBe(false);
   });
+
+  it("flags HARMONY_OFFSET_IN_RANGE when a chord offset is outside the measure", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true); // capacity 32
+    m.harmonies = [{ id: "h1", offsetDivisions: 999, root: { step: "C" }, kind: "major" }];
+    const result = validateScore(scoreOf([m]));
+    expect(result.hasBlocking).toBe(true);
+    expect(codes(scoreOf([m]))).toContain("HARMONY_OFFSET_IN_RANGE");
+  });
+
+  it("accepts an in-range chord offset", () => {
+    const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
+    m.harmonies = [{ id: "h1", offsetDivisions: 16, root: { step: "G" }, kind: "major" }];
+    expect(validateScore(scoreOf([m])).hasBlocking).toBe(false);
+  });
 });

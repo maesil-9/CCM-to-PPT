@@ -26,10 +26,16 @@ export {
 export { validateScore } from "./validation/index.js";
 
 // MusicXML
-export { serializeMusicXml, type SerializeOptions } from "./musicxml/serialize.js";
+export {
+  serializeMusicXml,
+  prepareScore,
+  type SerializeOptions,
+  type PreparedScore,
+} from "./musicxml/serialize.js";
 
-// Transposition
+// Transposition & chords
 export { transposeScore, transposeKey } from "./transpose.js";
+export { deriveChordText } from "./chord.js";
 
 // Presentation
 export {

@@ -14,6 +14,7 @@
   "dependencies": {
     "@worship-score/core": "workspace:*",
     "@worship-score/adapters": "workspace:*",
-    "@worship-score/pipeline": "workspace:*"
+    "@worship-score/pipeline": "workspace:*",
+    "zod": "^3.23.8"
   }
 }

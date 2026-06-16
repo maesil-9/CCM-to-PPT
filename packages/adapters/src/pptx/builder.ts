@@ -130,13 +130,17 @@ export class PptxGenJsBuilder implements PptxBuilder {
     const slideW = profile.slideWidthInches;
     const slideH = profile.slideHeightInches;
     const hasBgImage = !!profile.backgroundImage;
-    const scrim = clamp(profile.scoreScrim ?? 0, 0, 1);
-    const cardColor = profile.cardColor ?? "FFFFFF";
+    const cardOpacity = clamp(profile.card?.opacity ?? 0, 0, 1);
+    const cardColor = profile.card?.color ?? "FFFFFF";
+    // Encode the common background once, not per slide.
+    const bgDataUri = profile.backgroundImage
+      ? `data:${profile.backgroundImage.mime};base64,${toBase64(profile.backgroundImage.data)}`
+      : undefined;
 
     const titleStyle: TextStyle = profile.title ?? {};
     const labelStyle: TextStyle = profile.sectionLabel ?? {};
-    const titleColor = titleStyle.color ?? profile.titleColor ?? (hasBgImage ? "FFFFFF" : "111111");
-    const labelColor = labelStyle.color ?? profile.labelColor ?? (hasBgImage ? "F2F2F2" : "555555");
+    const titleColor = titleStyle.color ?? (hasBgImage ? "FFFFFF" : "111111");
+    const labelColor = labelStyle.color ?? (hasBgImage ? "F2F2F2" : "555555");
     const textShadow: PptxShadow | undefined = hasBgImage
       ? { type: "outer", color: "000000", blur: 4, offset: 2, angle: 90, opacity: 0.6 }
       : undefined;
@@ -146,9 +150,9 @@ export class PptxGenJsBuilder implements PptxBuilder {
       slide.background = { color: profile.background ?? "FFFFFF" };
 
       // 1. Common background image (full-bleed cover), behind everything.
-      if (profile.backgroundImage) {
+      if (bgDataUri) {
         slide.addImage({
-          data: `data:${profile.backgroundImage.mime};base64,${toBase64(profile.backgroundImage.data)}`,
+          data: bgDataUri,
           x: 0,
           y: 0,
           w: slideW,
@@ -194,23 +198,26 @@ export class PptxGenJsBuilder implements PptxBuilder {
       }
 
       const box: Box = { x: margin, y: contentTop, w: slideW - 2 * margin, h: slideH - contentTop - margin };
+      if (box.w <= 0 || box.h <= 0) {
+        throw new Error(
+          `슬라이드 콘텐츠 영역이 음수입니다(제목/섹션 라벨이 너무 큼): w=${box.w.toFixed(2)} h=${box.h.toFixed(2)}. 폰트 크기/여백을 줄이세요.`,
+        );
+      }
       const fit = fitContain(spec.image.widthPx, spec.image.heightPx, box);
 
-      // 2. Legibility card behind the score (only meaningful over a background).
-      if (scrim > 0) {
+      // 2. Legibility card behind the score, clamped inside the content box.
+      if (cardOpacity > 0) {
         const pad = 0.18;
-        const card: Box = {
-          x: clamp(fit.x - pad, 0, slideW),
-          y: clamp(fit.y - pad, 0, slideH),
-          w: Math.min(fit.w + 2 * pad, slideW),
-          h: Math.min(fit.h + 2 * pad, slideH),
-        };
+        const cardX = Math.max(box.x, fit.x - pad);
+        const cardY = Math.max(box.y, fit.y - pad);
+        const cardRight = Math.min(box.x + box.w, fit.x + fit.w + pad);
+        const cardBottom = Math.min(box.y + box.h, fit.y + fit.h + pad);
         slide.addShape(ROUND_RECT, {
-          x: card.x,
-          y: card.y,
-          w: card.w,
-          h: card.h,
-          fill: { color: cardColor, transparency: Math.round((1 - scrim) * 100) },
+          x: cardX,
+          y: cardY,
+          w: cardRight - cardX,
+          h: cardBottom - cardY,
+          fill: { color: cardColor, transparency: Math.round((1 - cardOpacity) * 100) },
           rectRadius: 0.08,
         });
       }

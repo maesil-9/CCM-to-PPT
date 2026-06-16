@@ -9,6 +9,7 @@
 import type {
   HarmonyChord,
   Key,
+  Mode,
   Note,
   RootStep,
   ScoreIR,
@@ -64,20 +65,28 @@ function mod12(n: number): number {
   return ((n % 12) + 12) % 12;
 }
 
-function normalizeFifths(fifths: number): number {
-  let f = fifths;
-  while (f > 7) f -= 12;
-  while (f < -7) f += 12;
-  return f;
+/**
+ * Picks the enharmonically-equivalent key signature with the fewest accidentals
+ * (tie → flats, matching convention). e.g. raw fifths 7 (C# major, 7 sharps) →
+ * -5 (Db major, 5 flats); 6 → -6 (Gb over F#).
+ */
+function minimizeAccidentals(fifths: number): number {
+  const base = ((fifths % 12) + 12) % 12; // 0..11
+  const candidates = [base, base - 12];
+  candidates.sort((a, b) => Math.abs(a) - Math.abs(b) || a - b);
+  return candidates[0]!;
 }
 
 /** Transposing up one semitone moves +7 around the circle of fifths. */
 export function transposeKey(key: Key, semitones: number): Key {
-  return { fifths: normalizeFifths(key.fifths + semitones * 7), mode: key.mode };
+  return { fifths: minimizeAccidentals(key.fifths + semitones * 7), mode: key.mode };
 }
 
-function spellingTable(fifths: number): Spelling[] {
-  return fifths >= 0 ? SHARP_SPELLING : FLAT_SPELLING;
+function spellingTable(fifths: number, mode: Mode): Spelling[] {
+  if (fifths > 0) return SHARP_SPELLING;
+  if (fifths < 0) return FLAT_SPELLING;
+  // C major / A minor: minor leans flat (Eb/Bb), major leans sharp.
+  return mode === "minor" ? FLAT_SPELLING : SHARP_SPELLING;
 }
 
 function spellPitch(midi: number, table: Spelling[]): { step: StepName; alter: number; octave: number } {
@@ -114,7 +123,7 @@ function transposeHarmony(h: HarmonyChord, semitones: number, table: Spelling[])
 export function transposeScore(score: ScoreIR, semitones: number): ScoreIR {
   if (semitones === 0) return score;
   const newInitialKey = transposeKey(score.musicalContext.initialKey, semitones);
-  const table = spellingTable(newInitialKey.fifths);
+  const table = spellingTable(newInitialKey.fifths, newInitialKey.mode);
 
   const measures = score.measures.map((m) => {
     const next = {

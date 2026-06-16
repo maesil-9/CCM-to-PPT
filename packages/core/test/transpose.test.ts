@@ -7,9 +7,9 @@ describe("transposeKey", () => {
     expect(transposeKey({ fifths: 0, mode: "major" }, 2)).toEqual({ fifths: 2, mode: "major" });
   });
 
-  it("normalizes the result within -7..7", () => {
-    expect(transposeKey({ fifths: 0, mode: "major" }, 1).fifths).toBe(7); // C#
-    expect(transposeKey({ fifths: 0, mode: "major" }, 6).fifths).toBe(6); // F#
+  it("minimizes accidentals via enharmonic spelling", () => {
+    expect(transposeKey({ fifths: 0, mode: "major" }, 1).fifths).toBe(-5); // Db (5 flats) over C# (7 sharps)
+    expect(transposeKey({ fifths: 0, mode: "major" }, 6).fifths).toBe(-6); // Gb (6 flats) over F# (6 sharps)
   });
 });
 
@@ -51,5 +51,19 @@ describe("transposeScore", () => {
     const before = JSON.stringify(s);
     transposeScore(s, 5);
     expect(JSON.stringify(s)).toBe(before);
+  });
+
+  it("spells notes with flats in a flat target key (+1 → Db major)", () => {
+    const t = transposeScore(scoreOf([validMeasure()]), 1); // C D E F → Db Eb F Gb
+    expect(t.musicalContext.initialKey.fifths).toBe(-5);
+    const ev = t.measures[0]!.events;
+    if (ev[0]!.kind === "note") {
+      expect(ev[0]!.pitch.step).toBe("D");
+      expect(ev[0]!.pitch.alter).toBe(-1); // Db, not C#
+    }
+    if (ev[2]!.kind === "note") {
+      expect(ev[2]!.pitch.step).toBe("F"); // E + 1 = F natural
+      expect(ev[2]!.pitch.alter ?? 0).toBe(0);
+    }
   });
 });

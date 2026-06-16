@@ -6,7 +6,7 @@
  * `@worship-score/adapters`. Each provider result records the provider name,
  * version, and a run id for traceability.
  */
-import type { TextStyle } from "./build.js";
+import type { CardStyle, TextStyle } from "./build.js";
 
 export interface ProviderHealth {
   ok: boolean;
@@ -22,7 +22,7 @@ export interface ProviderHealth {
 export type RenderOutputMode = "svg" | "png";
 
 export interface RenderOptions {
-  /** Rasterization scale for PNG output (1 = native Verovio px). */
+  /** Rasterization scale for PNG output (>1 upscales for crisper PNG). */
   scale?: number;
   /** Page width/height in Verovio units (1/100 mm). */
   pageWidth?: number;
@@ -31,6 +31,13 @@ export interface RenderOptions {
   adjustPageHeight?: boolean;
   /** Minimum staff size hint. */
   minStaffSize?: number;
+  /** Pin the text (lyric/chord) font family for deterministic rasterization. */
+  textFontFamily?: string;
+  /**
+   * Embeddable font file paths. When provided, system fonts are NOT loaded, so
+   * rasterization is deterministic across machines (PRD §8.4).
+   */
+  fontFiles?: string[];
   /** Escape hatch for renderer-specific options (kept out of the domain). */
   rendererOptions?: Record<string, unknown>;
 }
@@ -71,6 +78,8 @@ export interface RendererProvider {
   renderScore(input: RenderScoreInput): Promise<RenderScoreResult>;
   renderSystem(input: RenderSystemInput): Promise<RenderSystemResult>;
   healthCheck(): Promise<ProviderHealth>;
+  /** Release native/WASM resources. Callers that own the renderer should call it. */
+  dispose?(): Promise<void> | void;
 }
 
 // ---------------------------------------------------------------------------
@@ -104,16 +113,10 @@ export interface PptxProfile {
   background?: string;
   /** Common background image placed behind the score on every slide. */
   backgroundImage?: PptxBackgroundImage;
-  /** Opacity (0..1) of the legibility card behind the score. 0/undefined = none. */
-  scoreScrim?: number;
-  /** Legibility card colour (hex, no '#'). Default "FFFFFF". */
-  cardColor?: string;
+  /** Legibility card behind the score (one consistent "card" concept). */
+  card?: CardStyle;
   title?: TextStyle;
   sectionLabel?: TextStyle;
-  /** @deprecated use title.color */
-  titleColor?: string;
-  /** @deprecated use sectionLabel.color */
-  labelColor?: string;
 }
 
 export interface GeneratePptxInput {

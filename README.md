@@ -43,10 +43,61 @@ Domain(`core`)은 외부 엔진/SDK를 직접 import하지 않습니다.
 
 ```bash
 pnpm install        # 의존성 설치 (Node >= 20, pnpm)
-pnpm m1             # Milestone 1 체인 실행 → out/ 에 PPTX·에셋 생성
-pnpm test           # vitest 전체 (27 tests)
+pnpm ws demo        # 데모 악보(코드+배경+전조) 생성 후 준비
+pnpm ws build scores/demo   # → scores/demo/out/presentation.pptx 생성
+pnpm test           # vitest 전체
 pnpm typecheck      # tsc 타입체크 (strict, NodeNext)
+pnpm m1             # Milestone 1 결정적 체인 단독 실행 → out/
 ```
+
+## 악보 → PPT 워크플로 (CLI)
+
+폴더 하나 = 곡 하나 규약입니다 (`scores/<이름>/`).
+
+```text
+scores/<이름>/
+  input.png | input.pdf      원본 악보 (선택)
+  score.ir.json              분석 결과(ScoreIR) — 악보 분석으로 생성
+  options.json               코드/키/배경/스타일 옵션
+  background.png             공통 배경 이미지 (선택)
+  out/presentation.pptx      생성된 악보 PPT
+```
+
+명령:
+
+```bash
+pnpm ws init scores/<이름>      # 새 곡 폴더 템플릿 생성
+pnpm ws build scores/<이름>     # score.ir.json + options.json → PPT
+pnpm ws validate scores/<이름>  # 음악 검증만
+pnpm ws list                    # 곡 목록과 상태
+```
+
+`options.json` 예시 — **박자·음표·가사는 항상 고정**, 코드·키·배경·스타일은 선택:
+
+```json
+{
+  "chords": { "visible": true },
+  "key": { "transposeSemitones": 2 },
+  "background": { "image": "background.png" },
+  "style": {
+    "title": { "fontFace": "Malgun Gothic", "fontSize": 28, "color": "FFFFFF", "bold": true },
+    "sectionLabel": { "fontFace": "Malgun Gothic", "color": "E8ECF7" },
+    "card": { "color": "FFFFFF", "opacity": 0.84 }
+  }
+}
+```
+
+- `chords.visible` — 코드 심볼 표시/숨김 (기본 숨김)
+- `key.transposeSemitones` — 전조(반음 단위, 0 = 원조)
+- `background.image` — 공통 배경 이미지(PNG/JPEG, 악보 폴더 안)
+- `style.card` — 악보 뒤 가독성 카드 색상·불투명도(0~1)
+- `style` — 제목/섹션 라벨의 폰트·크기·색상 (향후 웹 스타일 에디터가 편집할 표면)
+
+> 입력은 모두 검증됩니다: 색상은 6자리 hex, 전조는 ±24, 배경 경로는 폴더 밖 차단(traversal),
+> 배경 파일은 8MB 이하 + PNG/JPEG 매직바이트 확인.
+
+> 악보 분석(`score.ir.json` 생성)은 현재 세션 내 분석으로 수행합니다. 자동 비전 OMR은
+> `OMRProvider` 추상화 위에 추후 연결됩니다.
 
 ## 결정적성과 한계 (정직한 현황)
 

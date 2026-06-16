@@ -20,11 +20,17 @@ export interface KeyOptions {
 export interface BackgroundImageOptions {
   data: Uint8Array;
   mime: "image/png" | "image/jpeg";
-  /**
-   * Opacity (0..1) of the legibility card drawn behind the score so the staff
-   * stays readable over the background. 0 = no card.
-   */
-  scrim: number;
+}
+
+/**
+ * Legibility card drawn behind the score so the staff stays readable over a
+ * background. One consistent "card" concept (colour + opacity) across all layers.
+ */
+export interface CardStyle {
+  /** Card colour (hex, no '#'). Default white. */
+  color?: string;
+  /** Opacity 0..1 (0 = no card). */
+  opacity?: number;
 }
 
 /**
@@ -47,8 +53,8 @@ export interface StyleOptions {
   sectionLabel?: TextStyle;
   /** Slide background colour (hex, no '#') when no background image is set. */
   backgroundColor?: string;
-  /** Legibility card colour behind the score (hex, no '#'). Default white. */
-  cardColor?: string;
+  /** Legibility card behind the score. */
+  card?: CardStyle;
 }
 
 export interface BuildOptions {

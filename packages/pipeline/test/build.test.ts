@@ -15,7 +15,8 @@ describe("buildPresentation (chords + transpose + background)", () => {
         options: {
           chords: { visible: true },
           key: { transposeSemitones: 2 },
-          background: { data: TINY_BG.data, mime: "image/png", scrim: 0.8 },
+          background: { data: TINY_BG.data, mime: "image/png" },
+          style: { card: { color: "FFFFFF", opacity: 0.8 } },
         },
       });
 

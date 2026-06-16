@@ -10,7 +10,8 @@
  * ("새 시스템에 필요한 음자리표·조표·박자 표시").
  */
 import { computeActiveAttributes, orderedMeasures, type ActiveAttributes } from "../context.js";
-import { eventDurationDivisions } from "../duration.js";
+import { deriveChordText } from "../chord.js";
+import { eventDurationDivisions, measureDurationDivisions } from "../duration.js";
 import type {
   Barline,
   Clef,
@@ -26,6 +27,16 @@ import { el, renderDocument, type XmlChild, type XmlNode } from "./xml.js";
 const MUSICXML_DOCTYPE =
   '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">';
 
+/** Precomputed per-score data, so per-slide serialization avoids O(N·M) rework. */
+export interface PreparedScore {
+  active: Map<string, ActiveAttributes>;
+  ordered: Measure[];
+}
+
+export function prepareScore(score: ScoreIR): PreparedScore {
+  return { active: computeActiveAttributes(score), ordered: orderedMeasures(score) };
+}
+
 export interface SerializeOptions {
   /** Restrict output to these measure ids (in score order). */
   measureIds?: string[];
@@ -33,14 +44,14 @@ export interface SerializeOptions {
   verses?: number[];
   /** Emit the chord-symbol (harmony) layer. Default false (chords hidden). */
   includeChords?: boolean;
+  /** Reuse precomputed score data (see {@link prepareScore}). */
+  prepared?: PreparedScore;
 }
 
 export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}): string {
-  const active = computeActiveAttributes(score);
-  const ordered = orderedMeasures(score);
-  const selected = options.measureIds
-    ? ordered.filter((m) => options.measureIds!.includes(m.id))
-    : ordered;
+  const { active, ordered } = options.prepared ?? prepareScore(score);
+  const idSet = options.measureIds ? new Set(options.measureIds) : null;
+  const selected = idSet ? ordered.filter((m) => idSet.has(m.id)) : ordered;
 
   const measureNodes: XmlNode[] = selected.map((measure, emittedIndex) => {
     const ctx = active.get(measure.id);
@@ -50,22 +61,30 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
     const attrNode = buildAttributes(measure, ctx, emittedIndex === 0);
     if (attrNode) children.push(attrNode);
 
+    // Chord layer: anchor each harmony to the note whose time span contains its
+    // onset, emitting a MusicXML <offset> when it is not exactly on that onset.
+    // Out-of-measure offsets are dropped here (validation flags them separately).
+    const capacity = measureDurationDivisions(ctx.time, ctx.divisions);
     const harmonies =
       options.includeChords && measure.harmonies
-        ? [...measure.harmonies].sort((a, b) => a.offsetDivisions - b.offsetDivisions)
+        ? measure.harmonies
+            .filter((h) => h.offsetDivisions >= 0 && h.offsetDivisions < capacity)
+            .slice()
+            .sort((a, b) => a.offsetDivisions - b.offsetDivisions)
         : [];
     let hi = 0;
     let cumulative = 0;
     for (const event of measure.events) {
-      while (hi < harmonies.length && harmonies[hi]!.offsetDivisions <= cumulative) {
-        children.push(buildHarmony(harmonies[hi]!));
+      const nextOnset = cumulative + eventDurationDivisions(event.duration, ctx.divisions);
+      while (hi < harmonies.length && harmonies[hi]!.offsetDivisions < nextOnset) {
+        children.push(buildHarmony(harmonies[hi]!, harmonies[hi]!.offsetDivisions - cumulative));
         hi++;
       }
       children.push(buildNote(event, ctx.divisions, options.verses));
-      cumulative += eventDurationDivisions(event.duration, ctx.divisions);
+      cumulative = nextOnset;
     }
     while (hi < harmonies.length) {
-      children.push(buildHarmony(harmonies[hi]!));
+      children.push(buildHarmony(harmonies[hi]!, 0));
       hi++;
     }
 
@@ -218,14 +237,15 @@ function buildNote(
   return el("note", undefined, kids);
 }
 
-function buildHarmony(h: HarmonyChord): XmlNode {
+function buildHarmony(h: HarmonyChord, offsetDivisions: number): XmlNode {
   const rootKids: XmlChild[] = [el("root-step", undefined, [h.root.step])];
   if (h.root.alter !== undefined && h.root.alter !== 0) {
     rootKids.push(el("root-alter", undefined, [String(h.root.alter)]));
   }
+  const text = h.text ?? deriveChordText(h.root, h.kind, h.bass);
   const kids: XmlChild[] = [
     el("root", undefined, rootKids),
-    el("kind", h.text !== undefined ? { text: h.text } : undefined, [h.kind]),
+    el("kind", { text }, [h.kind]),
   ];
   if (h.bass) {
     const bassKids: XmlChild[] = [el("bass-step", undefined, [h.bass.step])];
@@ -234,6 +254,8 @@ function buildHarmony(h: HarmonyChord): XmlNode {
     }
     kids.push(el("bass", undefined, bassKids));
   }
+  // <offset> follows the chord spec in the MusicXML harmony content model.
+  if (offsetDivisions !== 0) kids.push(el("offset", undefined, [String(offsetDivisions)]));
   return el("harmony", undefined, kids);
 }
 

@@ -6,8 +6,7 @@
     "transposeSemitones": 2
   },
   "background": {
-    "image": "background.png",
-    "scrim": 0.84
+    "image": "background.png"
   },
   "style": {
     "title": {
@@ -21,6 +20,9 @@
       "fontSize": 16,
       "color": "E8ECF7"
     },
-    "cardColor": "FFFFFF"
+    "card": {
+      "color": "FFFFFF",
+      "opacity": 0.84
+    }
   }
 }

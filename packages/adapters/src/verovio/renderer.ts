@@ -1,14 +1,19 @@
 /**
  * VerovioRenderer — RendererProvider backed by the Verovio toolkit (WASM) for
- * MusicXML -> SVG, with @resvg/resvg-js for deterministic SVG -> PNG.
+ * MusicXML -> SVG, with @resvg/resvg-js for SVG -> PNG.
  *
  * The PRD requires SVG-first output with a mandatory high-resolution PNG
  * compatibility mode (RND-002, PPT-002). Verovio embeds its music font as
- * vector paths, so the SVG geometry is deterministic for a given input.
+ * vector paths, so the SVG geometry is deterministic for a given input. Lyric/
+ * chord TEXT is rasterized via resvg; for cross-machine deterministic text,
+ * pass `fontFiles` (system fonts are then disabled).
+ *
+ * For one slide the PNG path also returns the SVG, so a caller needs only one
+ * Verovio loadData to get both assets.
  */
 import createVerovioModule from "verovio/wasm";
 import { VerovioToolkit } from "verovio/esm";
-import { Resvg } from "@resvg/resvg-js";
+import { Resvg, type ResvgRenderOptions } from "@resvg/resvg-js";
 import type {
   ProviderHealth,
   RenderedPage,
@@ -21,6 +26,7 @@ import type {
 } from "@worship-score/core";
 
 const PROVIDER_NAME = "verovio";
+const BASE_SCALE = 50;
 
 /** FNV-1a 32-bit hash → 8-hex chars. Deterministic run ids (no RNG/clock). */
 function shortHash(input: string): string {
@@ -34,9 +40,10 @@ function shortHash(input: string): string {
 
 function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
   return {
-    scale: 50,
+    // minStaffSize acts as a scale floor so larger requests grow the staff.
+    scale: Math.max(BASE_SCALE, options?.minStaffSize ?? 0),
     pageWidth: options?.pageWidth ?? 2400,
-    pageHeight: options?.pageHeight ?? 1200,
+    pageHeight: options?.pageHeight ?? 60000,
     adjustPageHeight: options?.adjustPageHeight ?? true,
     pageMarginTop: 60,
     pageMarginBottom: 60,
@@ -47,6 +54,20 @@ function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
     footer: "none",
     svgViewBox: true,
     ...(options?.rendererOptions ?? {}),
+  };
+}
+
+function resvgFontConfig(options?: RenderOptions): ResvgRenderOptions["font"] {
+  if (options?.fontFiles && options.fontFiles.length > 0) {
+    return {
+      loadSystemFonts: false,
+      fontFiles: options.fontFiles,
+      ...(options.textFontFamily ? { defaultFontFamily: options.textFontFamily } : {}),
+    };
+  }
+  return {
+    loadSystemFonts: true,
+    ...(options?.textFontFamily ? { defaultFontFamily: options.textFontFamily } : {}),
   };
 }
 
@@ -99,31 +120,35 @@ export class VerovioRenderer implements RendererProvider {
     if (pageCount < 1) {
       throw new Error("Verovio produced no pages from the given MusicXML");
     }
+    // A single slide must be exactly one page; more means content overflowed and
+    // we would silently drop measures. Fail loudly instead (PRD §5.5).
+    if (pageCount > 1) {
+      throw new Error(
+        `Verovio paginated this render into ${pageCount} pages; the slide's content does not fit one page. Reduce measures per slide or increase page size.`,
+      );
+    }
 
-    const rasterScale = input.options?.scale ?? 2;
+    const svg = this.toolkit.renderToSVG(1);
     const pages: RenderedPage[] = [];
 
-    for (let page = 1; page <= pageCount; page++) {
-      const svg = this.toolkit.renderToSVG(page);
-
-      if (input.outputMode === "svg") {
-        const size = svgPixelSize(svg);
-        pages.push({ index: page - 1, svg, widthPx: size.width, heightPx: size.height });
-      } else {
-        const resvg = new Resvg(svg, {
-          background: "white",
-          fitTo: { mode: "zoom", value: rasterScale },
-          font: { loadSystemFonts: true },
-        });
-        const rendered = resvg.render();
-        const png = rendered.asPng();
-        pages.push({
-          index: page - 1,
-          png: new Uint8Array(png),
-          widthPx: rendered.width,
-          heightPx: rendered.height,
-        });
-      }
+    if (input.outputMode === "svg") {
+      const size = svgPixelSize(svg);
+      pages.push({ index: 0, svg, widthPx: size.width, heightPx: size.height });
+    } else {
+      const rasterScale = input.options?.scale ?? 2;
+      const resvg = new Resvg(svg, {
+        background: "white",
+        fitTo: { mode: "zoom", value: rasterScale },
+        font: resvgFontConfig(input.options),
+      });
+      const rendered = resvg.render();
+      pages.push({
+        index: 0,
+        svg, // included so callers get both assets from one loadData
+        png: new Uint8Array(rendered.asPng()),
+        widthPx: rendered.width,
+        heightPx: rendered.height,
+      });
     }
 
     return {
@@ -136,8 +161,6 @@ export class VerovioRenderer implements RendererProvider {
   }
 
   async renderSystem(input: RenderSystemInput): Promise<RenderSystemResult> {
-    // Milestone 1 renders per-slide measure subsets via renderScore; a single
-    // system is just a small subset, so we delegate.
     return this.renderScore(input);
   }
 
@@ -145,7 +168,7 @@ export class VerovioRenderer implements RendererProvider {
     try {
       const probe =
         '<?xml version="1.0" encoding="UTF-8"?><score-partwise version="4.0">' +
-        "<part-list><score-part id=\"P1\"><part-name>P</part-name></score-part></part-list>" +
+        '<part-list><score-part id="P1"><part-name>P</part-name></score-part></part-list>' +
         '<part id="P1"><measure number="1"><attributes><divisions>1</divisions>' +
         "<key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time>" +
         "<clef><sign>G</sign><line>2</line></clef></attributes>" +
@@ -166,5 +189,10 @@ export class VerovioRenderer implements RendererProvider {
         detail: (err as Error).message,
       };
     }
+  }
+
+  dispose(): void {
+    // The Verovio JS binding exposes no explicit free; the toolkit and its WASM
+    // heap are released with the instance on GC. Present for interface symmetry.
   }
 }

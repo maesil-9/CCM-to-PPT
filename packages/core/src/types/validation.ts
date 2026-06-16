@@ -18,6 +18,7 @@ export const VALIDATION_RULES = [
   "NO_ORPHANED_SOURCE_REGION",
   // Implementation-specific additions:
   "DANGLING_SOURCE_REGION",
+  "HARMONY_OFFSET_IN_RANGE",
 ] as const;
 
 export type ValidationRuleCode = (typeof VALIDATION_RULES)[number];

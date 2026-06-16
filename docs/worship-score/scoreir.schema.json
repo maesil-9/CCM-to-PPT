@@ -1,0 +1,776 @@
+{
+  "$ref": "#/definitions/ScoreIR",
+  "definitions": {
+    "ScoreIR": {
+      "type": "object",
+      "properties": {
+        "scoreId": {
+          "type": "string"
+        },
+        "schemaVersion": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "subtitle": {
+              "type": "string"
+            },
+            "composer": {
+              "type": "string"
+            },
+            "lyricist": {
+              "type": "string"
+            },
+            "arranger": {
+              "type": "string"
+            },
+            "copyright": {
+              "type": "string"
+            },
+            "ccli": {
+              "type": "string"
+            },
+            "language": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "musicalContext": {
+          "type": "object",
+          "properties": {
+            "divisions": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "initialKey": {
+              "type": "object",
+              "properties": {
+                "fifths": {
+                  "type": "integer",
+                  "minimum": -7,
+                  "maximum": 7
+                },
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "major",
+                    "minor"
+                  ]
+                }
+              },
+              "required": [
+                "fifths",
+                "mode"
+              ],
+              "additionalProperties": false
+            },
+            "initialTime": {
+              "type": "object",
+              "properties": {
+                "beats": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "beatType": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "symbol": {
+                  "type": "string",
+                  "enum": [
+                    "common",
+                    "cut",
+                    "normal"
+                  ]
+                }
+              },
+              "required": [
+                "beats",
+                "beatType"
+              ],
+              "additionalProperties": false
+            },
+            "initialClef": {
+              "type": "object",
+              "properties": {
+                "sign": {
+                  "type": "string",
+                  "enum": [
+                    "G",
+                    "F",
+                    "C"
+                  ]
+                },
+                "line": {
+                  "type": "integer"
+                },
+                "octaveChange": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "sign",
+                "line"
+              ],
+              "additionalProperties": false
+            },
+            "tempoBpm": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "divisions",
+            "initialKey",
+            "initialTime",
+            "initialClef"
+          ],
+          "additionalProperties": false
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "staffCount": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "id",
+              "staffCount"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "measures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "number": {
+                "type": "integer"
+              },
+              "index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pickup": {
+                "type": "boolean"
+              },
+              "attributes": {
+                "type": "object",
+                "properties": {
+                  "divisions": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "key": {
+                    "$ref": "#/definitions/ScoreIR/properties/musicalContext/properties/initialKey"
+                  },
+                  "time": {
+                    "$ref": "#/definitions/ScoreIR/properties/musicalContext/properties/initialTime"
+                  },
+                  "clef": {
+                    "$ref": "#/definitions/ScoreIR/properties/musicalContext/properties/initialClef"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "const": "note"
+                        },
+                        "measureId": {
+                          "type": "string"
+                        },
+                        "voice": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "staff": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "pitch": {
+                          "type": "object",
+                          "properties": {
+                            "step": {
+                              "type": "string",
+                              "enum": [
+                                "A",
+                                "B",
+                                "C",
+                                "D",
+                                "E",
+                                "F",
+                                "G"
+                              ]
+                            },
+                            "alter": {
+                              "type": "integer",
+                              "minimum": -2,
+                              "maximum": 2
+                            },
+                            "octave": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "step",
+                            "octave"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "duration": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "whole",
+                                "half",
+                                "quarter",
+                                "eighth",
+                                "16th",
+                                "32nd"
+                              ]
+                            },
+                            "dots": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 2
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "dots"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "tie": {
+                          "type": "object",
+                          "properties": {
+                            "start": {
+                              "type": "boolean"
+                            },
+                            "stop": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "start",
+                            "stop"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "slur": {
+                          "$ref": "#/definitions/ScoreIR/properties/measures/items/properties/events/items/anyOf/0/properties/tie"
+                        },
+                        "lyrics": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "verse": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0
+                              },
+                              "text": {
+                                "type": "string"
+                              },
+                              "syllabic": {
+                                "type": "string",
+                                "enum": [
+                                  "single",
+                                  "begin",
+                                  "middle",
+                                  "end"
+                                ]
+                              },
+                              "extend": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "verse",
+                              "text",
+                              "syllabic"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "confidence": {
+                          "type": "object",
+                          "properties": {
+                            "pitch": {
+                              "type": "number"
+                            },
+                            "duration": {
+                              "type": "number"
+                            },
+                            "lyric": {
+                              "type": "number"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "sourceRegionId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind",
+                        "measureId",
+                        "voice",
+                        "staff",
+                        "pitch",
+                        "duration"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "const": "rest"
+                        },
+                        "measureId": {
+                          "type": "string"
+                        },
+                        "voice": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "staff": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        },
+                        "duration": {
+                          "$ref": "#/definitions/ScoreIR/properties/measures/items/properties/events/items/anyOf/0/properties/duration"
+                        },
+                        "sourceRegionId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind",
+                        "measureId",
+                        "voice",
+                        "staff",
+                        "duration"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "harmonies": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "offsetDivisions": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "root": {
+                      "type": "object",
+                      "properties": {
+                        "step": {
+                          "$ref": "#/definitions/ScoreIR/properties/measures/items/properties/events/items/anyOf/0/properties/pitch/properties/step"
+                        },
+                        "alter": {
+                          "type": "integer",
+                          "minimum": -2,
+                          "maximum": 2
+                        }
+                      },
+                      "required": [
+                        "step"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "bass": {
+                      "$ref": "#/definitions/ScoreIR/properties/measures/items/properties/harmonies/items/properties/root"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "sourceRegionId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "offsetDivisions",
+                    "root",
+                    "kind"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "barlines": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "location": {
+                      "type": "string",
+                      "enum": [
+                        "left",
+                        "right"
+                      ]
+                    },
+                    "style": {
+                      "type": "string",
+                      "enum": [
+                        "regular",
+                        "light-light",
+                        "light-heavy",
+                        "heavy-light",
+                        "final",
+                        "none"
+                      ]
+                    },
+                    "repeat": {
+                      "type": "object",
+                      "properties": {
+                        "direction": {
+                          "type": "string",
+                          "enum": [
+                            "forward",
+                            "backward"
+                          ]
+                        },
+                        "times": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0
+                        }
+                      },
+                      "required": [
+                        "direction"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "ending": {
+                      "type": "object",
+                      "properties": {
+                        "numbers": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "start",
+                            "stop",
+                            "discontinue"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "numbers",
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "location"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "sectionId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "number",
+              "index",
+              "events"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "intro",
+                  "verse",
+                  "preChorus",
+                  "chorus",
+                  "bridge",
+                  "interlude",
+                  "tag",
+                  "ending",
+                  "custom"
+                ]
+              },
+              "label": {
+                "type": "string"
+              },
+              "number": {
+                "type": "integer"
+              },
+              "startMeasureId": {
+                "type": "string"
+              },
+              "endMeasureId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "startMeasureId",
+              "endMeasureId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "sourceRegions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "documentId": {
+                "type": "string"
+              },
+              "pageNumber": {
+                "type": "integer"
+              },
+              "bbox": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              },
+              "imageAssetId": {
+                "type": "string"
+              },
+              "contentHash": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "documentId",
+              "pageNumber",
+              "bbox",
+              "contentHash"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "resolved",
+                  "dismissed"
+                ]
+              },
+              "candidates": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "value": {},
+                    "confidence": {
+                      "type": "number"
+                    },
+                    "source": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "confidence",
+                    "source"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "validationFailures": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "entityId",
+              "field",
+              "severity",
+              "status",
+              "candidates",
+              "validationFailures"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "presentation": {
+          "type": "object",
+          "properties": {
+            "profileRef": {
+              "type": "string"
+            },
+            "chordVisibility": {
+              "type": "string",
+              "enum": [
+                "hidden",
+                "visible"
+              ]
+            },
+            "order": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "sectionId": {
+                    "type": "string"
+                  },
+                  "verse": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "repeatCount": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  "hidden": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "sectionId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "chordVisibility",
+            "order"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "scoreId",
+        "schemaVersion",
+        "metadata",
+        "musicalContext",
+        "parts",
+        "measures",
+        "sections",
+        "sourceRegions",
+        "uncertainties",
+        "presentation"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

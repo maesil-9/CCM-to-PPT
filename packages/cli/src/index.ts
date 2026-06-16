@@ -14,14 +14,18 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import {
   safeParseScoreIr,
+  scoreIrSchema,
   validateScore,
   type ScoreIR,
   type ScoreValidationResult,
 } from "@worship-score/core";
 import { buildDemoScore, buildPresentation } from "@worship-score/pipeline";
 import { rasterizeSvg } from "@worship-score/adapters";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import { loadBuildOptions } from "./optionsFile.js";
 import { worshipGradientSvg } from "./backgrounds.js";
+
+const SUPPORTED_INPUT = new Set([".pdf", ".png", ".jpg", ".jpeg"]);
 
 const SCORES_DIR = "scores";
 
@@ -173,6 +177,41 @@ async function cmdInit(scoreDir: string): Promise<void> {
   console.log("  options.json, README.md 작성. 이제 원본 악보를 분석해 score.ir.json을 추가하세요.");
 }
 
+async function cmdAnalyze(inputPath: string | undefined, nameArg: string | undefined): Promise<void> {
+  if (!inputPath) throw new Error("입력 파일 경로가 필요합니다: ws analyze <파일> [이름]");
+  const ext = path.extname(inputPath).toLowerCase();
+  if (!SUPPORTED_INPUT.has(ext)) {
+    throw new Error(`지원하지 않는 입력 형식: ${ext || "(없음)"} (지원: pdf, png, jpg, jpeg)`);
+  }
+  if (!(await exists(inputPath))) throw new Error(`입력 파일 없음: ${inputPath}`);
+
+  const base = nameArg ?? path.basename(inputPath, path.extname(inputPath));
+  const name = base.replace(/[^\w가-힣.-]+/g, "_");
+  const dir = path.join(SCORES_DIR, name);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.copyFile(inputPath, path.join(dir, `input${ext}`));
+  if (!(await exists(path.join(dir, "options.json")))) {
+    await fs.writeFile(path.join(dir, "options.json"), JSON.stringify(OPTIONS_TEMPLATE, null, 2) + "\n", "utf8");
+  }
+  if (!(await exists(path.join(dir, "README.md")))) {
+    await fs.writeFile(path.join(dir, "README.md"), README_TEMPLATE, "utf8");
+  }
+
+  console.log(`\n[analyze] ${dir} 준비 완료 (input${ext} 복사)`);
+  console.log("  다음: 이 악보를 분석해 score.ir.json을 작성하세요.");
+  console.log("        (세션에서 Claude에게 '이 악보 분석해줘'라고 요청 — 키/박자/템포/음표/가사/코드를 추출)");
+  console.log(`  이후:  pnpm ws build ${dir}`);
+  console.log("  참고:  ScoreIR 형식은 docs/worship-score/ANALYSIS_WORKFLOW.md 및 'pnpm ws schema' 참고");
+}
+
+async function cmdSchema(): Promise<void> {
+  const schema = zodToJsonSchema(scoreIrSchema, "ScoreIR");
+  const out = path.join("docs", "worship-score", "scoreir.schema.json");
+  await fs.mkdir(path.dirname(out), { recursive: true });
+  await fs.writeFile(out, JSON.stringify(schema, null, 2) + "\n", "utf8");
+  console.log(`\n[schema] ScoreIR JSON Schema → ${out}`);
+}
+
 async function cmdDemo(): Promise<void> {
   const dir = path.join(SCORES_DIR, "demo");
   await fs.mkdir(dir, { recursive: true });
@@ -223,15 +262,18 @@ WorshipScore AI CLI
 
 사용법:
   pnpm ws demo                  데모 악보(코드+배경+전조)를 만들고 빌드 준비
+  pnpm ws analyze <파일> [이름]  PDF/이미지 악보를 폴더로 받아 분석 준비
   pnpm ws build <scoreDir>      score.ir.json + options.json → PPT 생성
   pnpm ws build --all           scores/ 안의 분석된 모든 곡을 일괄 빌드
   pnpm ws validate <scoreDir>   음악 검증만 실행
   pnpm ws init <scoreDir>       새 악보 폴더 템플릿 생성
+  pnpm ws schema                ScoreIR JSON 스키마 내보내기
   pnpm ws list                  scores/ 목록과 상태
 
 예시:
   pnpm ws demo
   pnpm ws build scores/demo
+  pnpm ws analyze ~/Downloads/score.pdf my-song
 `);
 }
 
@@ -244,7 +286,7 @@ function requireDir(arg: string | undefined): string {
 }
 
 async function main(): Promise<void> {
-  const [cmd, arg] = process.argv.slice(2);
+  const [cmd, arg, arg2] = process.argv.slice(2);
   switch (cmd) {
     case "build":
       if (arg === "--all") await cmdBuildAll();
@@ -255,6 +297,12 @@ async function main(): Promise<void> {
       break;
     case "init":
       await cmdInit(requireDir(arg));
+      break;
+    case "analyze":
+      await cmdAnalyze(arg, arg2);
+      break;
+    case "schema":
+      await cmdSchema();
       break;
     case "demo":
       await cmdDemo();

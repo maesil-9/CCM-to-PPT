@@ -57,7 +57,7 @@ WorshipScore AI는 찬양 악보 이미지/PDF를 구조화된 악보 데이터(
   - `pnpm m1` 결과: 스키마 통과, 검증 blocking 0/warning 0, MusicXML 11,806 bytes(결정적 확인), 슬라이드 4장, PNG 4장(2400×314px, 결정적), PPTX `out/worship-score-sample.pptx`(213,481 bytes, 4슬라이드).
   - OOXML 검증 13개 항목 전부 통과(`zip_loadable`, `content_types_present`, `root_rels_present`, `presentation_xml_present`, `presentation_rels_present`, `slides_present`, `slide_count_match`, `slide_master_present`, `slide_layout_present`, `media_present`, `all_xml_well_formed`, `relationship_targets_resolve`, `each_slide_has_image`).
   - 산출물 시각 확인: 슬라이드 PNG에 높은음자리표·4/4·멜로디 음표·마디선·한글 가사가 정확히 렌더됨(악보형 PPT 실증, 자막형 아님).
-  - 테스트: vitest 27개 전부 통과(core 21 + pipeline fixture 5 + e2e 1). `tsc -p tsconfig.json` 타입체크 clean.
+  - 테스트: vitest 전체 통과(`pnpm test`)(core 21 + pipeline fixture 5 + e2e 1). `tsc -p tsconfig.json` 타입체크 clean.
 - **레이어 규칙이 강제 가능한 형태로 자리잡았다.** Domain이 외부 엔진을 import하지 않으므로, 이후 렌더러/빌더/OMR 엔진 교체가 Domain 변경 없이 어댑터 교체로 가능하다.
 - **인프라 도입을 지연한 만큼, 미증명 가정을 줄였다.** 웹/DB/UI 결정을 Milestone 1 산출물(특히 ScoreIR 형태와 변환 체인의 실제 동작)을 본 뒤로 미룸으로써, 잘못된 추상화를 조기에 고정할 위험을 낮췄다.
 

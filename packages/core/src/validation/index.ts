@@ -7,7 +7,7 @@
  */
 import { computeActiveAttributes, orderedMeasures } from "../context.js";
 import { eventDurationDivisions, measureDurationDivisions } from "../duration.js";
-import type { Note, Pitch, ScoreIR } from "../types/scoreir.js";
+import { SCOREIR_SCHEMA_VERSION, type Note, type Pitch, type ScoreIR } from "../types/scoreir.js";
 import type {
   ScoreValidationIssue,
   ScoreValidationResult,
@@ -311,6 +311,12 @@ function validateIntegrity(
 ): void {
   if (ordered.length === 0) {
     issues.push(issue("EMPTY_SCORE", "error", "악보에 마디가 없습니다", {}));
+  }
+
+  if (score.schemaVersion !== SCOREIR_SCHEMA_VERSION) {
+    issues.push(
+      issue("SCHEMA_VERSION_SUPPORTED", "warning", `스키마 버전이 다릅니다: ${score.schemaVersion} (현재 ${SCOREIR_SCHEMA_VERSION})`, {}),
+    );
   }
 
   // Unique ids across measures / events / harmonies / sections / source regions.

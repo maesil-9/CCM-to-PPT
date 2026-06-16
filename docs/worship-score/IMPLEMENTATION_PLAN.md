@@ -123,7 +123,7 @@ ScoreIR
 
 ### 테스트
 
-- vitest 27개 전부 통과: core 21 + pipeline fixture 5 + e2e 1(render → pptx → ooxml).
+- vitest 전체 통과(`pnpm test`): core 21 + pipeline fixture 5 + e2e 1(render → pptx → ooxml).
 - `tsc -p tsconfig.json` 타입체크 clean.
 
 ### 수용 기준 (실제 실행/검증 결과)

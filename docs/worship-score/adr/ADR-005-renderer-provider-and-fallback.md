@@ -85,7 +85,7 @@ Verovio는 Java 비의존(WASM)이고 MusicXML 입력을 직접 처리하므로 
 - **결정성 확보(검증됨):** `ScoreIR → MusicXML → SVG/PNG`는 동일 머신에서 결정적임이 Milestone 1에서 실증되었다. `pnpm m1` 실행 시 PNG 4장(2400×314px)이 결정적으로 생성되었고, 전체 체인(스키마 통과, 검증 blocking 0/warning 0, MusicXML 11806 bytes 결정적, 슬라이드 4장, PPTX 213,481 bytes 4슬라이드)이 통과했다. 슬라이드 PNG에 높은음자리표·4/4·멜로디 음표·마디선·한글 가사가 정확히 렌더됨을 시각 확인했다.
 - **레이어 경계 유지:** Domain은 `RendererProvider`에만 의존하고 Verovio/resvg import은 어댑터에 격리되었다.
 - **교체 용이성:** 향후 대체 엔진을 동일 포트로 도입 가능.
-- **테스트로 보호:** vitest 27개 전부 통과(core 21 + pipeline fixture 5 + e2e 1[render→pptx→ooxml]), `tsc -p tsconfig.json` 타입체크 clean.
+- **테스트로 보호:** vitest 전체 통과(`pnpm test`), `tsc -p tsconfig.json` 타입체크 clean.
 
 ### 4.2 부정적 / 한계(정직하게 기재)
 

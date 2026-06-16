@@ -7,7 +7,7 @@
 
 본 저장소는 **그린필드(greenfield)** 프로젝트다. 평가 시작 시점에 원격(`github.com/maesil-9/CCM-to-PPT`)은 비어 있었고, 로컬에는 PRD 문서 1개만 존재했다. 따라서 **"보존(preserve)해야 할 기존 코드는 없다."** 본 문서가 다루는 "재사용 가능한 요소"·"유지할 패턴"·"교체가 필요한 부분"은 모두 *Milestone 1에서 새로 채택·구현한 기준선*에 대한 평가이며, 레거시 코드에 대한 평가가 아니다.
 
-Milestone 1의 목적은 빅뱅 도입을 피하고 핵심 결정적 변환 체인(ScoreIR → MusicXML → 렌더 → PPTX → 검증)을 먼저 실증하는 것이었으며, 이 체인은 실제로 실행·검증되었다(`pnpm m1`, vitest 27개 통과, OOXML 13개 항목 통과). 산출물은 가사 자막형 PPT가 아니라 **오선·음표·마디선·가사가 조판된 악보형 16:9 PPTX**임이 시각적으로 확인되었다.
+Milestone 1의 목적은 빅뱅 도입을 피하고 핵심 결정적 변환 체인(ScoreIR → MusicXML → 렌더 → PPTX → 검증)을 먼저 실증하는 것이었으며, 이 체인은 실제로 실행·검증되었다(`pnpm m1`, vitest 전체 통과(`pnpm test`), OOXML 13개 항목 통과). 산출물은 가사 자막형 PPT가 아니라 **오선·음표·마디선·가사가 조판된 악보형 16:9 PPTX**임이 시각적으로 확인되었다.
 
 ---
 
@@ -84,7 +84,7 @@ UI → Application Use Cases → Domain → Provider Interfaces → Infrastructu
 - PPTX `out/worship-score-sample.pptx` (213,481 bytes, 4슬라이드).
 - OOXML 검증 13개 항목 전부 통과: `zip_loadable`, `content_types_present`, `root_rels_present`, `presentation_xml_present`, `presentation_rels_present`, `slides_present`, `slide_count_match`, `slide_master_present`, `slide_layout_present`, `media_present`, `all_xml_well_formed`, `relationship_targets_resolve`, `each_slide_has_image`.
 - 시각 확인: 슬라이드 PNG에 높은음자리표·4/4·멜로디 음표·마디선·한글 가사가 정확히 렌더됨(악보형 PPT 실증).
-- 테스트: vitest 27개 전부 통과(core 21 + pipeline fixture 5 + e2e 1[render→pptx→ooxml]). `tsc -p tsconfig.json` 타입체크 clean.
+- 테스트: vitest 전체 통과(`pnpm test`). `tsc -p tsconfig.json` 타입체크 clean.
 
 ---
 

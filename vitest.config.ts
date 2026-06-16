@@ -9,10 +9,11 @@ export default defineConfig({
     alias: {
       "@worship-score/core": path.resolve(root, "packages/core/src/index.ts"),
       "@worship-score/adapters": path.resolve(root, "packages/adapters/src/index.ts"),
+      "@worship-score/pipeline": path.resolve(root, "packages/pipeline/src/index.ts"),
     },
   },
   test: {
-    include: ["packages/*/test/**/*.test.ts"],
+    include: ["packages/*/test/**/*.test.ts", "apps/*/test/**/*.test.ts"],
     environment: "node",
   },
 });

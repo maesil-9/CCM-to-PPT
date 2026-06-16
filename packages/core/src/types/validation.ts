@@ -23,6 +23,7 @@ export const VALIDATION_RULES = [
   "DUPLICATE_ID",
   "SECTION_MEASURE_REF_VALID",
   "PRESENTATION_SECTION_REF_VALID",
+  "SCHEMA_VERSION_SUPPORTED",
 ] as const;
 
 export type ValidationRuleCode = (typeof VALIDATION_RULES)[number];

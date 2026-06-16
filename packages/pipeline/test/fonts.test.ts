@@ -8,19 +8,19 @@ import {
 } from "@worship-score/pipeline";
 
 describe("bundled fonts", () => {
-  it("ships the Pretendard Regular + Bold OTF assets", () => {
+  it("ships the Pretendard text fonts and the Bravura music font", () => {
     const files = bundledFontFiles();
-    expect(files.length).toBe(2);
-    for (const f of files) {
-      expect(existsSync(f)).toBe(true);
-      expect(/Pretendard-(Regular|Bold)\.otf$/.test(f)).toBe(true);
-    }
+    expect(files.length).toBe(3);
+    for (const f of files) expect(existsSync(f)).toBe(true);
+    expect(files.some((f) => /Pretendard-Regular\.otf$/.test(f))).toBe(true);
+    expect(files.some((f) => /Pretendard-Bold\.otf$/.test(f))).toBe(true);
+    expect(files.some((f) => /Bravura\.otf$/.test(f))).toBe(true);
   });
 
-  it("defaultFontConfig pins the bundled family and files (no system-font dependency)", () => {
+  it("defaultFontConfig pins the text family and loads text + music fonts", () => {
     const cfg = defaultFontConfig();
     expect(cfg.textFontFamily).toBe(BUNDLED_FONT_FAMILY);
-    expect(cfg.fontFiles?.length).toBe(2);
+    expect(cfg.fontFiles?.length).toBe(3);
   });
 
   it("fontEmbedFromConfig resolves Regular + Bold from the bundled family by filename", () => {

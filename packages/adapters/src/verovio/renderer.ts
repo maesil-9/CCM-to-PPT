@@ -53,6 +53,12 @@ function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
     header: "none",
     footer: "none",
     svgViewBox: true,
+    // Use Bravura (the SMuFL reference font) for the engraving. Verovio renders
+    // some glyphs as <text font-family="Bravura"> (metronome note, chord-symbol
+    // accidentals); resvg can't read Verovio's embedded font, so we also bundle
+    // Bravura.otf and load it into resvg (see pipeline defaultFontConfig).
+    // Without a real Bravura file in fontFiles those glyphs rasterize as tofu.
+    font: "Bravura",
     ...(options?.lineThickness
       ? {
           staffLineWidth: 0.15 * options.lineThickness,

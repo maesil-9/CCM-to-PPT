@@ -13,18 +13,25 @@ import { fileURLToPath } from "node:url";
 import type { PptxFontEmbed } from "@worship-score/core";
 import type { FontConfig } from "./buildPresentation.js";
 
-/** Internal family name of the bundled font (name table nameID 1/16). */
+/** Internal family name of the bundled TEXT font (lyrics/labels). */
 export const BUNDLED_FONT_FAMILY = "Pretendard";
+/** Internal family name of the bundled MUSIC font (SMuFL engraving glyphs). */
+export const BUNDLED_MUSIC_FONT_FAMILY = "Bravura";
 
-const BUNDLED_FONT_FILES = ["Pretendard-Regular.otf", "Pretendard-Bold.otf"];
+// Pretendard renders Korean/Latin lyric & label text; Bravura is the SMuFL music
+// font. Verovio emits a few glyphs (metronome note, chord-symbol accidentals) as
+// <text font-family="Bravura">, which resvg can only rasterize if a real Bravura
+// file is in its font list — so we bundle and load it too.
+const TEXT_FONT_FILES = ["Pretendard-Regular.otf", "Pretendard-Bold.otf"];
+const MUSIC_FONT_FILES = ["Bravura.otf"];
 
 function fontPath(file: string): string {
   return fileURLToPath(new URL(`../assets/fonts/${file}`, import.meta.url));
 }
 
-/** Absolute paths of the bundled font files that actually exist on disk. */
+/** Absolute paths of every bundled font file (text + music) present on disk. */
 export function bundledFontFiles(): string[] {
-  return BUNDLED_FONT_FILES.map(fontPath).filter(existsSync);
+  return [...TEXT_FONT_FILES, ...MUSIC_FONT_FILES].map(fontPath).filter(existsSync);
 }
 
 /**

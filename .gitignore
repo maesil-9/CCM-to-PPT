@@ -17,6 +17,11 @@ coverage/
 *.local.pptx
 # Per-score generated output (keep inputs/options, drop generated artifacts)
 scores/*/out/
+# User-provided scores may be copyrighted — keep them local. Only the synthetic
+# `demo` example is tracked in the repo.
+scores/*/
+!scores/demo/
+!scores/demo/**
 
 # Env / secrets
 .env

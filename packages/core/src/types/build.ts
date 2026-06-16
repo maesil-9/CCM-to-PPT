@@ -17,6 +17,11 @@ export interface KeyOptions {
   transposeSemitones: number;
 }
 
+export interface TempoOptions {
+  /** Show the tempo mark (metronome ♩ = N) on the first system. Default true. */
+  visible: boolean;
+}
+
 export interface BackgroundImageOptions {
   data: Uint8Array;
   mime: "image/png" | "image/jpeg";
@@ -71,6 +76,8 @@ export interface ScoreAppearance {
 export interface BuildOptions {
   chords: ChordOptions;
   key: KeyOptions;
+  /** Tempo mark visibility (default shown). */
+  tempo?: TempoOptions;
   background?: BackgroundImageOptions;
   style?: StyleOptions;
   score?: ScoreAppearance;
@@ -79,4 +86,5 @@ export interface BuildOptions {
 export const DEFAULT_BUILD_OPTIONS: BuildOptions = {
   chords: { visible: false },
   key: { transposeSemitones: 0 },
+  tempo: { visible: true },
 };

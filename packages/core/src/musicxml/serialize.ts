@@ -47,6 +47,8 @@ export interface SerializeOptions {
   verses?: number[];
   /** Emit the chord-symbol (harmony) layer. Default false (chords hidden). */
   includeChords?: boolean;
+  /** Emit the tempo mark on the first measure. Default true. */
+  includeTempo?: boolean;
   /** Force a new system (staff line) every N emitted measures (encoded breaks). */
   systemBreakEvery?: number;
   /**
@@ -81,7 +83,7 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
     const attrNode = buildAttributes(measure, ctx, emittedIndex === 0);
     if (attrNode) children.push(attrNode);
 
-    if (emittedIndex === 0 && score.musicalContext.tempoBpm) {
+    if (emittedIndex === 0 && score.musicalContext.tempoBpm && options.includeTempo !== false) {
       children.push(buildTempo(score.musicalContext.tempoBpm));
     }
 

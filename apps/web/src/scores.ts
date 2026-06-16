@@ -127,6 +127,7 @@ const textStyle = z
 export const uiOptionsSchema = z
   .object({
     chords: z.object({ visible: z.boolean() }).strict().optional(),
+    tempo: z.object({ visible: z.boolean() }).strict().optional(),
     key: z.object({ transposeSemitones: z.number().int().min(-24).max(24) }).strict().optional(),
     backgroundEnabled: z.boolean().optional(),
     layout: z
@@ -160,6 +161,7 @@ export async function resolveBuildOptions(id: string, ui: unknown): Promise<Part
   const v = uiOptionsSchema.parse(ui);
   const options: Partial<BuildOptions> = {};
   if (v.chords) options.chords = v.chords;
+  if (v.tempo) options.tempo = v.tempo;
   if (v.key) options.key = v.key;
   if (v.style) options.style = v.style;
   if (v.score) options.score = v.score;
@@ -196,6 +198,7 @@ export async function saveUiOptions(id: string, ui: unknown): Promise<void> {
   }
   const out: Record<string, unknown> = {};
   if (v.chords) out["chords"] = v.chords;
+  if (v.tempo) out["tempo"] = v.tempo;
   if (v.key) out["key"] = v.key;
   if (v.score) out["score"] = v.score;
   if (v.style) out["style"] = v.style;
@@ -222,6 +225,7 @@ export async function loadUiOptions(id: string): Promise<UiOptions> {
   }
   const ui: Record<string, unknown> = {};
   if (json["chords"]) ui["chords"] = json["chords"];
+  if (json["tempo"]) ui["tempo"] = json["tempo"];
   if (json["key"]) ui["key"] = json["key"];
   if (json["style"]) ui["style"] = json["style"];
   if (json["score"]) ui["score"] = json["score"];

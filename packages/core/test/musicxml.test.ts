@@ -127,6 +127,14 @@ describe("serializeMusicXml", () => {
     expect((xml.match(/<direction[ >]/g) ?? []).length).toBe(1);
   });
 
+  it("omits the tempo mark when includeTempo is false", () => {
+    const score = scoreOf([validMeasure()]);
+    score.musicalContext.tempoBpm = 84;
+    expect(serializeMusicXml(score, { includeTempo: true })).toContain("<metronome>");
+    expect(serializeMusicXml(score)).toContain("<metronome>"); // default = shown
+    expect(serializeMusicXml(score, { includeTempo: false })).not.toContain("<metronome>");
+  });
+
   it("passes non-final bar styles through unchanged", () => {
     const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
     m.barlines = [{ location: "right", style: "light-light" }];

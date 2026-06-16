@@ -81,6 +81,7 @@ export interface BuildPresentationResult {
 
 function resolveOptions(options?: Partial<BuildOptions>): BuildOptions {
   return {
+    tempo: { visible: options?.tempo?.visible ?? true },
     chords: { ...DEFAULT_BUILD_OPTIONS.chords, ...options?.chords },
     key: { ...DEFAULT_BUILD_OPTIONS.key, ...options?.key },
     ...(options?.background ? { background: options.background } : {}),
@@ -176,6 +177,7 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
         prepared,
         measureIds: slide.measureIds,
         includeChords: options.chords.visible,
+        includeTempo: options.tempo?.visible !== false,
         // Projection: explicit per-phrase breaks (empty = one full-width line).
         // Leadsheet: wrap every N measures.
         ...(profile.layout === "projection"
@@ -229,7 +231,7 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
       slidePlan,
       assets,
       musicXml: emitFullMusicXml
-        ? serializeMusicXml(resolvedScore, { prepared, includeChords: options.chords.visible })
+        ? serializeMusicXml(resolvedScore, { prepared, includeChords: options.chords.visible, includeTempo: options.tempo?.visible !== false })
         : "",
       resolvedScore,
     };

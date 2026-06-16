@@ -26,6 +26,7 @@ const textStyle = z
 const optionsFileSchema = z
   .object({
     chords: z.object({ visible: z.boolean().optional() }).strict().optional(),
+    tempo: z.object({ visible: z.boolean().optional() }).strict().optional(),
     key: z.object({ transposeSemitones: z.number().int().min(-24).max(24).optional() }).strict().optional(),
     score: z
       .object({ inkColor: hex.optional(), lineThickness: z.number().min(0.3).max(3).optional() })
@@ -92,6 +93,7 @@ export async function loadBuildOptions(scoreDir: string): Promise<LoadedOptions>
 
   const options: Partial<BuildOptions> = {};
   if (v.chords?.visible !== undefined) options.chords = { visible: v.chords.visible };
+  if (v.tempo?.visible !== undefined) options.tempo = { visible: v.tempo.visible };
   if (v.key?.transposeSemitones !== undefined) options.key = { transposeSemitones: v.key.transposeSemitones };
   if (v.style) options.style = v.style as StyleOptions;
   if (v.score) options.score = v.score;

@@ -29,6 +29,8 @@ export interface RenderOptions {
   pageHeight?: number;
   /** Let the renderer shrink page height to content. */
   adjustPageHeight?: boolean;
+  /** Honour encoded system breaks (`<print new-system>`) instead of auto layout. */
+  encodedBreaks?: boolean;
   /** Minimum staff size hint. */
   minStaffSize?: number;
   /** Ink colour for staff/notes/text (hex, no '#'); default engine black. */

@@ -7,8 +7,10 @@ export const DEFAULT_PRESENTATION_PROFILE: PresentationProfile = {
   version: PRESENTATION_PROFILE_VERSION,
   ratio: "16:9",
   chordVisibility: "hidden",
-  maxSystemsPerSlide: 2,
-  measuresPerSystem: 4,
+  // 2 measures per line × up to 4 lines fills a 16:9 slide with a large,
+  // back-of-room-readable staff (PRD §RND-003).
+  maxSystemsPerSlide: 4,
+  measuresPerSystem: 2,
   minimumStaffSize: 32,
   safeMarginInches: 0.35,
   titleVisibility: "first-slide",

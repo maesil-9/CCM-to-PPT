@@ -105,6 +105,10 @@ function renderOptionsFor(
 ): RenderOptions {
   return {
     scale: 2,
+    // Honour the per-system measure count so each slide stacks rows and fills
+    // its vertical space; page width ~ constant per-measure width.
+    encodedBreaks: true,
+    pageWidth: Math.max(900, profile.measuresPerSystem * 620),
     ...(profile.minimumStaffSize ? { minStaffSize: profile.minimumStaffSize } : {}),
     ...(options.score?.inkColor ? { inkColor: options.score.inkColor } : {}),
     ...(options.score?.lineThickness ? { lineThickness: options.score.lineThickness } : {}),
@@ -158,6 +162,7 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
         prepared,
         measureIds: slide.measureIds,
         includeChords: options.chords.visible,
+        systemBreakEvery: profile.measuresPerSystem,
         ...(slide.verse !== undefined ? { verses: [slide.verse] } : {}),
       });
 

@@ -30,6 +30,16 @@ describe("serializeMusicXml", () => {
     expect(xml).not.toContain('<measure number="1">');
   });
 
+  it("injects encoded system breaks every N measures", () => {
+    const ms = ["m1", "m2", "m3", "m4"].map((id, i) =>
+      measure(id, i, [qn(id, 1, "C", 4), qn(id, 2, "D", 4), qn(id, 3, "E", 4), qn(id, 4, "F", 4)], i === 0),
+    );
+    const xml = serializeMusicXml(scoreOf(ms), { systemBreakEvery: 2 });
+    // breaks before measure 3 (and not before 1 or 2) → exactly one new-system here.
+    expect((xml.match(/new-system="yes"/g) ?? []).length).toBe(1);
+    expect(xml.indexOf('new-system="yes"')).toBeLessThan(xml.indexOf('<measure number="3">') + 40);
+  });
+
   it("filters and renumbers lyrics by verse", () => {
     const note = qn("m1", 1, "C", 4, "whole", {
       lyrics: [

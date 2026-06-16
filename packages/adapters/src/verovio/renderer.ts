@@ -49,7 +49,7 @@ function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
     pageMarginBottom: 60,
     pageMarginLeft: 60,
     pageMarginRight: 60,
-    breaks: "auto",
+    breaks: options?.encodedBreaks ? "encoded" : "auto",
     header: "none",
     footer: "none",
     svgViewBox: true,

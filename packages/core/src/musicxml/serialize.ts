@@ -44,6 +44,8 @@ export interface SerializeOptions {
   verses?: number[];
   /** Emit the chord-symbol (harmony) layer. Default false (chords hidden). */
   includeChords?: boolean;
+  /** Force a new system (staff line) every N emitted measures (encoded breaks). */
+  systemBreakEvery?: number;
   /** Reuse precomputed score data (see {@link prepareScore}). */
   prepared?: PreparedScore;
 }
@@ -57,6 +59,12 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
     const ctx = active.get(measure.id);
     if (!ctx) throw new Error(`No active attributes for measure ${measure.id}`);
     const children: XmlChild[] = [];
+
+    // Encoded system break: start a new staff line every N measures so a slide
+    // shows multiple rows and fills its vertical space (readability).
+    if (options.systemBreakEvery && emittedIndex > 0 && emittedIndex % options.systemBreakEvery === 0) {
+      children.push(el("print", { "new-system": "yes" }));
+    }
 
     const attrNode = buildAttributes(measure, ctx, emittedIndex === 0);
     if (attrNode) children.push(attrNode);

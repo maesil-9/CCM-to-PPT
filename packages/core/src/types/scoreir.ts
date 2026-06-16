@@ -307,7 +307,12 @@ export interface EvidenceSource {
 }
 
 export interface UncertaintyCandidate {
-  value: unknown;
+  /**
+   * Candidate reading. Typed `unknown` because it depends on `field` (a pitch,
+   * a duration type, a lyric string, …). Optional because an `unknown` value
+   * already admits `undefined`, and the JSON schema cannot mark it required.
+   */
+  value?: unknown;
   confidence: number;
   source: string;
 }

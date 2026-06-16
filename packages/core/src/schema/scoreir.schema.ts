@@ -234,8 +234,22 @@ export const scoreIrSchema = z.object({
   }),
 });
 
+// ---------------------------------------------------------------------------
+// Compile-time single-source-of-truth guard (PRD §SCR-001)
+// ---------------------------------------------------------------------------
+// The hand-written interfaces in `types/scoreir.ts` and this zod schema must
+// describe the exact same shape. The two assignments below fail to compile if
+// they drift apart in either direction (a field added/removed/retyped on one
+// side only). Reconcile both sides; never paper over a mismatch with `as`.
+type InferredScoreIR = z.infer<typeof scoreIrSchema>;
+const _schemaSatisfiesType: (value: InferredScoreIR) => ScoreIR = (value) => value;
+const _typeSatisfiesSchema: (value: ScoreIR) => InferredScoreIR = (value) => value;
+void _schemaSatisfiesType;
+void _typeSatisfiesSchema;
+
 export function parseScoreIr(data: unknown): ScoreIR {
-  return scoreIrSchema.parse(data) as ScoreIR;
+  // No cast: the guard above proves the parsed shape is exactly `ScoreIR`.
+  return scoreIrSchema.parse(data);
 }
 
 export function safeParseScoreIr(data: unknown) {

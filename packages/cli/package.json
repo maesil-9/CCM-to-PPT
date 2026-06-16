@@ -1,0 +1,19 @@
+{
+  "name": "@worship-score/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "WorshipScore AI CLI — folder-drop a score, get a worship score PPT (optional chords/key, common background image).",
+  "main": "./src/index.ts",
+  "bin": {
+    "ws": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@worship-score/core": "workspace:*",
+    "@worship-score/adapters": "workspace:*",
+    "@worship-score/pipeline": "workspace:*"
+  }
+}

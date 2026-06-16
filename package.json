@@ -12,7 +12,8 @@
     "typecheck": "tsc -b --pretty",
     "test": "vitest run",
     "test:watch": "vitest",
-    "m1": "pnpm --filter @worship-score/pipeline run m1"
+    "m1": "pnpm --filter @worship-score/pipeline run m1",
+    "ws": "tsx packages/cli/src/index.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

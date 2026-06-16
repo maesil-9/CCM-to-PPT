@@ -1,0 +1,26 @@
+{
+  "chords": {
+    "visible": true
+  },
+  "key": {
+    "transposeSemitones": 2
+  },
+  "background": {
+    "image": "background.png",
+    "scrim": 0.84
+  },
+  "style": {
+    "title": {
+      "fontFace": "Malgun Gothic",
+      "fontSize": 28,
+      "color": "FFFFFF",
+      "bold": true
+    },
+    "sectionLabel": {
+      "fontFace": "Malgun Gothic",
+      "fontSize": 16,
+      "color": "E8ECF7"
+    },
+    "cardColor": "FFFFFF"
+  }
+}

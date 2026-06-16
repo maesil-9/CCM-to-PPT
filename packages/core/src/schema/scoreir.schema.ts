@@ -100,6 +100,21 @@ const barlineSchema = z.object({
     .optional(),
 });
 
+const rootStepSchema = z.object({
+  step: stepSchema,
+  alter: z.number().int().min(-2).max(2).optional(),
+});
+
+const harmonySchema = z.object({
+  id: z.string(),
+  offsetDivisions: z.number().int().min(0),
+  root: rootStepSchema,
+  kind: z.string(),
+  bass: rootStepSchema.optional(),
+  text: z.string().optional(),
+  sourceRegionId: z.string().optional(),
+});
+
 const measureSchema = z.object({
   id: z.string(),
   number: z.number().int(),
@@ -114,6 +129,7 @@ const measureSchema = z.object({
     })
     .optional(),
   events: z.array(eventSchema),
+  harmonies: z.array(harmonySchema).optional(),
   barlines: z.array(barlineSchema).optional(),
   sectionId: z.string().optional(),
 });

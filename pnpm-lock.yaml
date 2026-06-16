@@ -42,6 +42,18 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0
 
+  packages/cli:
+    dependencies:
+      '@worship-score/adapters':
+        specifier: workspace:*
+        version: link:../adapters
+      '@worship-score/core':
+        specifier: workspace:*
+        version: link:../core
+      '@worship-score/pipeline':
+        specifier: workspace:*
+        version: link:../pipeline
+
   packages/core:
     dependencies:
       zod:

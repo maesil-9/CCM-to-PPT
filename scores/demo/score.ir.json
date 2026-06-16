@@ -1,0 +1,995 @@
+{
+  "scoreId": "fixture-demo-001",
+  "schemaVersion": "scoreir-0.1.0",
+  "metadata": {
+    "title": "샘플 찬양 (코드·배경 데모)",
+    "composer": "WorshipScore AI Test Fixtures",
+    "copyright": "Original synthetic test data — public domain",
+    "language": "ko"
+  },
+  "musicalContext": {
+    "divisions": 8,
+    "initialKey": {
+      "fifths": 0,
+      "mode": "major"
+    },
+    "initialTime": {
+      "beats": 4,
+      "beatType": 4
+    },
+    "initialClef": {
+      "sign": "G",
+      "line": 2
+    },
+    "tempoBpm": 84
+  },
+  "parts": [
+    {
+      "id": "P1",
+      "name": "Melody",
+      "staffCount": 1
+    }
+  ],
+  "measures": [
+    {
+      "id": "m1",
+      "number": 1,
+      "index": 0,
+      "events": [
+        {
+          "id": "m1-n1",
+          "kind": "note",
+          "measureId": "m1",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "C",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "주",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "어",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m1-n2",
+          "kind": "note",
+          "measureId": "m1",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "D",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "님",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "둠",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m1-n3",
+          "kind": "note",
+          "measureId": "m1",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "E",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "의",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "속",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m1-n4",
+          "kind": "note",
+          "measureId": "m1",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "F",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "크",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "에",
+              "syllabic": "single"
+            }
+          ]
+        }
+      ],
+      "attributes": {
+        "divisions": 8,
+        "key": {
+          "fifths": 0,
+          "mode": "major"
+        },
+        "time": {
+          "beats": 4,
+          "beatType": 4
+        },
+        "clef": {
+          "sign": "G",
+          "line": 2
+        }
+      },
+      "harmonies": [
+        {
+          "id": "m1-h1",
+          "offsetDivisions": 0,
+          "root": {
+            "step": "C"
+          },
+          "kind": "major"
+        },
+        {
+          "id": "m1-h2",
+          "offsetDivisions": 16,
+          "root": {
+            "step": "C"
+          },
+          "kind": "major"
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "number": 2,
+      "index": 1,
+      "events": [
+        {
+          "id": "m2-n1",
+          "kind": "note",
+          "measureId": "m2",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "G",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "신",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "빛",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m2-n2",
+          "kind": "note",
+          "measureId": "m2",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "G",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "사",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "으",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m2-n3",
+          "kind": "note",
+          "measureId": "m2",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "A",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "랑",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "로",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m2-n4",
+          "kind": "note",
+          "measureId": "m2",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "G",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "을",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "와",
+              "syllabic": "single"
+            }
+          ]
+        }
+      ],
+      "harmonies": [
+        {
+          "id": "m2-h1",
+          "offsetDivisions": 0,
+          "root": {
+            "step": "F"
+          },
+          "kind": "major"
+        },
+        {
+          "id": "m2-h2",
+          "offsetDivisions": 16,
+          "root": {
+            "step": "F"
+          },
+          "kind": "major"
+        }
+      ]
+    },
+    {
+      "id": "m3",
+      "number": 3,
+      "index": 2,
+      "events": [
+        {
+          "id": "m3-n1",
+          "kind": "note",
+          "measureId": "m3",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "F",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "찬",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "구",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m3-n2",
+          "kind": "note",
+          "measureId": "m3",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "E",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "양",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "원",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m3-n3",
+          "kind": "note",
+          "measureId": "m3",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "D",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "하",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "하",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m3-n4",
+          "kind": "note",
+          "measureId": "m3",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "C",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "리",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "신",
+              "syllabic": "single"
+            }
+          ]
+        }
+      ],
+      "harmonies": [
+        {
+          "id": "m3-h1",
+          "offsetDivisions": 0,
+          "root": {
+            "step": "G"
+          },
+          "kind": "major"
+        },
+        {
+          "id": "m3-h2",
+          "offsetDivisions": 16,
+          "root": {
+            "step": "G"
+          },
+          "kind": "major"
+        }
+      ]
+    },
+    {
+      "id": "m4",
+      "number": 4,
+      "index": 3,
+      "events": [
+        {
+          "id": "m4-n1",
+          "kind": "note",
+          "measureId": "m4",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "C",
+            "octave": 4
+          },
+          "duration": {
+            "type": "half",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "영",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "주",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m4-n2",
+          "kind": "note",
+          "measureId": "m4",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "D",
+            "octave": 4
+          },
+          "duration": {
+            "type": "half",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "원",
+              "syllabic": "single"
+            },
+            {
+              "verse": 2,
+              "text": "님",
+              "syllabic": "single"
+            }
+          ]
+        }
+      ],
+      "harmonies": [
+        {
+          "id": "m4-h1",
+          "offsetDivisions": 0,
+          "root": {
+            "step": "C"
+          },
+          "kind": "major"
+        },
+        {
+          "id": "m4-h2",
+          "offsetDivisions": 16,
+          "root": {
+            "step": "G"
+          },
+          "kind": "major"
+        }
+      ]
+    },
+    {
+      "id": "m5",
+      "number": 5,
+      "index": 4,
+      "events": [
+        {
+          "id": "m5-n1",
+          "kind": "note",
+          "measureId": "m5",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "E",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "할",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m5-n2",
+          "kind": "note",
+          "measureId": "m5",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "E",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "렐",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m5-n3",
+          "kind": "note",
+          "measureId": "m5",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "F",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "루",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m5-n4",
+          "kind": "note",
+          "measureId": "m5",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "G",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "야",
+              "syllabic": "single"
+            }
+          ]
+        }
+      ],
+      "barlines": [
+        {
+          "location": "left",
+          "style": "heavy-light",
+          "repeat": {
+            "direction": "forward"
+          }
+        }
+      ],
+      "harmonies": [
+        {
+          "id": "m5-h1",
+          "offsetDivisions": 0,
+          "root": {
+            "step": "C"
+          },
+          "kind": "major"
+        },
+        {
+          "id": "m5-h2",
+          "offsetDivisions": 16,
+          "root": {
+            "step": "C"
+          },
+          "kind": "major"
+        }
+      ]
+    },
+    {
+      "id": "m6",
+      "number": 6,
+      "index": 5,
+      "events": [
+        {
+          "id": "m6-n1",
+          "kind": "note",
+          "measureId": "m6",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "G",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "주",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m6-n2",
+          "kind": "note",
+          "measureId": "m6",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "F",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "께",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m6-n3",
+          "kind": "note",
+          "measureId": "m6",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "E",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "영",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m6-n4",
+          "kind": "note",
+          "measureId": "m6",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "D",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "광",
+              "syllabic": "single"
+            }
+          ]
+        }
+      ],
+      "harmonies": [
+        {
+          "id": "m6-h1",
+          "offsetDivisions": 0,
+          "root": {
+            "step": "F"
+          },
+          "kind": "major"
+        },
+        {
+          "id": "m6-h2",
+          "offsetDivisions": 16,
+          "root": {
+            "step": "C"
+          },
+          "kind": "major"
+        }
+      ]
+    },
+    {
+      "id": "m7",
+      "number": 7,
+      "index": 6,
+      "events": [
+        {
+          "id": "m7-n1",
+          "kind": "note",
+          "measureId": "m7",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "C",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "다",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m7-n2",
+          "kind": "note",
+          "measureId": "m7",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "D",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "같",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m7-n3",
+          "kind": "note",
+          "measureId": "m7",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "E",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "이",
+              "syllabic": "single"
+            }
+          ]
+        },
+        {
+          "id": "m7-n4",
+          "kind": "note",
+          "measureId": "m7",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "F",
+            "octave": 4
+          },
+          "duration": {
+            "type": "quarter",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "찬",
+              "syllabic": "single"
+            }
+          ]
+        }
+      ],
+      "harmonies": [
+        {
+          "id": "m7-h1",
+          "offsetDivisions": 0,
+          "root": {
+            "step": "G"
+          },
+          "kind": "major"
+        },
+        {
+          "id": "m7-h2",
+          "offsetDivisions": 16,
+          "root": {
+            "step": "G"
+          },
+          "kind": "major"
+        }
+      ]
+    },
+    {
+      "id": "m8",
+      "number": 8,
+      "index": 7,
+      "events": [
+        {
+          "id": "m8-n1",
+          "kind": "note",
+          "measureId": "m8",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "E",
+            "octave": 4
+          },
+          "duration": {
+            "type": "half",
+            "dots": 0
+          },
+          "lyrics": [
+            {
+              "verse": 1,
+              "text": "양",
+              "syllabic": "single",
+              "extend": true
+            }
+          ],
+          "tie": {
+            "start": true,
+            "stop": false
+          }
+        },
+        {
+          "id": "m8-n2",
+          "kind": "note",
+          "measureId": "m8",
+          "voice": 1,
+          "staff": 1,
+          "pitch": {
+            "step": "E",
+            "octave": 4
+          },
+          "duration": {
+            "type": "half",
+            "dots": 0
+          },
+          "tie": {
+            "start": false,
+            "stop": true
+          }
+        }
+      ],
+      "barlines": [
+        {
+          "location": "right",
+          "style": "light-heavy",
+          "repeat": {
+            "direction": "backward"
+          }
+        }
+      ],
+      "harmonies": [
+        {
+          "id": "m8-h1",
+          "offsetDivisions": 0,
+          "root": {
+            "step": "C"
+          },
+          "kind": "major"
+        }
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "id": "sec-verse",
+      "kind": "verse",
+      "label": "Verse",
+      "startMeasureId": "m1",
+      "endMeasureId": "m4"
+    },
+    {
+      "id": "sec-chorus",
+      "kind": "chorus",
+      "label": "Chorus",
+      "startMeasureId": "m5",
+      "endMeasureId": "m8"
+    }
+  ],
+  "sourceRegions": [],
+  "uncertainties": [],
+  "presentation": {
+    "chordVisibility": "hidden",
+    "order": [
+      {
+        "id": "p1",
+        "sectionId": "sec-verse",
+        "verse": 1,
+        "label": "Verse 1"
+      },
+      {
+        "id": "p2",
+        "sectionId": "sec-chorus",
+        "verse": 1,
+        "label": "Chorus"
+      },
+      {
+        "id": "p3",
+        "sectionId": "sec-verse",
+        "verse": 2,
+        "label": "Verse 2"
+      },
+      {
+        "id": "p4",
+        "sectionId": "sec-chorus",
+        "verse": 1,
+        "label": "Chorus"
+      }
+    ]
+  }
+}

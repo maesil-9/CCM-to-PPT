@@ -6,6 +6,7 @@
  * `@worship-score/adapters`. Each provider result records the provider name,
  * version, and a run id for traceability.
  */
+import type { TextStyle } from "./build.js";
 
 export interface ProviderHealth {
   ok: boolean;
@@ -90,12 +91,28 @@ export interface PptxSlideSpec {
   image: PptxImage;
 }
 
+export interface PptxBackgroundImage {
+  data: Uint8Array;
+  mime: "image/png" | "image/jpeg";
+}
+
 export interface PptxProfile {
   slideWidthInches: number;
   slideHeightInches: number;
   safeMarginInches: number;
+  /** Solid slide background colour (hex, no '#'); ignored if backgroundImage set. */
   background?: string;
+  /** Common background image placed behind the score on every slide. */
+  backgroundImage?: PptxBackgroundImage;
+  /** Opacity (0..1) of the legibility card behind the score. 0/undefined = none. */
+  scoreScrim?: number;
+  /** Legibility card colour (hex, no '#'). Default "FFFFFF". */
+  cardColor?: string;
+  title?: TextStyle;
+  sectionLabel?: TextStyle;
+  /** @deprecated use title.color */
   titleColor?: string;
+  /** @deprecated use sectionLabel.color */
   labelColor?: string;
 }
 

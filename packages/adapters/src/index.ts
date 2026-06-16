@@ -6,3 +6,4 @@
 export { VerovioRenderer } from "./verovio/renderer.js";
 export { PptxGenJsBuilder } from "./pptx/builder.js";
 export { validatePptxOoxml } from "./pptx/ooxml.js";
+export { rasterizeSvg, type RasterizeOptions } from "./raster.js";

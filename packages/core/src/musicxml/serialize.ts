@@ -14,6 +14,7 @@ import { eventDurationDivisions } from "../duration.js";
 import type {
   Barline,
   Clef,
+  HarmonyChord,
   Key,
   Measure,
   ScoreEvent,
@@ -30,6 +31,8 @@ export interface SerializeOptions {
   measureIds?: string[];
   /** Restrict lyrics to these verses, renumbered 1..n in output. */
   verses?: number[];
+  /** Emit the chord-symbol (harmony) layer. Default false (chords hidden). */
+  includeChords?: boolean;
 }
 
 export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}): string {
@@ -47,9 +50,25 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
     const attrNode = buildAttributes(measure, ctx, emittedIndex === 0);
     if (attrNode) children.push(attrNode);
 
+    const harmonies =
+      options.includeChords && measure.harmonies
+        ? [...measure.harmonies].sort((a, b) => a.offsetDivisions - b.offsetDivisions)
+        : [];
+    let hi = 0;
+    let cumulative = 0;
     for (const event of measure.events) {
+      while (hi < harmonies.length && harmonies[hi]!.offsetDivisions <= cumulative) {
+        children.push(buildHarmony(harmonies[hi]!));
+        hi++;
+      }
       children.push(buildNote(event, ctx.divisions, options.verses));
+      cumulative += eventDurationDivisions(event.duration, ctx.divisions);
     }
+    while (hi < harmonies.length) {
+      children.push(buildHarmony(harmonies[hi]!));
+      hi++;
+    }
+
     for (const barline of measure.barlines ?? []) {
       children.push(buildBarline(barline));
     }
@@ -197,6 +216,25 @@ function buildNote(
   }
 
   return el("note", undefined, kids);
+}
+
+function buildHarmony(h: HarmonyChord): XmlNode {
+  const rootKids: XmlChild[] = [el("root-step", undefined, [h.root.step])];
+  if (h.root.alter !== undefined && h.root.alter !== 0) {
+    rootKids.push(el("root-alter", undefined, [String(h.root.alter)]));
+  }
+  const kids: XmlChild[] = [
+    el("root", undefined, rootKids),
+    el("kind", h.text !== undefined ? { text: h.text } : undefined, [h.kind]),
+  ];
+  if (h.bass) {
+    const bassKids: XmlChild[] = [el("bass-step", undefined, [h.bass.step])];
+    if (h.bass.alter !== undefined && h.bass.alter !== 0) {
+      bassKids.push(el("bass-alter", undefined, [String(h.bass.alter)]));
+    }
+    kids.push(el("bass", undefined, bassKids));
+  }
+  return el("harmony", undefined, kids);
 }
 
 function buildBarline(barline: Barline): XmlNode {

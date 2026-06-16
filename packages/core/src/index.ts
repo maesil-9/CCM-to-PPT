@@ -8,6 +8,7 @@ export * from "./types/scoreir.js";
 export * from "./types/validation.js";
 export * from "./types/presentation.js";
 export * from "./types/providers.js";
+export * from "./types/build.js";
 
 // Musical context + durations
 export {
@@ -26,6 +27,9 @@ export { validateScore } from "./validation/index.js";
 
 // MusicXML
 export { serializeMusicXml, type SerializeOptions } from "./musicxml/serialize.js";
+
+// Transposition
+export { transposeScore, transposeKey } from "./transpose.js";
 
 // Presentation
 export {

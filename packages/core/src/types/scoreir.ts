@@ -167,6 +167,33 @@ export interface Barline {
   ending?: Ending;
 }
 
+/**
+ * Chord symbol (harmony) — stored as a separate layer (PRD OMR-004). Recognition
+ * failures here must not affect the melody, and chords are hidden by default in
+ * the final PPT; they are an opt-in display layer.
+ */
+export interface RootStep {
+  step: StepName;
+  alter?: number;
+}
+
+export interface HarmonyChord {
+  id: string;
+  /** Beat offset within the measure, in division units (0 = downbeat). */
+  offsetDivisions: number;
+  root: RootStep;
+  /**
+   * Chord quality as a MusicXML harmony kind value, e.g. "major", "minor",
+   * "dominant", "major-seventh", "minor-seventh", "suspended-fourth".
+   */
+  kind: string;
+  /** Bass note for slash chords (e.g. C/E). */
+  bass?: RootStep;
+  /** Optional display override (e.g. "G", "Am7", "C/E"); derived if absent. */
+  text?: string;
+  sourceRegionId?: string;
+}
+
 export interface Measure {
   id: string;
   /** Display measure number (1-based; pickup measure may be 0). */
@@ -178,6 +205,8 @@ export interface Measure {
   attributes?: MeasureAttributes;
   /** Voice-1 melody events in time order (MVP is monophonic). */
   events: ScoreEvent[];
+  /** Optional chord-symbol layer (hidden by default in output). */
+  harmonies?: HarmonyChord[];
   barlines?: Barline[];
   sectionId?: string;
 }

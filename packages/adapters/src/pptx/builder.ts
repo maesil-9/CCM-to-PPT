@@ -3,8 +3,12 @@
  *
  * Embeds rendered score images as PNG (the mandated compatibility mode), placed
  * with contain-fit inside a safe-margin content box so nothing is ever clipped
- * (acceptance: "슬라이드 요소 잘림 0"). The builder is kept replaceable behind
- * the PptxBuilder interface.
+ * (acceptance: "슬라이드 요소 잘림 0").
+ *
+ * Supports a common background image per score with a translucent legibility
+ * card behind the staff, and output typography (font/colour) — the surface a
+ * future web styling editor drives. The builder stays replaceable behind the
+ * PptxBuilder interface.
  */
 import pptxgen from "pptxgenjs";
 import type {
@@ -12,6 +16,7 @@ import type {
   GeneratePptxInput,
   PptxBuilder,
   PptxValidationResult,
+  TextStyle,
   ValidatePptxInput,
 } from "@worship-score/core";
 import { validatePptxOoxml } from "./ooxml.js";
@@ -23,15 +28,26 @@ const BUILDER_VERSION = "4.0.1";
 // seen as constructable under NodeNext. At runtime the default import IS the
 // constructor; we describe the surface we use with a structural type and cast,
 // keeping the engine's types out of the rest of the codebase.
+interface PptxShadow {
+  type: "outer" | "inner";
+  color: string;
+  blur: number;
+  offset: number;
+  angle: number;
+  opacity: number;
+}
 interface PptxTextOptions {
   x: number;
   y: number;
   w: number;
   h: number;
+  fontFace?: string;
   fontSize: number;
   bold?: boolean;
+  italic?: boolean;
   align?: "left" | "center" | "right";
   color?: string;
+  shadow?: PptxShadow;
 }
 interface PptxImageOptions {
   data: string;
@@ -39,11 +55,22 @@ interface PptxImageOptions {
   y: number;
   w: number;
   h: number;
+  sizing?: { type: "cover" | "contain" | "crop"; w: number; h: number };
+}
+interface PptxShapeOptions {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  fill?: { color: string; transparency?: number };
+  line?: { color: string; width: number };
+  rectRadius?: number;
 }
 interface PptxSlide {
   background: { color: string };
   addText(text: string, opts: PptxTextOptions): void;
   addImage(opts: PptxImageOptions): void;
+  addShape(shapeType: string, opts: PptxShapeOptions): void;
 }
 interface PptxPresentation {
   defineLayout(opts: { name: string; width: number; height: number }): void;
@@ -57,9 +84,10 @@ interface PptxPresentation {
 // Under ESM/CJS interop (tsx, Node) the default import is the interop namespace
 // whose `.default` is the real constructor; fall back to the import itself for
 // environments that expose the class directly.
-const PptxGenJSCtor =
-  (pptxgen as unknown as { default?: unknown }).default ?? pptxgen;
+const PptxGenJSCtor = (pptxgen as unknown as { default?: unknown }).default ?? pptxgen;
 const PptxGenJS = PptxGenJSCtor as unknown as new () => PptxPresentation;
+
+const ROUND_RECT = "roundRect";
 
 interface Box {
   x: number;
@@ -81,6 +109,10 @@ function toBase64(data: Uint8Array): string {
   return Buffer.from(data).toString("base64");
 }
 
+function clamp(v: number, lo: number, hi: number): number {
+  return Math.max(lo, Math.min(hi, v));
+}
+
 export class PptxGenJsBuilder implements PptxBuilder {
   readonly builderName = BUILDER_NAME;
   readonly builderVersion = BUILDER_VERSION;
@@ -88,11 +120,7 @@ export class PptxGenJsBuilder implements PptxBuilder {
   async generate(input: GeneratePptxInput): Promise<GeneratedPptx> {
     const { profile } = input;
     const pptx = new PptxGenJS();
-    pptx.defineLayout({
-      name: "WS_16x9",
-      width: profile.slideWidthInches,
-      height: profile.slideHeightInches,
-    });
+    pptx.defineLayout({ name: "WS_16x9", width: profile.slideWidthInches, height: profile.slideHeightInches });
     pptx.layout = "WS_16x9";
     if (input.metadata.title) pptx.title = input.metadata.title;
     pptx.author = "WorshipScore AI";
@@ -101,10 +129,33 @@ export class PptxGenJsBuilder implements PptxBuilder {
     const margin = profile.safeMarginInches;
     const slideW = profile.slideWidthInches;
     const slideH = profile.slideHeightInches;
+    const hasBgImage = !!profile.backgroundImage;
+    const scrim = clamp(profile.scoreScrim ?? 0, 0, 1);
+    const cardColor = profile.cardColor ?? "FFFFFF";
+
+    const titleStyle: TextStyle = profile.title ?? {};
+    const labelStyle: TextStyle = profile.sectionLabel ?? {};
+    const titleColor = titleStyle.color ?? profile.titleColor ?? (hasBgImage ? "FFFFFF" : "111111");
+    const labelColor = labelStyle.color ?? profile.labelColor ?? (hasBgImage ? "F2F2F2" : "555555");
+    const textShadow: PptxShadow | undefined = hasBgImage
+      ? { type: "outer", color: "000000", blur: 4, offset: 2, angle: 90, opacity: 0.6 }
+      : undefined;
 
     for (const spec of input.slides) {
       const slide = pptx.addSlide();
       slide.background = { color: profile.background ?? "FFFFFF" };
+
+      // 1. Common background image (full-bleed cover), behind everything.
+      if (profile.backgroundImage) {
+        slide.addImage({
+          data: `data:${profile.backgroundImage.mime};base64,${toBase64(profile.backgroundImage.data)}`,
+          x: 0,
+          y: 0,
+          w: slideW,
+          h: slideH,
+          sizing: { type: "cover", w: slideW, h: slideH },
+        });
+      }
 
       let contentTop = margin;
 
@@ -114,10 +165,13 @@ export class PptxGenJsBuilder implements PptxBuilder {
           y: margin * 0.5,
           w: slideW - 2 * margin,
           h: 0.7,
-          fontSize: 26,
-          bold: true,
+          fontSize: titleStyle.fontSize ?? 26,
+          bold: titleStyle.bold ?? true,
+          ...(titleStyle.italic !== undefined ? { italic: titleStyle.italic } : {}),
+          ...(titleStyle.fontFace ? { fontFace: titleStyle.fontFace } : {}),
           align: "center",
-          color: profile.titleColor ?? "111111",
+          color: titleColor,
+          ...(textShadow ? { shadow: textShadow } : {}),
         });
         contentTop = margin * 0.5 + 0.8;
       }
@@ -128,21 +182,40 @@ export class PptxGenJsBuilder implements PptxBuilder {
           y: contentTop,
           w: slideW - 2 * margin,
           h: 0.4,
-          fontSize: 16,
-          bold: true,
+          fontSize: labelStyle.fontSize ?? 16,
+          bold: labelStyle.bold ?? true,
+          ...(labelStyle.italic !== undefined ? { italic: labelStyle.italic } : {}),
+          ...(labelStyle.fontFace ? { fontFace: labelStyle.fontFace } : {}),
           align: "left",
-          color: profile.labelColor ?? "555555",
+          color: labelColor,
+          ...(textShadow ? { shadow: textShadow } : {}),
         });
         contentTop += 0.55;
       }
 
-      const box: Box = {
-        x: margin,
-        y: contentTop,
-        w: slideW - 2 * margin,
-        h: slideH - contentTop - margin,
-      };
+      const box: Box = { x: margin, y: contentTop, w: slideW - 2 * margin, h: slideH - contentTop - margin };
       const fit = fitContain(spec.image.widthPx, spec.image.heightPx, box);
+
+      // 2. Legibility card behind the score (only meaningful over a background).
+      if (scrim > 0) {
+        const pad = 0.18;
+        const card: Box = {
+          x: clamp(fit.x - pad, 0, slideW),
+          y: clamp(fit.y - pad, 0, slideH),
+          w: Math.min(fit.w + 2 * pad, slideW),
+          h: Math.min(fit.h + 2 * pad, slideH),
+        };
+        slide.addShape(ROUND_RECT, {
+          x: card.x,
+          y: card.y,
+          w: card.w,
+          h: card.h,
+          fill: { color: cardColor, transparency: Math.round((1 - scrim) * 100) },
+          rectRadius: 0.08,
+        });
+      }
+
+      // 3. The score image on top.
       slide.addImage({
         data: `data:${spec.image.mime};base64,${toBase64(spec.image.data)}`,
         x: fit.x,

@@ -85,13 +85,9 @@ export function validateScore(score: ScoreIR): ScoreValidationResult {
 
     const expected = measureDurationDivisions(ctx.time, ctx.divisions);
     if (measure.pickup) {
-      if (measure.index !== 0) {
-        issues.push(
-          issue("PICKUP_MEASURE_ALLOWED", "warning", `Pickup measure ${measure.id} is not the first measure`, {
-            measureId: measure.id,
-          }),
-        );
-      }
+      // A pickup (anacrusis) measure is legitimate anywhere, not just at the
+      // start: worship charts routinely carry a sectional pickup into a bridge
+      // or a D.S. return. Only its duration is constrained (>0 and < a full bar).
       if (sum <= 0 || sum > expected) {
         issues.push(
           issue("PICKUP_MEASURE_ALLOWED", "error", `Pickup measure ${measure.id} duration ${sum} must be >0 and <= ${expected}`, {

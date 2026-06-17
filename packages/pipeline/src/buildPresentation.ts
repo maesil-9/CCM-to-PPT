@@ -205,6 +205,10 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
         includeTempo: options.tempo?.visible !== false,
         // Part label ("Melody"): shown for leadsheet, hidden for projection.
         suppressPartName: !(options.partName?.visible ?? profile.layout !== "projection"),
+        // Projection slides are a linear sing-along order; hide jump navigation
+        // (repeats, 1./2. endings, segno, D.S., Fine) so the congregation never
+        // has to follow a jump.
+        ...(profile.layout === "projection" ? { hideNavigation: true } : {}),
         // Projection: explicit per-phrase breaks (empty = one full-width line).
         // Leadsheet: wrap every N measures.
         ...(profile.layout === "projection"

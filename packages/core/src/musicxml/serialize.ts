@@ -51,6 +51,12 @@ export interface SerializeOptions {
   includeTempo?: boolean;
   /** Suppress the part/instrument name label (e.g. "Melody"). Default false. */
   suppressPartName?: boolean;
+  /**
+   * Hide jump-navigation markup — repeat barlines, 1st/2nd endings, segno, coda,
+   * D.S./D.C., Fine. For projection the running order is already unfolded into a
+   * linear sequence, so these would only confuse a congregation following along.
+   */
+  hideNavigation?: boolean;
   /** Force a new system (staff line) every N emitted measures (encoded breaks). */
   systemBreakEvery?: number;
   /**
@@ -92,7 +98,10 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
     // Dynamics / navigation markers. Each carries an <offset> from the measure
     // downbeat, so they can all be emitted up front before the note stream.
     for (const direction of measure.directions ?? []) {
-      const node = buildDirection(direction);
+      // In projection, drop the navigation part (segno/coda/D.S./Fine) but keep
+      // dynamics/words; an empty direction then renders nothing.
+      const dir = options.hideNavigation ? { ...direction, navigation: undefined } : direction;
+      const node = buildDirection(dir);
       if (node) children.push(node);
     }
 
@@ -124,7 +133,7 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
     }
 
     for (const barline of measure.barlines ?? []) {
-      children.push(buildBarline(barline));
+      children.push(buildBarline(barline, options.hideNavigation));
     }
 
     return el("measure", { number: String(measure.number) }, children);
@@ -398,12 +407,14 @@ function buildHarmony(h: HarmonyChord, offsetDivisions: number): XmlNode {
 // value — a final barline is "light-heavy" (the IR↔MusicXML boundary, ADR-001).
 const BAR_STYLE_MUSICXML: Partial<Record<string, string>> = { final: "light-heavy" };
 
-function buildBarline(barline: Barline): XmlNode {
+function buildBarline(barline: Barline, hideNavigation?: boolean): XmlNode {
   const kids: XmlChild[] = [];
   if (barline.style) {
     kids.push(el("bar-style", undefined, [BAR_STYLE_MUSICXML[barline.style] ?? barline.style]));
   }
-  if (barline.ending) {
+  // Endings (1./2. brackets) and repeat barlines are jump navigation; omit them
+  // for projection (the running order is already unfolded).
+  if (barline.ending && !hideNavigation) {
     kids.push(
       el("ending", {
         number: barline.ending.numbers.join(","),
@@ -411,7 +422,7 @@ function buildBarline(barline: Barline): XmlNode {
       }),
     );
   }
-  if (barline.repeat) {
+  if (barline.repeat && !hideNavigation) {
     kids.push(
       el("repeat", {
         direction: barline.repeat.direction,

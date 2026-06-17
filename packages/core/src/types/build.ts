@@ -77,6 +77,11 @@ export interface ScoreAppearance {
   inkColor?: string;
   /** Line-weight scale (1 = Verovio default); affects staff/stem/barline width. */
   lineThickness?: number;
+  /**
+   * Font family for the lyrics in the engraved score. Default is the bundled
+   * Pretendard; choosing another loads system fonts so it can render.
+   */
+  lyricFont?: string;
 }
 
 export interface BuildOptions {

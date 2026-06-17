@@ -31,7 +31,11 @@ const optionsFileSchema = z
     partName: z.object({ visible: z.boolean().optional() }).strict().optional(),
     key: z.object({ transposeSemitones: z.number().int().min(-24).max(24).optional() }).strict().optional(),
     score: z
-      .object({ inkColor: hex.optional(), lineThickness: z.number().min(0.3).max(3).optional() })
+      .object({
+        inkColor: hex.optional(),
+        lineThickness: z.number().min(0.3).max(3).optional(),
+        lyricFont: z.string().max(64).optional(),
+      })
       .strict()
       .optional(),
     layout: z

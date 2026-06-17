@@ -142,7 +142,11 @@ export const uiOptionsSchema = z
       .strict()
       .optional(),
     score: z
-      .object({ inkColor: hex.optional(), lineThickness: z.number().min(0.3).max(3).optional() })
+      .object({
+        inkColor: hex.optional(),
+        lineThickness: z.number().min(0.3).max(3).optional(),
+        lyricFont: z.string().max(64).optional(),
+      })
       .strict()
       .optional(),
     style: z

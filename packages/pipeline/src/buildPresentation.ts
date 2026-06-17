@@ -29,7 +29,7 @@ import {
   type ScoreValidationResult,
   type SlidePlan,
 } from "@worship-score/core";
-import { defaultFontConfig, fontEmbedFromConfig } from "./fonts.js";
+import { defaultFontConfig, fontEmbedFromConfig, BUNDLED_FONT_FAMILY } from "./fonts.js";
 
 export interface SlideAsset {
   index: number;
@@ -132,7 +132,13 @@ function renderOptionsFor(
     ...((options.measureNumbers?.visible ?? !projection) ? {} : { hideMeasureNumbers: true }),
     ...(options.score?.inkColor ? { inkColor: options.score.inkColor } : {}),
     ...(options.score?.lineThickness ? { lineThickness: options.score.lineThickness } : {}),
-    ...(fonts?.textFontFamily ? { textFontFamily: fonts.textFontFamily } : {}),
+    // Lyric font: a user choice overrides the bundled default and (if it is not
+    // the bundled Pretendard) enables system fonts so resvg can find it.
+    ...(options.score?.lyricFont
+      ? { textFontFamily: options.score.lyricFont, ...(options.score.lyricFont !== BUNDLED_FONT_FAMILY ? { loadSystemFonts: true } : {}) }
+      : fonts?.textFontFamily
+        ? { textFontFamily: fonts.textFontFamily }
+        : {}),
     ...(fonts?.fontFiles ? { fontFiles: fonts.fontFiles } : {}),
   };
 }

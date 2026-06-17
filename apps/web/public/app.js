@@ -42,7 +42,7 @@ function fitContain(imgW, imgH, box) {
 }
 
 function populateFonts() {
-  for (const sel of [$("title-font"), $("label-font")]) {
+  for (const sel of [$("title-font"), $("label-font"), $("lyric-font")]) {
     sel.innerHTML = "";
     for (const f of FONTS) {
       const o = document.createElement("option");
@@ -53,6 +53,7 @@ function populateFonts() {
   }
   $("title-font").value = "Malgun Gothic";
   $("label-font").value = "Malgun Gothic";
+  $("lyric-font").value = "Pretendard";
 }
 
 function readOptions() {
@@ -86,7 +87,7 @@ function readOptions() {
       measuresPerSystem: clampInt($("measures-per-system").value, 1, 4),
       maxSystemsPerSlide: clampInt($("max-systems").value, 1, 6),
     },
-    score: { inkColor: toHex($("ink-color").value), lineThickness: parseFloat($("line-thickness").value) },
+    score: { inkColor: toHex($("ink-color").value), lineThickness: parseFloat($("line-thickness").value), lyricFont: $("lyric-font").value },
     style,
   };
   if (bgOn) o.backgroundEnabled = true;
@@ -123,6 +124,7 @@ function applyOptions(ui) {
   if (ui.score) {
     if (ui.score.inkColor) setColor($("ink-color"), ui.score.inkColor);
     if (ui.score.lineThickness != null) $("line-thickness").value = String(ui.score.lineThickness);
+    if (ui.score.lyricFont) $("lyric-font").value = ui.score.lyricFont;
   }
   if (ui.layout) {
     if (ui.layout.measuresPerSystem) $("measures-per-system").value = String(ui.layout.measuresPerSystem);
@@ -155,6 +157,7 @@ function renderKeyOf(o) {
     o.key.transposeSemitones,
     o.score.inkColor,
     o.score.lineThickness,
+    o.score.lyricFont,
     o.layout.mode,
     o.layout.lyricSize,
     o.layout.measuresPerSystem,
@@ -435,6 +438,7 @@ async function removeBackground() {
 function resetDefaults() {
   setColor($("ink-color"), "1A1A1A");
   $("line-thickness").value = "1";
+  $("lyric-font").value = "Pretendard";
   $("layout-mode").value = "projection";
   $("lyric-size").value = "6";
   $("chords-visible").checked = false;

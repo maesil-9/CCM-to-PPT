@@ -96,7 +96,9 @@ function stripMeasureNumbers(svg: string): string {
 function resvgFontConfig(options?: RenderOptions): ResvgRenderOptions["font"] {
   if (options?.fontFiles && options.fontFiles.length > 0) {
     return {
-      loadSystemFonts: false,
+      // System fonts off by default (deterministic, headless-safe). Enabled when
+      // the user picks a lyric font that is not bundled.
+      loadSystemFonts: options.loadSystemFonts ?? false,
       fontFiles: options.fontFiles,
       ...(options.textFontFamily ? { defaultFontFamily: options.textFontFamily } : {}),
     };

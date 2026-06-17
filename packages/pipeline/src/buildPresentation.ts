@@ -120,11 +120,10 @@ function renderOptionsFor(
     // notes out (spacingLinear) to give the large lyrics room. Leadsheet keeps a
     // constant per-measure width.
     pageWidth: projection ? 2400 : Math.max(900, profile.measuresPerSystem * 620),
-    // Projection: keep full-width lyrics (spacingLinear modest so sparse phrases
-    // don't wrap), and spread the lines vertically (max spacingSystem/staff) so a
-    // multi-line slide fills the screen instead of floating as a thin band.
+    // Projection: full-width lyrics (spacingLinear modest so sparse phrases don't
+    // wrap) with a comfortable — not extreme — gap between the sung lines.
     ...(projection
-      ? { rendererOptions: { spacingLinear: 0.35, spacingNonLinear: 0.7, spacingSystem: 48, spacingStaff: 14 } }
+      ? { rendererOptions: { spacingLinear: 0.35, spacingNonLinear: 0.7, spacingSystem: 18, spacingStaff: 6 } }
       : {}),
     ...(profile.minimumStaffSize ? { minStaffSize: profile.minimumStaffSize } : {}),
     ...(profile.lyricSize ? { lyricSize: profile.lyricSize } : {}),

@@ -49,6 +49,8 @@ export interface SerializeOptions {
   includeChords?: boolean;
   /** Emit the tempo mark on the first measure. Default true. */
   includeTempo?: boolean;
+  /** Suppress the part/instrument name label (e.g. "Melody"). Default false. */
+  suppressPartName?: boolean;
   /** Force a new system (staff line) every N emitted measures (encoded breaks). */
   systemBreakEvery?: number;
   /**
@@ -129,10 +131,10 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
   });
 
   const part = el("part", { id: "P1" }, measureNodes);
+  // Empty part-name → Verovio prints no instrument label (clutter for slides).
+  const partName = options.suppressPartName ? "" : (score.parts[0]?.name ?? "Melody");
   const partList = el("part-list", undefined, [
-    el("score-part", { id: "P1" }, [
-      el("part-name", undefined, [score.parts[0]?.name ?? "Melody"]),
-    ]),
+    el("score-part", { id: "P1" }, [el("part-name", undefined, [partName])]),
   ]);
 
   const root = el("score-partwise", { version: "4.0" }, [

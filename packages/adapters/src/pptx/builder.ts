@@ -144,8 +144,10 @@ export class PptxGenJsBuilder implements PptxBuilder {
     const labelColor = labelStyle.color ?? (hasBgImage ? "F2F2F2" : "555555");
     // A FRESH shadow object per addText call: PptxGenJS converts shadow units to
     // EMU in place, so a shared object accumulates across slides and overflows.
+    // Drop shadow only when explicitly enabled (opt-in). On light backgrounds it
+    // muddies dark text, so it is off by default.
     const makeShadow = (): PptxShadow | undefined =>
-      hasBgImage ? { type: "outer", color: "000000", blur: 4, offset: 2, angle: 90, opacity: 0.6 } : undefined;
+      profile.textShadow ? { type: "outer", color: "000000", blur: 4, offset: 2, angle: 90, opacity: 0.6 } : undefined;
 
     for (const spec of input.slides) {
       const slide = pptx.addSlide();

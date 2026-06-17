@@ -128,6 +128,8 @@ export const uiOptionsSchema = z
   .object({
     chords: z.object({ visible: z.boolean() }).strict().optional(),
     tempo: z.object({ visible: z.boolean() }).strict().optional(),
+    measureNumbers: z.object({ visible: z.boolean() }).strict().optional(),
+    partName: z.object({ visible: z.boolean() }).strict().optional(),
     key: z.object({ transposeSemitones: z.number().int().min(-24).max(24) }).strict().optional(),
     backgroundEnabled: z.boolean().optional(),
     layout: z
@@ -149,6 +151,7 @@ export const uiOptionsSchema = z
         sectionLabel: textStyle.optional(),
         backgroundColor: hex.optional(),
         card: z.object({ color: hex.optional(), opacity: z.number().min(0).max(1).optional() }).strict().optional(),
+        textShadow: z.boolean().optional(),
       })
       .strict()
       .optional(),
@@ -163,6 +166,8 @@ export async function resolveBuildOptions(id: string, ui: unknown): Promise<Part
   const options: Partial<BuildOptions> = {};
   if (v.chords) options.chords = v.chords;
   if (v.tempo) options.tempo = v.tempo;
+  if (v.measureNumbers) options.measureNumbers = v.measureNumbers;
+  if (v.partName) options.partName = v.partName;
   if (v.key) options.key = v.key;
   if (v.style) options.style = v.style;
   if (v.score) options.score = v.score;
@@ -201,6 +206,8 @@ export async function saveUiOptions(id: string, ui: unknown): Promise<void> {
   const out: Record<string, unknown> = {};
   if (v.chords) out["chords"] = v.chords;
   if (v.tempo) out["tempo"] = v.tempo;
+  if (v.measureNumbers) out["measureNumbers"] = v.measureNumbers;
+  if (v.partName) out["partName"] = v.partName;
   if (v.key) out["key"] = v.key;
   if (v.score) out["score"] = v.score;
   if (v.style) out["style"] = v.style;
@@ -228,6 +235,8 @@ export async function loadUiOptions(id: string): Promise<UiOptions> {
   const ui: Record<string, unknown> = {};
   if (json["chords"]) ui["chords"] = json["chords"];
   if (json["tempo"]) ui["tempo"] = json["tempo"];
+  if (json["measureNumbers"]) ui["measureNumbers"] = json["measureNumbers"];
+  if (json["partName"]) ui["partName"] = json["partName"];
   if (json["key"]) ui["key"] = json["key"];
   if (json["style"]) ui["style"] = json["style"];
   if (json["score"]) ui["score"] = json["score"];

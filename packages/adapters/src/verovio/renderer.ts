@@ -86,6 +86,13 @@ function recolorSvg(svg: string, inkColor: string | undefined): string {
     .replace('class="definition-scale"', 'class="definition-scale" fill="currentColor"');
 }
 
+// Strip Verovio's auto-generated measure-number groups. They contain only a
+// <text>/<tspan> (no nested <g>), so a non-greedy match to the first </g> is
+// safe. Attribute order varies (`id` before `class`), so match class anywhere.
+function stripMeasureNumbers(svg: string): string {
+  return svg.replace(/<g\b[^>]*\bclass="mNum[^"]*"[^>]*>[\s\S]*?<\/g>/g, "");
+}
+
 function resvgFontConfig(options?: RenderOptions): ResvgRenderOptions["font"] {
   if (options?.fontFiles && options.fontFiles.length > 0) {
     return {
@@ -159,7 +166,8 @@ export class VerovioRenderer implements RendererProvider {
       );
     }
 
-    const svg = recolorSvg(this.toolkit.renderToSVG(1), input.options?.inkColor);
+    let svg = recolorSvg(this.toolkit.renderToSVG(1), input.options?.inkColor);
+    if (input.options?.hideMeasureNumbers) svg = stripMeasureNumbers(svg);
     const pages: RenderedPage[] = [];
 
     if (input.outputMode === "svg") {
@@ -167,8 +175,10 @@ export class VerovioRenderer implements RendererProvider {
       pages.push({ index: 0, svg, widthPx: size.width, heightPx: size.height });
     } else {
       const rasterScale = input.options?.scale ?? 2;
+      // Transparent background: the score (staff/notes/lyrics) must float over the
+      // slide background, NOT sit in an opaque white box. (resvg defaults to
+      // transparent when no background is given.)
       const resvg = new Resvg(svg, {
-        background: "white",
         fitTo: { mode: "zoom", value: rasterScale },
         font: resvgFontConfig(input.options),
       });

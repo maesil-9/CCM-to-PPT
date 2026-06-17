@@ -22,6 +22,10 @@ export interface TempoOptions {
   visible: boolean;
 }
 
+export interface VisibilityOption {
+  visible: boolean;
+}
+
 export interface BackgroundImageOptions {
   data: Uint8Array;
   mime: "image/png" | "image/jpeg";
@@ -60,6 +64,8 @@ export interface StyleOptions {
   backgroundColor?: string;
   /** Legibility card behind the score. */
   card?: CardStyle;
+  /** Drop shadow behind the title/section text. Default false. */
+  textShadow?: boolean;
 }
 
 /**
@@ -78,6 +84,10 @@ export interface BuildOptions {
   key: KeyOptions;
   /** Tempo mark visibility (default shown). */
   tempo?: TempoOptions;
+  /** Measure-number visibility. Default: shown for leadsheet, hidden for projection. */
+  measureNumbers?: VisibilityOption;
+  /** Part/instrument label ("Melody") visibility. Default: leadsheet on, projection off. */
+  partName?: VisibilityOption;
   background?: BackgroundImageOptions;
   style?: StyleOptions;
   score?: ScoreAppearance;

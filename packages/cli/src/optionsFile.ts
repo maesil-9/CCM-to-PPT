@@ -27,6 +27,8 @@ const optionsFileSchema = z
   .object({
     chords: z.object({ visible: z.boolean().optional() }).strict().optional(),
     tempo: z.object({ visible: z.boolean().optional() }).strict().optional(),
+    measureNumbers: z.object({ visible: z.boolean().optional() }).strict().optional(),
+    partName: z.object({ visible: z.boolean().optional() }).strict().optional(),
     key: z.object({ transposeSemitones: z.number().int().min(-24).max(24).optional() }).strict().optional(),
     score: z
       .object({ inkColor: hex.optional(), lineThickness: z.number().min(0.3).max(3).optional() })
@@ -49,6 +51,7 @@ const optionsFileSchema = z
         sectionLabel: textStyle.optional(),
         backgroundColor: hex.optional(),
         card: z.object({ color: hex.optional(), opacity: z.number().min(0).max(1).optional() }).strict().optional(),
+        textShadow: z.boolean().optional(),
       })
       .strict()
       .optional(),
@@ -95,6 +98,8 @@ export async function loadBuildOptions(scoreDir: string): Promise<LoadedOptions>
   const options: Partial<BuildOptions> = {};
   if (v.chords?.visible !== undefined) options.chords = { visible: v.chords.visible };
   if (v.tempo?.visible !== undefined) options.tempo = { visible: v.tempo.visible };
+  if (v.measureNumbers?.visible !== undefined) options.measureNumbers = { visible: v.measureNumbers.visible };
+  if (v.partName?.visible !== undefined) options.partName = { visible: v.partName.visible };
   if (v.key?.transposeSemitones !== undefined) options.key = { transposeSemitones: v.key.transposeSemitones };
   if (v.style) options.style = v.style as StyleOptions;
   if (v.score) options.score = v.score;

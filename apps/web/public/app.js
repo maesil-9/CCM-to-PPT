@@ -71,11 +71,14 @@ function readOptions() {
       bold: $("label-bold").checked,
     },
     card: { color: toHex($("card-color").value), opacity: parseFloat($("card-opacity").value) },
+    textShadow: $("text-shadow").checked,
   };
   if (!bgOn) style.backgroundColor = toHex($("bg-color").value);
   const o = {
     chords: { visible: $("chords-visible").checked },
     tempo: { visible: $("tempo-visible").checked },
+    measureNumbers: { visible: $("measure-numbers").checked },
+    partName: { visible: $("part-name").checked },
     key: { transposeSemitones: clampInt($("transpose").value, -12, 12) },
     layout: {
       mode: $("layout-mode").value === "leadsheet" ? "leadsheet" : "projection",
@@ -93,6 +96,9 @@ function readOptions() {
 function applyOptions(ui) {
   $("chords-visible").checked = !!ui.chords?.visible;
   $("tempo-visible").checked = ui.tempo?.visible !== false;
+  $("measure-numbers").checked = !!ui.measureNumbers?.visible;
+  $("part-name").checked = !!ui.partName?.visible;
+  $("text-shadow").checked = !!ui.style?.textShadow;
   $("transpose").value = String(ui.key?.transposeSemitones ?? 0);
   $("bg-enabled").checked = !!ui.backgroundEnabled;
   $("layout-mode").value = ui.layout?.mode === "leadsheet" ? "leadsheet" : "projection";
@@ -144,6 +150,8 @@ function renderKeyOf(o) {
   return [
     o.chords.visible,
     o.tempo.visible,
+    o.measureNumbers.visible,
+    o.partName.visible,
     o.key.transposeSemitones,
     o.score.inkColor,
     o.score.lineThickness,
@@ -213,7 +221,7 @@ function compose() {
   const bgUrl = ui.backgroundEnabled
     ? `/api/scores/${encodeURIComponent(state.id)}/background?v=${state.bgVersion}`
     : null;
-  const shadow = bgUrl ? "0 2px 4px rgba(0,0,0,0.6)" : "none";
+  const shadow = ui.style.textShadow ? "0 2px 4px rgba(0,0,0,0.55)" : "none";
 
   for (const s of state.slides) {
     const L = computeLayout(s);
@@ -413,6 +421,9 @@ function resetDefaults() {
   $("lyric-size").value = "6";
   $("chords-visible").checked = false;
   $("tempo-visible").checked = true;
+  $("measure-numbers").checked = false;
+  $("part-name").checked = false;
+  $("text-shadow").checked = false;
   $("transpose").value = "0";
   $("measures-per-system").value = "2";
   $("max-systems").value = "2";

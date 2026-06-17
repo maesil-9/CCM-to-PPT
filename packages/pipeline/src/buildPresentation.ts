@@ -100,6 +100,7 @@ function toPptxProfile(profile: PresentationProfile, options: BuildOptions): Ppt
   if (options.style?.card) p.card = options.style.card;
   if (options.style?.title) p.title = options.style.title;
   if (options.style?.sectionLabel) p.sectionLabel = options.style.sectionLabel;
+  if (options.style?.textShadow) p.textShadow = true;
   if (options.background) {
     p.backgroundImage = { data: options.background.data, mime: options.background.mime };
   }
@@ -119,11 +120,16 @@ function renderOptionsFor(
     // notes out (spacingLinear) to give the large lyrics room. Leadsheet keeps a
     // constant per-measure width.
     pageWidth: projection ? 2400 : Math.max(900, profile.measuresPerSystem * 620),
-    // Modest extra spacing so big lyrics don't collide, but not so much that a
-    // sparse phrase over-spreads and wraps into extra rows (kept near default).
-    ...(projection ? { rendererOptions: { spacingLinear: 0.3, spacingNonLinear: 0.7 } } : {}),
+    // Projection: keep full-width lyrics (spacingLinear modest so sparse phrases
+    // don't wrap), and spread the lines vertically (max spacingSystem/staff) so a
+    // multi-line slide fills the screen instead of floating as a thin band.
+    ...(projection
+      ? { rendererOptions: { spacingLinear: 0.35, spacingNonLinear: 0.7, spacingSystem: 48, spacingStaff: 14 } }
+      : {}),
     ...(profile.minimumStaffSize ? { minStaffSize: profile.minimumStaffSize } : {}),
     ...(profile.lyricSize ? { lyricSize: profile.lyricSize } : {}),
+    // Measure numbers: shown for leadsheet, hidden for projection (unless overridden).
+    ...((options.measureNumbers?.visible ?? !projection) ? {} : { hideMeasureNumbers: true }),
     ...(options.score?.inkColor ? { inkColor: options.score.inkColor } : {}),
     ...(options.score?.lineThickness ? { lineThickness: options.score.lineThickness } : {}),
     ...(fonts?.textFontFamily ? { textFontFamily: fonts.textFontFamily } : {}),
@@ -198,6 +204,8 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
         measureIds: slide.measureIds,
         includeChords: options.chords.visible,
         includeTempo: options.tempo?.visible !== false,
+        // Part label ("Melody"): shown for leadsheet, hidden for projection.
+        suppressPartName: !(options.partName?.visible ?? profile.layout !== "projection"),
         // Projection: explicit per-phrase breaks (empty = one full-width line).
         // Leadsheet: wrap every N measures.
         ...(profile.layout === "projection"

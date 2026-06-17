@@ -35,6 +35,8 @@ export interface RenderOptions {
   minStaffSize?: number;
   /** Lyric font size in Verovio points (2–8). Large for projection subtitles. */
   lyricSize?: number;
+  /** Remove auto-generated measure numbers from the engraving. */
+  hideMeasureNumbers?: boolean;
   /** Ink colour for staff/notes/text (hex, no '#'); default engine black. */
   inkColor?: string;
   /** Line-weight scale (1 = engine default) for staff/stem/barline widths. */
@@ -130,6 +132,8 @@ export interface PptxProfile {
   card?: CardStyle;
   title?: TextStyle;
   sectionLabel?: TextStyle;
+  /** Drop shadow behind title/section text. Default false. */
+  textShadow?: boolean;
 }
 
 /**

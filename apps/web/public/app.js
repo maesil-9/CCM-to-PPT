@@ -183,15 +183,31 @@ function updateValidation(v, ooxmlOk) {
   }
 }
 
-function computeLayout(s) {
+function computeLayout(s, compact) {
   const hasTitle = !!s.title;
   const hasSection = !!s.sectionLabel;
+  const innerW = SLIDE_W - 2 * MARGIN;
   let contentTop = MARGIN;
-  const titleRect = hasTitle ? { x: MARGIN, y: MARGIN * 0.5, w: SLIDE_W - 2 * MARGIN, h: 0.7 } : null;
-  if (hasTitle) contentTop = MARGIN * 0.5 + 0.8;
-  const sectionRect = hasSection ? { x: MARGIN, y: contentTop, w: SLIDE_W - 2 * MARGIN, h: 0.4 } : null;
-  if (hasSection) contentTop += 0.55;
-  const box = { x: MARGIN, y: contentTop, w: SLIDE_W - 2 * MARGIN, h: SLIDE_H - contentTop - MARGIN };
+  let titleRect = null;
+  let sectionRect = null;
+  if (compact) {
+    // Projection: small title top-left, section subtle top-right, on one row.
+    const rowY = MARGIN * 0.5;
+    const rowH = 0.55;
+    if (hasTitle) titleRect = { x: MARGIN, y: rowY, w: innerW * 0.66, h: rowH };
+    if (hasSection) sectionRect = { x: MARGIN + innerW * 0.66, y: rowY, w: innerW * 0.34, h: rowH };
+    contentTop = rowY + rowH + 0.12;
+  } else {
+    if (hasTitle) {
+      titleRect = { x: MARGIN, y: MARGIN * 0.5, w: innerW, h: 0.7 };
+      contentTop = MARGIN * 0.5 + 0.8;
+    }
+    if (hasSection) {
+      sectionRect = { x: MARGIN, y: contentTop, w: innerW, h: 0.4 };
+      contentTop += 0.55;
+    }
+  }
+  const box = { x: MARGIN, y: contentTop, w: innerW, h: SLIDE_H - contentTop - MARGIN };
   const fit = fitContain(s.widthPx || 16, s.heightPx || 9, box);
   const cardX = Math.max(box.x, fit.x - CARD_PAD);
   const cardY = Math.max(box.y, fit.y - CARD_PAD);
@@ -209,6 +225,7 @@ function place(el, r) {
 
 function compose() {
   const ui = readOptions();
+  const compact = ui.layout.mode === "projection";
   const preview = $("preview");
   preview.innerHTML = "";
   if (state.slides.length === 0) {
@@ -224,7 +241,7 @@ function compose() {
   const shadow = ui.style.textShadow ? "0 2px 4px rgba(0,0,0,0.55)" : "none";
 
   for (const s of state.slides) {
-    const L = computeLayout(s);
+    const L = computeLayout(s, compact);
     const wrap = document.createElement("div");
     wrap.className = "slide-wrap";
 
@@ -266,12 +283,12 @@ function compose() {
       const t = document.createElement("div");
       t.className = "slide-text slide-title";
       place(t, L.titleRect);
-      t.textContent = s.title;
+      t.textContent = compact ? "♪ " + s.title : s.title;
       t.style.fontFamily = ui.style.title.fontFace;
       t.style.fontSize = ptToCqw(ui.style.title.fontSize).toFixed(3) + "cqw";
       t.style.color = "#" + ui.style.title.color;
       t.style.fontWeight = ui.style.title.bold ? "700" : "400";
-      t.style.justifyContent = "center";
+      t.style.justifyContent = compact ? "flex-start" : "center";
       t.style.textShadow = shadow;
       slide.appendChild(t);
     }
@@ -285,6 +302,7 @@ function compose() {
       sec.style.fontSize = ptToCqw(ui.style.sectionLabel.fontSize).toFixed(3) + "cqw";
       sec.style.color = "#" + ui.style.sectionLabel.color;
       sec.style.fontWeight = ui.style.sectionLabel.bold === false ? "400" : "700";
+      sec.style.justifyContent = compact ? "flex-end" : "flex-start";
       sec.style.textShadow = shadow;
       slide.appendChild(sec);
     }
@@ -432,7 +450,7 @@ function resetDefaults() {
   setColor($("card-color"), "FFFFFF");
   $("card-opacity").value = "0";
   $("title-font").value = "Malgun Gothic";
-  $("title-size").value = "30";
+  $("title-size").value = "24";
   setColor($("title-color"), "1A1A1A");
   $("title-bold").checked = true;
   $("label-font").value = "Malgun Gothic";

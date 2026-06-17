@@ -30,7 +30,7 @@ export const PROJECTION_PRESENTATION_PROFILE: PresentationProfile = {
   version: PRESENTATION_PROFILE_VERSION,
   ratio: "16:9",
   layout: "projection",
-  lyricSize: 7,
+  lyricSize: 8,
   chordVisibility: "hidden",
   // In projection, maxSystemsPerSlide = sung lines per slide (reference: 2).
   maxSystemsPerSlide: 2,

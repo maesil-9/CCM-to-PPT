@@ -134,6 +134,8 @@ export interface PptxProfile {
   sectionLabel?: TextStyle;
   /** Drop shadow behind title/section text. Default false. */
   textShadow?: boolean;
+  /** Compact projection chrome: small ♪ title top-left, section label top-right. */
+  compact?: boolean;
 }
 
 /**

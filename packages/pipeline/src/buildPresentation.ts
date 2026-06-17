@@ -101,6 +101,7 @@ function toPptxProfile(profile: PresentationProfile, options: BuildOptions): Ppt
   if (options.style?.title) p.title = options.style.title;
   if (options.style?.sectionLabel) p.sectionLabel = options.style.sectionLabel;
   if (options.style?.textShadow) p.textShadow = true;
+  if (profile.layout === "projection") p.compact = true;
   if (options.background) {
     p.backgroundImage = { data: options.background.data, mime: options.background.mime };
   }
@@ -123,7 +124,7 @@ function renderOptionsFor(
     // Projection: full-width lyrics (spacingLinear modest so sparse phrases don't
     // wrap) with a comfortable — not extreme — gap between the sung lines.
     ...(projection
-      ? { rendererOptions: { spacingLinear: 0.35, spacingNonLinear: 0.7, spacingSystem: 18, spacingStaff: 6 } }
+      ? { rendererOptions: { spacingLinear: 0.35, spacingNonLinear: 0.7, spacingSystem: 16, spacingStaff: 4 } }
       : {}),
     ...(profile.minimumStaffSize ? { minStaffSize: profile.minimumStaffSize } : {}),
     ...(profile.lyricSize ? { lyricSize: profile.lyricSize } : {}),

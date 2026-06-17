@@ -166,45 +166,60 @@ export class PptxGenJsBuilder implements PptxBuilder {
       }
 
       let contentTop = margin;
+      const compact = profile.compact === true;
+      const innerW = slideW - 2 * margin;
 
-      if (spec.title) {
-        slide.addText(spec.title, {
-          x: margin,
-          y: margin * 0.5,
-          w: slideW - 2 * margin,
-          h: 0.7,
-          fontSize: titleStyle.fontSize ?? 26,
-          bold: titleStyle.bold ?? true,
-          ...(titleStyle.italic !== undefined ? { italic: titleStyle.italic } : {}),
-          ...(titleStyle.fontFace ? { fontFace: titleStyle.fontFace } : {}),
-          align: "center",
-          color: titleColor,
-          ...(() => {
-            const s = makeShadow();
-            return s ? { shadow: s } : {};
-          })(),
-        });
-        contentTop = margin * 0.5 + 0.8;
-      }
-
-      if (spec.sectionLabel) {
-        slide.addText(spec.sectionLabel, {
-          x: margin,
-          y: contentTop,
-          w: slideW - 2 * margin,
-          h: 0.4,
-          fontSize: labelStyle.fontSize ?? 16,
-          bold: labelStyle.bold ?? true,
-          ...(labelStyle.italic !== undefined ? { italic: labelStyle.italic } : {}),
-          ...(labelStyle.fontFace ? { fontFace: labelStyle.fontFace } : {}),
-          align: "left",
-          color: labelColor,
-          ...(() => {
-            const s = makeShadow();
-            return s ? { shadow: s } : {};
-          })(),
-        });
-        contentTop += 0.55;
+      if (compact) {
+        // Projection: a small title (♪ prefix) top-left with the section label
+        // subtle on the right, on one row — the score then fills the rest.
+        const rowY = margin * 0.5;
+        const rowH = 0.55;
+        if (spec.title) {
+          slide.addText("♪ " + spec.title, {
+            x: margin, y: rowY, w: innerW * 0.66, h: rowH,
+            fontSize: titleStyle.fontSize ?? 24,
+            bold: titleStyle.bold ?? true,
+            ...(titleStyle.fontFace ? { fontFace: titleStyle.fontFace } : {}),
+            align: "left", color: titleColor,
+            ...(() => { const s = makeShadow(); return s ? { shadow: s } : {}; })(),
+          });
+        }
+        if (spec.sectionLabel) {
+          slide.addText(spec.sectionLabel, {
+            x: margin + innerW * 0.66, y: rowY, w: innerW * 0.34, h: rowH,
+            fontSize: labelStyle.fontSize ?? 18,
+            bold: labelStyle.bold ?? true,
+            ...(labelStyle.fontFace ? { fontFace: labelStyle.fontFace } : {}),
+            align: "right", color: labelColor,
+            ...(() => { const s = makeShadow(); return s ? { shadow: s } : {}; })(),
+          });
+        }
+        contentTop = rowY + rowH + 0.12;
+      } else {
+        if (spec.title) {
+          slide.addText(spec.title, {
+            x: margin, y: margin * 0.5, w: innerW, h: 0.7,
+            fontSize: titleStyle.fontSize ?? 26,
+            bold: titleStyle.bold ?? true,
+            ...(titleStyle.italic !== undefined ? { italic: titleStyle.italic } : {}),
+            ...(titleStyle.fontFace ? { fontFace: titleStyle.fontFace } : {}),
+            align: "center", color: titleColor,
+            ...(() => { const s = makeShadow(); return s ? { shadow: s } : {}; })(),
+          });
+          contentTop = margin * 0.5 + 0.8;
+        }
+        if (spec.sectionLabel) {
+          slide.addText(spec.sectionLabel, {
+            x: margin, y: contentTop, w: innerW, h: 0.4,
+            fontSize: labelStyle.fontSize ?? 16,
+            bold: labelStyle.bold ?? true,
+            ...(labelStyle.italic !== undefined ? { italic: labelStyle.italic } : {}),
+            ...(labelStyle.fontFace ? { fontFace: labelStyle.fontFace } : {}),
+            align: "left", color: labelColor,
+            ...(() => { const s = makeShadow(); return s ? { shadow: s } : {}; })(),
+          });
+          contentTop += 0.55;
+        }
       }
 
       const box: Box = { x: margin, y: contentTop, w: slideW - 2 * margin, h: slideH - contentTop - margin };

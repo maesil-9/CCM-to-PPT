@@ -92,7 +92,7 @@ export function serializeMusicXml(score: ScoreIR, options: SerializeOptions = {}
     if (attrNode) children.push(attrNode);
 
     if (emittedIndex === 0 && score.musicalContext.tempoBpm && options.includeTempo !== false) {
-      children.push(buildTempo(score.musicalContext.tempoBpm));
+      children.push(buildTempo(score.musicalContext.tempoBpm, ctx.time));
     }
 
     // Dynamics / navigation markers. Each carries an <offset> from the measure
@@ -296,16 +296,22 @@ function buildNote(
   return el("note", undefined, kids);
 }
 
-function buildTempo(bpm: number): XmlNode {
-  const value = String(Math.round(bpm));
+/**
+ * `tempoBpm` is stored as quarter-notes-per-minute. In a compound meter
+ * (6/8, 9/8, 12/8) musicians read the beat as a dotted quarter, so display
+ * "♩.=N" (N = quarter-bpm × 2/3) to match how these charts are written, while
+ * the MusicXML <sound> value stays quarter-based for correct playback tempo.
+ */
+function buildTempo(bpm: number, time: Time): XmlNode {
+  const compound = time.beatType === 8 && time.beats % 3 === 0;
+  const sound = String(Math.round(bpm));
+  const display = String(Math.round(compound ? (bpm * 2) / 3 : bpm));
+  const metronomeKids: XmlChild[] = [el("beat-unit", undefined, ["quarter"])];
+  if (compound) metronomeKids.push(el("beat-unit-dot"));
+  metronomeKids.push(el("per-minute", undefined, [display]));
   return el("direction", { placement: "above" }, [
-    el("direction-type", undefined, [
-      el("metronome", undefined, [
-        el("beat-unit", undefined, ["quarter"]),
-        el("per-minute", undefined, [value]),
-      ]),
-    ]),
-    el("sound", { tempo: value }),
+    el("direction-type", undefined, [el("metronome", undefined, metronomeKids)]),
+    el("sound", { tempo: sound }),
   ]);
 }
 

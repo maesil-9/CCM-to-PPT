@@ -135,6 +135,37 @@ describe("serializeMusicXml", () => {
     expect(serializeMusicXml(score, { includeTempo: false })).not.toContain("<metronome>");
   });
 
+  it("renders the tempo beat as a dotted quarter in a compound meter", () => {
+    // Simple meter (4/4): quarter beat, value unchanged.
+    const simple = scoreOf([validMeasure()]);
+    simple.musicalContext.tempoBpm = 84;
+    const simpleXml = serializeMusicXml(simple);
+    expect(simpleXml).not.toContain("<beat-unit-dot/>");
+    expect(simpleXml).toContain("<per-minute>84</per-minute>");
+
+    // Compound meter (6/8): dotted-quarter beat = 84 × 2/3 = 56, but <sound>
+    // stays quarter-based (84) for correct playback.
+    const m68 = measure(
+      "m1",
+      0,
+      ["C", "D", "E", "F", "G", "A"].map((s, i) => qn("m1", i + 1, s as "C", 4, "eighth")),
+    );
+    m68.attributes = { divisions: 8, key: { fifths: 0, mode: "major" }, time: { beats: 6, beatType: 8 }, clef: { sign: "G", line: 2 } };
+    const compound = scoreOf([m68], {
+      musicalContext: {
+        divisions: 8,
+        initialKey: { fifths: 0, mode: "major" },
+        initialTime: { beats: 6, beatType: 8 },
+        initialClef: { sign: "G", line: 2 },
+        tempoBpm: 84,
+      },
+    });
+    const compoundXml = serializeMusicXml(compound);
+    expect(compoundXml).toContain("<beat-unit-dot/>");
+    expect(compoundXml).toContain("<per-minute>56</per-minute>");
+    expect(compoundXml).toContain('<sound tempo="84"/>');
+  });
+
   it("passes non-final bar styles through unchanged", () => {
     const m = measure("m1", 0, [qn("m1", 1, "C", 4, "whole")], true);
     m.barlines = [{ location: "right", style: "light-light" }];

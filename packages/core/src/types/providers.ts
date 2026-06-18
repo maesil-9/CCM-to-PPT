@@ -57,6 +57,8 @@ export interface RenderOptions {
   lyricOutlineColor?: string;
   /** Lyric outline width as a percentage of glyph height (e.g. 4 = 4%). */
   lyricOutlineWidth?: number;
+  /** Draw a soft drop shadow behind the congregation lyrics (over-photo legibility). */
+  lyricShadow?: boolean;
   /** Ink colour for staff/notes/text (hex, no '#'); default engine black. */
   inkColor?: string;
   /** Line-weight scale (1 = engine default) for staff/stem/barline widths. */

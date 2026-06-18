@@ -154,6 +154,7 @@ function renderOptionsFor(
     ...(options.score?.lyricColor ? { lyricColor: options.score.lyricColor } : {}),
     ...(options.score?.lyricOutlineColor ? { lyricOutlineColor: options.score.lyricOutlineColor } : {}),
     ...(options.score?.lyricOutlineWidth !== undefined ? { lyricOutlineWidth: options.score.lyricOutlineWidth } : {}),
+    ...(options.score?.lyricShadow ? { lyricShadow: true } : {}),
     ...(options.score?.lyricGap !== undefined ? { lyricTopMargin: options.score.lyricGap } : {}),
     // Lyric font: a user choice overrides the bundled default and (if it is not
     // the bundled Pretendard) enables system fonts so resvg can find it.

@@ -55,8 +55,8 @@ function populateFonts() {
       sel.appendChild(o);
     }
   }
-  $("title-font").value = "Malgun Gothic";
-  $("label-font").value = "Malgun Gothic";
+  $("title-font").value = "Pretendard";
+  $("label-font").value = "Pretendard";
   $("lyric-font").value = "Pretendard";
 }
 
@@ -99,6 +99,7 @@ function readOptions() {
       lyricColor: toHex($("lyric-color").value),
       lyricOutlineColor: toHex($("lyric-outline-color").value),
       lyricOutlineWidth: parseFloat($("lyric-outline-width").value),
+      lyricShadow: $("lyric-shadow").checked,
       lyricGap: parseFloat($("lyric-gap").value),
     },
     style,
@@ -142,6 +143,7 @@ function applyOptions(ui) {
     if (ui.score.lyricColor) setColor($("lyric-color"), ui.score.lyricColor);
     if (ui.score.lyricOutlineColor) setColor($("lyric-outline-color"), ui.score.lyricOutlineColor);
     if (ui.score.lyricOutlineWidth != null) $("lyric-outline-width").value = String(ui.score.lyricOutlineWidth);
+    $("lyric-shadow").checked = !!ui.score.lyricShadow;
     if (ui.score.lyricGap != null) $("lyric-gap").value = String(ui.score.lyricGap);
   }
   if (ui.layout) {
@@ -180,6 +182,7 @@ function renderKeyOf(o) {
     o.score.lyricColor,
     o.score.lyricOutlineColor,
     o.score.lyricOutlineWidth,
+    o.score.lyricShadow,
     o.score.lyricGap,
     o.layout.mode,
     o.layout.lyricSize,
@@ -470,19 +473,24 @@ async function removeBackground() {
   }
 }
 
+// System default preset: the worship-slide look (white outlined lyrics, heavier
+// ink, navy title, tempo hidden) — mirrors scores/saenggi-ya/options.json. Per-
+// score values (background, transpose) are intentionally left at their neutral
+// state, not part of the preset.
 function resetDefaults() {
   setColor($("ink-color"), "1A1A1A");
-  $("line-thickness").value = "1";
+  $("line-thickness").value = "1.7";
   $("lyric-font").value = "Pretendard";
-  $("lyric-bold").checked = false;
-  setColor($("lyric-color"), "1A1A1A");
-  setColor($("lyric-outline-color"), "FFFFFF");
-  $("lyric-outline-width").value = "0";
-  $("lyric-gap").value = "3";
+  $("lyric-bold").checked = true;
+  setColor($("lyric-color"), "FFFFFF");
+  setColor($("lyric-outline-color"), "000000");
+  $("lyric-outline-width").value = "12";
+  $("lyric-shadow").checked = false;
+  $("lyric-gap").value = "8";
   $("layout-mode").value = "projection";
-  $("lyric-size").value = "6";
+  $("lyric-size").value = "8";
   $("chords-visible").checked = false;
-  $("tempo-visible").checked = true;
+  $("tempo-visible").checked = false;
   $("measure-numbers").checked = false;
   $("part-name").checked = false;
   $("text-shadow").checked = false;
@@ -493,11 +501,11 @@ function resetDefaults() {
   setColor($("bg-color"), "FFFFFF");
   setColor($("card-color"), "FFFFFF");
   $("card-opacity").value = "0";
-  $("title-font").value = "Malgun Gothic";
+  $("title-font").value = "Pretendard";
   $("title-size").value = "24";
-  setColor($("title-color"), "1A1A1A");
+  setColor($("title-color"), "2A3A66");
   $("title-bold").checked = true;
-  $("label-font").value = "Malgun Gothic";
+  $("label-font").value = "Pretendard";
   $("label-size").value = "18";
   setColor($("label-color"), "555555");
   $("label-bold").checked = true;

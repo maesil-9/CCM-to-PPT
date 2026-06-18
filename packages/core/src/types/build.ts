@@ -90,6 +90,8 @@ export interface ScoreAppearance {
   lyricOutlineColor?: string;
   /** Lyric outline width as a percentage of glyph height (0 = none). */
   lyricOutlineWidth?: number;
+  /** Drop a soft shadow behind the congregation lyrics (legibility over photos). */
+  lyricShadow?: boolean;
   /** Gap between staff and lyrics (Verovio units; larger = more space). */
   lyricGap?: number;
 }

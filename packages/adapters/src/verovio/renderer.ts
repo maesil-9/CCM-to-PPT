@@ -151,27 +151,50 @@ function rightAlignTrailingSystems(svg: string): string {
 
 /**
  * Style the congregation lyrics (the `<g class="syl">` groups): optional bold
- * weight and an outline (stroke behind the fill via paint-order) so the text can
- * be made heavier and given a halo/keyline for legibility over a photo. The
- * outline width is given as a percentage of the glyph height so it scales with
- * the lyric size. Other text (tempo, chords) is untouched.
+ * weight, fill colour, an outline (stroke behind the fill via paint-order), and
+ * a soft drop shadow — so the text can be made heavier and given a halo/keyline
+ * and/or shadow for legibility over a photo. The outline width and the shadow
+ * offset/blur are scaled to the glyph height so they track the lyric size. The
+ * shadow is an SVG `feDropShadow` filter applied per syllable; its dx/dy/blur are
+ * in the definition-scale user space (where a glyph is ~700 units tall), so the
+ * filter `<defs>` is injected inside that inner `<svg>`. Other text (tempo,
+ * chords) is untouched.
  */
 function styleLyrics(
   svg: string,
-  opts: { lyricBold?: boolean; lyricColor?: string; lyricOutlineColor?: string; lyricOutlineWidth?: number },
+  opts: {
+    lyricBold?: boolean;
+    lyricColor?: string;
+    lyricOutlineColor?: string;
+    lyricOutlineWidth?: number;
+    lyricShadow?: boolean;
+  },
 ): string {
   const hasOutline = !!opts.lyricOutlineColor && (opts.lyricOutlineWidth ?? 0) > 0;
-  if (!opts.lyricBold && !opts.lyricColor && !hasOutline) return svg;
+  const hasShadow = !!opts.lyricShadow;
+  if (!opts.lyricBold && !opts.lyricColor && !hasOutline && !hasShadow) return svg;
+  // Glyph height drives both the outline width and the shadow offset/blur.
+  const fs = parseFloat(svg.match(/class="syl">[\s\S]*?<tspan font-size="([\d.]+)px"/)?.[1] ?? "700");
   const attrs: string[] = [];
   if (opts.lyricColor) attrs.push(`fill="#${opts.lyricColor}"`);
   if (opts.lyricBold) attrs.push('font-weight="bold"');
   if (hasOutline) {
-    const fs = parseFloat(svg.match(/class="syl">[\s\S]*?<tspan font-size="([\d.]+)px"/)?.[1] ?? "700");
     const sw = (fs * (opts.lyricOutlineWidth as number)) / 100; // width as % of glyph height
     attrs.push(`stroke="#${opts.lyricOutlineColor}" stroke-width="${sw.toFixed(1)}" paint-order="stroke" stroke-linejoin="round"`);
   }
+  if (hasShadow) attrs.push('filter="url(#wsLyricShadow)"');
   const add = " " + attrs.join(" ");
-  return svg.replace(/<g (id="[^"]*") class="syl">/g, `<g $1 class="syl"${add}>`);
+  let out = svg.replace(/<g (id="[^"]*") class="syl">/g, `<g $1 class="syl"${add}>`);
+  if (hasShadow) {
+    const off = Math.max(2, Math.round(fs * 0.05));
+    const blur = Math.max(2, Math.round(fs * 0.045));
+    const filterDef =
+      `<defs><filter id="wsLyricShadow" x="-40%" y="-40%" width="180%" height="180%">` +
+      `<feDropShadow dx="${off}" dy="${off}" stdDeviation="${blur}" flood-color="#000000" flood-opacity="0.7"/>` +
+      `</filter></defs>`;
+    out = out.replace(/(<svg class="definition-scale"[^>]*>)/, `$1${filterDef}`);
+  }
+  return out;
 }
 
 // Strip Verovio's auto-generated measure-number groups. They contain only a
@@ -264,6 +287,7 @@ export class VerovioRenderer implements RendererProvider {
       ...(input.options?.lyricColor ? { lyricColor: input.options.lyricColor } : {}),
       ...(input.options?.lyricOutlineColor ? { lyricOutlineColor: input.options.lyricOutlineColor } : {}),
       ...(input.options?.lyricOutlineWidth !== undefined ? { lyricOutlineWidth: input.options.lyricOutlineWidth } : {}),
+      ...(input.options?.lyricShadow ? { lyricShadow: true } : {}),
     });
     const pages: RenderedPage[] = [];
 

@@ -45,7 +45,7 @@
           </label>
           <label class="row" data-hint="오선·음표 기둥·마디선의 굵기입니다. 멀리서도 잘 보이게 굵게 할 수 있습니다.">
             <span class="row-label">선 두께</span>
-            <input type="range" id="line-thickness" min="0.6" max="2.4" step="0.1" value="1" />
+            <input type="range" id="line-thickness" min="0.6" max="2.4" step="0.1" value="1.7" />
           </label>
           <label class="row" data-hint="가사 글씨에 쓰는 글꼴입니다. 컴퓨터에 설치된 글꼴이어야 화면·내보내기에 그대로 나옵니다.">
             <span class="row-label">가사 글꼴</span>
@@ -53,23 +53,27 @@
           </label>
           <label class="row" data-hint="가사 글씨 색입니다. 오선·음표 색과 따로 지정합니다.">
             <span class="row-label">가사 색</span>
-            <input type="color" id="lyric-color" value="#1a1a1a" />
+            <input type="color" id="lyric-color" value="#ffffff" />
           </label>
           <label class="row" data-hint="오선(음표)과 그 아래 가사 사이의 간격입니다. 클수록 가사가 아래로 내려갑니다.">
             <span class="row-label">악보·가사 간격</span>
-            <input type="range" id="lyric-gap" min="0" max="16" step="0.5" value="3" />
+            <input type="range" id="lyric-gap" min="0" max="16" step="0.5" value="8" />
           </label>
           <label class="row" data-hint="가사 글씨를 굵게 표시합니다.">
             <span class="row-label">가사 굵기</span>
-            <input type="checkbox" id="lyric-bold" />
+            <input type="checkbox" id="lyric-bold" checked />
           </label>
           <label class="row" data-hint="가사 글씨에 두르는 외곽선(테두리) 색입니다. 사진 배경 위에서 글씨가 또렷하게 보이게 합니다.">
             <span class="row-label">가사 외곽선 색</span>
-            <input type="color" id="lyric-outline-color" value="#ffffff" />
+            <input type="color" id="lyric-outline-color" value="#000000" />
           </label>
           <label class="row" data-hint="가사 외곽선의 굵기입니다. 0이면 외곽선 없음. 글자 높이의 %로 적용됩니다.">
             <span class="row-label">가사 외곽선 굵기</span>
-            <input type="range" id="lyric-outline-width" min="0" max="12" step="0.5" value="0" />
+            <input type="range" id="lyric-outline-width" min="0" max="12" step="0.5" value="12" />
+          </label>
+          <label class="row" data-hint="가사 글씨 뒤에 부드러운 그림자를 깔아 사진 배경 위에서 또렷하게 보이게 합니다.">
+            <span class="row-label">가사 그림자</span>
+            <input type="checkbox" id="lyric-shadow" />
           </label>
         </section>
 
@@ -77,7 +81,7 @@
           <h2 class="group-title">레이아웃</h2>
           <label class="row" id="row-lyric-size" data-hint="자막형에서 가사 글씨 크기입니다. 클수록 멀리서도 잘 보입니다.">
             <span class="row-label">가사 크기</span>
-            <input type="range" id="lyric-size" min="3" max="8" step="0.5" value="6" />
+            <input type="range" id="lyric-size" min="3" max="8" step="0.5" value="8" />
           </label>
           <label class="row" id="row-max-systems" data-hint="한 장에 담을 줄 수입니다. 자막형은 한 줄 = 한 가사 구절이라 보통 2줄을 권합니다.">
             <span class="row-label">한 장 줄 수</span>
@@ -109,7 +113,7 @@
           </label>
           <label class="row" data-hint="악보 위에 빠르기표(♩=숫자)를 보여 줍니다. 끄면 사라집니다.">
             <span class="row-label">빠르기표</span>
-            <input type="checkbox" id="tempo-visible" checked />
+            <input type="checkbox" id="tempo-visible" />
           </label>
           <label class="row" data-hint="악보 줄 앞에 붙는 마디 번호입니다. 화면에 띄울 땐 보통 끕니다.">
             <span class="row-label">마디 번호</span>
@@ -177,7 +181,7 @@
           </label>
           <label class="row" data-hint="제목 글씨의 색입니다.">
             <span class="row-label">색</span>
-            <input type="color" id="title-color" value="#1a1a1a" />
+            <input type="color" id="title-color" value="#2a3a66" />
           </label>
           <label class="row" data-hint="제목을 굵게 표시합니다.">
             <span class="row-label">굵게</span>

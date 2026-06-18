@@ -150,6 +150,7 @@ export const uiOptionsSchema = z
         lyricColor: hex.optional(),
         lyricOutlineColor: hex.optional(),
         lyricOutlineWidth: z.number().min(0).max(20).optional(),
+        lyricShadow: z.boolean().optional(),
         lyricGap: z.number().min(0).max(20).optional(),
       })
       .strict()

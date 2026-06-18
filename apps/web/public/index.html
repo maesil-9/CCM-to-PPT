@@ -26,188 +26,204 @@
 
     <main class="layout">
       <aside class="controls" aria-label="스타일 설정">
-        <section class="group">
-          <h2 class="group-title">형식</h2>
-          <label class="row" data-hint="자막형: 큰 가사와 작은 멜로디를 화면에 띄우는 예배용. 악보형: 코드까지 촘촘히 담는 인쇄용 악보.">
-            <span class="row-label">형식</span>
-            <select id="layout-mode">
-              <option value="projection" selected>자막형</option>
-              <option value="leadsheet">악보형</option>
-            </select>
-          </label>
-        </section>
+        <details class="group" open>
+          <summary class="group-title">형식</summary>
+          <div class="group-body">
+            <label class="row" data-hint="자막형: 큰 가사와 멜로디를 화면에 띄우는 예배용. 악보형: 코드까지 촘촘히 담는 인쇄용 악보.">
+              <span class="row-label">형식</span>
+              <select id="layout-mode">
+                <option value="projection" selected>자막형</option>
+                <option value="leadsheet">악보형</option>
+              </select>
+            </label>
+          </div>
+        </details>
 
-        <section class="group">
-          <h2 class="group-title">악보</h2>
-          <label class="row" data-hint="오선과 음표, 가사의 색입니다.">
-            <span class="row-label">색</span>
-            <input type="color" id="ink-color" value="#1a1a1a" />
-          </label>
-          <label class="row" data-hint="오선·음표 기둥·마디선의 굵기입니다. 멀리서도 잘 보이게 굵게 할 수 있습니다.">
-            <span class="row-label">선 두께</span>
-            <input type="range" id="line-thickness" min="0.6" max="2.4" step="0.1" value="1.7" />
-          </label>
-          <label class="row" data-hint="가사 글씨에 쓰는 글꼴입니다. 컴퓨터에 설치된 글꼴이어야 화면·내보내기에 그대로 나옵니다.">
-            <span class="row-label">가사 글꼴</span>
-            <select id="lyric-font" class="font-select"></select>
-          </label>
-          <label class="row" data-hint="가사 글씨 색입니다. 오선·음표 색과 따로 지정합니다.">
-            <span class="row-label">가사 색</span>
-            <input type="color" id="lyric-color" value="#ffffff" />
-          </label>
-          <label class="row" data-hint="오선(음표)과 그 아래 가사 사이의 간격입니다. 클수록 가사가 아래로 내려갑니다.">
-            <span class="row-label">악보·가사 간격</span>
-            <input type="range" id="lyric-gap" min="0" max="16" step="0.5" value="8" />
-          </label>
-          <label class="row" data-hint="가사 글씨를 굵게 표시합니다.">
-            <span class="row-label">가사 굵기</span>
-            <input type="checkbox" id="lyric-bold" checked />
-          </label>
-          <label class="row" data-hint="가사 글씨에 두르는 외곽선(테두리) 색입니다. 사진 배경 위에서 글씨가 또렷하게 보이게 합니다.">
-            <span class="row-label">가사 외곽선 색</span>
-            <input type="color" id="lyric-outline-color" value="#000000" />
-          </label>
-          <label class="row" data-hint="가사 외곽선의 굵기입니다. 0이면 외곽선 없음. 글자 높이의 %로 적용됩니다.">
-            <span class="row-label">가사 외곽선 굵기</span>
-            <input type="range" id="lyric-outline-width" min="0" max="12" step="0.5" value="12" />
-          </label>
-          <label class="row" data-hint="가사 글씨 뒤에 부드러운 그림자를 깔아 사진 배경 위에서 또렷하게 보이게 합니다.">
-            <span class="row-label">가사 그림자</span>
-            <input type="checkbox" id="lyric-shadow" />
-          </label>
-        </section>
+        <details class="group" open>
+          <summary class="group-title">악보</summary>
+          <div class="group-body">
+            <label class="row" data-hint="오선과 음표, 가사의 색입니다.">
+              <span class="row-label">색</span>
+              <input type="color" id="ink-color" value="#1a1a1a" />
+            </label>
+            <label class="row" data-hint="오선·음표 기둥·마디선의 굵기입니다. 멀리서도 잘 보이게 굵게 할 수 있습니다.">
+              <span class="row-label">선 두께</span>
+              <input type="range" id="line-thickness" min="0.6" max="2.4" step="0.1" value="1.7" />
+            </label>
+            <label class="row" data-hint="가사 글씨에 쓰는 글꼴입니다. 컴퓨터에 설치된 글꼴이어야 화면·내보내기에 그대로 나옵니다.">
+              <span class="row-label">가사 글꼴</span>
+              <select id="lyric-font" class="font-select"></select>
+            </label>
+            <label class="row" data-hint="가사 글씨 색입니다. 오선·음표 색과 따로 지정합니다.">
+              <span class="row-label">가사 색</span>
+              <input type="color" id="lyric-color" value="#ffffff" />
+            </label>
+            <label class="row" data-hint="오선(음표)과 그 아래 가사 사이의 간격입니다. 클수록 가사가 아래로 내려갑니다.">
+              <span class="row-label">악보·가사 간격</span>
+              <input type="range" id="lyric-gap" min="0" max="16" step="0.5" value="8" />
+            </label>
+            <label class="row" data-hint="가사 글씨를 굵게 표시합니다.">
+              <span class="row-label">가사 굵기</span>
+              <input type="checkbox" id="lyric-bold" checked />
+            </label>
+            <label class="row" data-hint="가사 글씨에 두르는 외곽선(테두리) 색입니다. 사진 배경 위에서 글씨가 또렷하게 보이게 합니다.">
+              <span class="row-label">가사 외곽선 색</span>
+              <input type="color" id="lyric-outline-color" value="#000000" />
+            </label>
+            <label class="row" data-hint="가사 외곽선의 굵기입니다. 0이면 외곽선 없음. 글자 높이의 %로 적용됩니다.">
+              <span class="row-label">가사 외곽선 굵기</span>
+              <input type="range" id="lyric-outline-width" min="0" max="12" step="0.5" value="12" data-unit="%" />
+            </label>
+            <label class="row" data-hint="가사 글씨 뒤에 부드러운 그림자를 깔아 사진 배경 위에서 또렷하게 보이게 합니다.">
+              <span class="row-label">가사 그림자</span>
+              <input type="checkbox" id="lyric-shadow" />
+            </label>
+          </div>
+        </details>
 
-        <section class="group">
-          <h2 class="group-title">레이아웃</h2>
-          <label class="row" id="row-lyric-size" data-hint="자막형에서 가사 글씨 크기입니다. 클수록 멀리서도 잘 보입니다.">
-            <span class="row-label">가사 크기</span>
-            <input type="range" id="lyric-size" min="3" max="8" step="0.5" value="8" />
-          </label>
-          <label class="row" id="row-max-systems" data-hint="한 장에 담을 줄 수입니다. 자막형은 한 줄 = 한 가사 구절이라 보통 2줄을 권합니다.">
-            <span class="row-label">한 장 줄 수</span>
-            <select id="max-systems">
-              <option value="1">1</option>
-              <option value="2" selected>2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-            </select>
-          </label>
-          <label class="row" id="row-measures" data-hint="악보형에서 한 줄에 넣을 마디 수입니다. 적을수록 악보가 커집니다. (자막형에서는 구절 단위로 자동 배치됩니다.)">
-            <span class="row-label">한 줄 마디</span>
-            <select id="measures-per-system">
-              <option value="1">1</option>
-              <option value="2" selected>2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-            </select>
-          </label>
-        </section>
+        <details class="group" open>
+          <summary class="group-title">레이아웃</summary>
+          <div class="group-body">
+            <label class="row" id="row-lyric-size" data-hint="자막형에서 가사 글씨 크기입니다. 클수록 멀리서도 잘 보입니다.">
+              <span class="row-label">가사 크기</span>
+              <input type="range" id="lyric-size" min="3" max="8" step="0.5" value="8" />
+            </label>
+            <label class="row" id="row-max-systems" data-hint="한 장에 담을 줄 수입니다. 자막형은 한 줄 = 한 가사 구절이라 보통 2줄을 권합니다.">
+              <span class="row-label">한 장 줄 수</span>
+              <select id="max-systems">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+              </select>
+            </label>
+            <label class="row" id="row-measures" data-hint="악보형에서 한 줄에 넣을 마디 수입니다. 적을수록 악보가 커집니다. (자막형에서는 구절 단위로 자동 배치됩니다.)">
+              <span class="row-label">한 줄 마디</span>
+              <select id="measures-per-system">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </label>
+          </div>
+        </details>
 
-        <section class="group">
-          <h2 class="group-title">표시</h2>
-          <label class="row" data-hint="음표 위에 코드 기호를 함께 보여 줍니다. 끄면 멜로디와 가사만 남습니다.">
-            <span class="row-label">코드</span>
-            <input type="checkbox" id="chords-visible" />
-          </label>
-          <label class="row" data-hint="악보 위에 빠르기표(♩=숫자)를 보여 줍니다. 끄면 사라집니다.">
-            <span class="row-label">빠르기표</span>
-            <input type="checkbox" id="tempo-visible" />
-          </label>
-          <label class="row" data-hint="악보 줄 앞에 붙는 마디 번호입니다. 화면에 띄울 땐 보통 끕니다.">
-            <span class="row-label">마디 번호</span>
-            <input type="checkbox" id="measure-numbers" />
-          </label>
-          <label class="row" data-hint="악보 왼쪽의 ‘Melody’ 같은 파트 이름입니다. 화면에 띄울 땐 보통 끕니다.">
-            <span class="row-label">악기 이름</span>
-            <input type="checkbox" id="part-name" />
-          </label>
-          <label class="row" data-hint="제목·절 이름 글씨 뒤 그림자입니다. 밝은 배경에선 보통 끕니다.">
-            <span class="row-label">글자 그림자</span>
-            <input type="checkbox" id="text-shadow" />
-          </label>
-          <label class="row" data-hint="곡 전체의 조를 반음 단위로 올리거나 내립니다. 0은 원래 조입니다.">
-            <span class="row-label">조옮김</span>
-            <span class="stepper">
-              <button type="button" data-step="-1" id="transpose-down" aria-label="조 반음 내림">−</button>
-              <input type="number" id="transpose" min="-12" max="12" step="1" value="0" aria-label="조옮김 반음 수" />
-              <button type="button" data-step="1" id="transpose-up" aria-label="조 반음 올림">+</button>
-            </span>
-          </label>
-        </section>
+        <details class="group" open>
+          <summary class="group-title">표시</summary>
+          <div class="group-body">
+            <label class="row" data-hint="음표 위에 코드 기호를 함께 보여 줍니다. 끄면 멜로디와 가사만 남습니다.">
+              <span class="row-label">코드</span>
+              <input type="checkbox" id="chords-visible" />
+            </label>
+            <label class="row" data-hint="악보 위에 빠르기표(♩=숫자)를 보여 줍니다. 끄면 사라집니다.">
+              <span class="row-label">빠르기표</span>
+              <input type="checkbox" id="tempo-visible" />
+            </label>
+            <label class="row" data-hint="악보 줄 앞에 붙는 마디 번호입니다. 화면에 띄울 땐 보통 끕니다.">
+              <span class="row-label">마디 번호</span>
+              <input type="checkbox" id="measure-numbers" />
+            </label>
+            <label class="row" data-hint="악보 왼쪽의 ‘Melody’ 같은 파트 이름입니다. 화면에 띄울 땐 보통 끕니다.">
+              <span class="row-label">악기 이름</span>
+              <input type="checkbox" id="part-name" />
+            </label>
+            <label class="row" data-hint="제목·절 이름 글씨 뒤 그림자입니다. 밝은 배경에선 보통 끕니다.">
+              <span class="row-label">글자 그림자</span>
+              <input type="checkbox" id="text-shadow" />
+            </label>
+            <label class="row" data-hint="곡 전체의 조를 반음 단위로 올리거나 내립니다. 0은 원래 조입니다.">
+              <span class="row-label">조옮김</span>
+              <span class="stepper">
+                <button type="button" data-step="-1" id="transpose-down" aria-label="조 반음 내림">−</button>
+                <input type="number" id="transpose" min="-12" max="12" step="1" value="0" aria-label="조옮김 반음 수" />
+                <button type="button" data-step="1" id="transpose-up" aria-label="조 반음 올림">+</button>
+              </span>
+            </label>
+          </div>
+        </details>
 
-        <section class="group">
-          <h2 class="group-title">배경</h2>
-          <label class="row" data-hint="곡마다 공통으로 깔리는 배경 그림을 사용합니다.">
-            <span class="row-label">배경 그림</span>
-            <input type="checkbox" id="bg-enabled" />
-          </label>
-          <label class="row" data-hint="배경 그림 파일(PNG)을 이 곡에 올립니다.">
-            <span class="row-label">그림 올리기</span>
-            <input type="file" id="bg-file" accept="image/png" />
-          </label>
-          <label class="row" data-hint="이 곡의 배경 그림을 지웁니다.">
-            <span class="row-label">그림 제거</span>
-            <button type="button" id="bg-remove">제거</button>
-          </label>
-          <label class="row" data-hint="배경 그림이 없을 때의 바탕 색입니다.">
-            <span class="row-label">바탕 색</span>
-            <input type="color" id="bg-color" value="#ffffff" />
-          </label>
-        </section>
+        <details class="group" open>
+          <summary class="group-title">배경</summary>
+          <div class="group-body">
+            <label class="row" data-hint="곡마다 공통으로 깔리는 배경 그림을 사용합니다.">
+              <span class="row-label">배경 그림</span>
+              <input type="checkbox" id="bg-enabled" />
+            </label>
+            <label class="row" data-hint="배경 그림 파일(PNG)을 이 곡에 올립니다.">
+              <span class="row-label">그림 올리기</span>
+              <input type="file" id="bg-file" accept="image/png" />
+            </label>
+            <label class="row" data-hint="이 곡의 배경 그림을 지웁니다.">
+              <span class="row-label">그림 제거</span>
+              <button type="button" id="bg-remove">제거</button>
+            </label>
+            <label class="row" data-hint="배경 그림이 없을 때의 바탕 색입니다.">
+              <span class="row-label">바탕 색</span>
+              <input type="color" id="bg-color" value="#ffffff" />
+            </label>
+          </div>
+        </details>
 
-        <section class="group">
-          <h2 class="group-title">가독성 바탕</h2>
-          <label class="row" data-hint="악보 뒤에 깔아 글씨가 잘 보이게 하는 바탕의 색입니다.">
-            <span class="row-label">색</span>
-            <input type="color" id="card-color" value="#ffffff" />
-          </label>
-          <label class="row" data-hint="악보 뒤 바탕의 진하기입니다. 0이면 바탕 없이 배경이 그대로 비칩니다. 사진처럼 복잡한 배경에서 글씨가 안 보일 때만 올리세요.">
-            <span class="row-label">진하기</span>
-            <input type="range" id="card-opacity" min="0" max="1" step="0.02" value="0" />
-          </label>
-        </section>
+        <details class="group">
+          <summary class="group-title">가독성 바탕</summary>
+          <div class="group-body">
+            <label class="row" data-hint="악보 뒤에 깔아 글씨가 잘 보이게 하는 바탕의 색입니다.">
+              <span class="row-label">색</span>
+              <input type="color" id="card-color" value="#ffffff" />
+            </label>
+            <label class="row" data-hint="악보 뒤 바탕의 진하기입니다. 0이면 바탕 없이 배경이 그대로 비칩니다. 사진처럼 복잡한 배경에서 글씨가 안 보일 때만 올리세요.">
+              <span class="row-label">진하기</span>
+              <input type="range" id="card-opacity" min="0" max="1" step="0.02" value="0" data-scale="100" data-unit="%" />
+            </label>
+          </div>
+        </details>
 
-        <section class="group">
-          <h2 class="group-title">제목</h2>
-          <label class="row" data-hint="제목에 쓰는 글꼴입니다.">
-            <span class="row-label">글꼴</span>
-            <select id="title-font" class="font-select"></select>
-          </label>
-          <label class="row" data-hint="제목 글씨의 크기입니다.">
-            <span class="row-label">크기</span>
-            <input type="number" id="title-size" min="8" max="80" step="1" value="24" />
-          </label>
-          <label class="row" data-hint="제목 글씨의 색입니다.">
-            <span class="row-label">색</span>
-            <input type="color" id="title-color" value="#2a3a66" />
-          </label>
-          <label class="row" data-hint="제목을 굵게 표시합니다.">
-            <span class="row-label">굵게</span>
-            <input type="checkbox" id="title-bold" checked />
-          </label>
-        </section>
+        <details class="group">
+          <summary class="group-title">제목</summary>
+          <div class="group-body">
+            <label class="row" data-hint="제목에 쓰는 글꼴입니다.">
+              <span class="row-label">글꼴</span>
+              <select id="title-font" class="font-select"></select>
+            </label>
+            <label class="row" data-hint="제목 글씨의 크기입니다.">
+              <span class="row-label">크기</span>
+              <input type="number" id="title-size" min="8" max="80" step="1" value="24" />
+            </label>
+            <label class="row" data-hint="제목 글씨의 색입니다.">
+              <span class="row-label">색</span>
+              <input type="color" id="title-color" value="#2a3a66" />
+            </label>
+            <label class="row" data-hint="제목을 굵게 표시합니다.">
+              <span class="row-label">굵게</span>
+              <input type="checkbox" id="title-bold" checked />
+            </label>
+          </div>
+        </details>
 
-        <section class="group">
-          <h2 class="group-title">절 이름</h2>
-          <label class="row" data-hint="‘1절’, ‘후렴’ 같은 이름에 쓰는 글꼴입니다.">
-            <span class="row-label">글꼴</span>
-            <select id="label-font" class="font-select"></select>
-          </label>
-          <label class="row" data-hint="절 이름 글씨의 크기입니다.">
-            <span class="row-label">크기</span>
-            <input type="number" id="label-size" min="8" max="60" step="1" value="18" />
-          </label>
-          <label class="row" data-hint="절 이름 글씨의 색입니다.">
-            <span class="row-label">색</span>
-            <input type="color" id="label-color" value="#555555" />
-          </label>
-          <label class="row" data-hint="절 이름을 굵게 표시합니다.">
-            <span class="row-label">굵게</span>
-            <input type="checkbox" id="label-bold" checked />
-          </label>
-        </section>
+        <details class="group">
+          <summary class="group-title">절 이름</summary>
+          <div class="group-body">
+            <label class="row" data-hint="‘1절’, ‘후렴’ 같은 이름에 쓰는 글꼴입니다.">
+              <span class="row-label">글꼴</span>
+              <select id="label-font" class="font-select"></select>
+            </label>
+            <label class="row" data-hint="절 이름 글씨의 크기입니다.">
+              <span class="row-label">크기</span>
+              <input type="number" id="label-size" min="8" max="60" step="1" value="18" />
+            </label>
+            <label class="row" data-hint="절 이름 글씨의 색입니다.">
+              <span class="row-label">색</span>
+              <input type="color" id="label-color" value="#555555" />
+            </label>
+            <label class="row" data-hint="절 이름을 굵게 표시합니다.">
+              <span class="row-label">굵게</span>
+              <input type="checkbox" id="label-bold" checked />
+            </label>
+          </div>
+        </details>
       </aside>
 
       <section class="preview" id="preview" aria-label="슬라이드 미리보기" aria-busy="false"></section>

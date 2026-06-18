@@ -37,6 +37,79 @@ function clampInt(v, lo, hi) {
   return Math.max(lo, Math.min(hi, n));
 }
 
+// --- Editor affordances: live slider/colour readouts + collapsible groups ---
+const readoutUpdaters = [];
+
+// Format a slider's current value for display: optional ×scale and unit suffix
+// (e.g. card opacity 0.5 → "50%", outline 12 → "12%", thickness 1.7 → "1.7").
+function fmtRange(el) {
+  const scale = parseFloat(el.dataset.scale || "1");
+  const unit = el.dataset.unit || "";
+  let v = parseFloat(el.value) * scale;
+  if (!isFinite(v)) v = 0;
+  const s = Number.isInteger(v) ? String(v) : v.toFixed(1);
+  return s + unit;
+}
+
+// Attach a live readout to every slider (number) and colour swatch (hex). The
+// readouts are injected at runtime so the markup stays clean; each input is
+// wrapped with its readout in a .row-ctl so they sit together on the row's right.
+function initReadouts() {
+  for (const r of document.querySelectorAll(".controls input[type=range]")) {
+    const ctl = document.createElement("span");
+    ctl.className = "row-ctl";
+    r.parentNode.insertBefore(ctl, r);
+    ctl.appendChild(r);
+    const out = document.createElement("span");
+    out.className = "range-val";
+    ctl.appendChild(out);
+    const upd = () => { out.textContent = fmtRange(r); };
+    r.addEventListener("input", upd);
+    readoutUpdaters.push(upd);
+    upd();
+  }
+  for (const c of document.querySelectorAll(".controls input[type=color]")) {
+    const ctl = document.createElement("span");
+    ctl.className = "row-ctl";
+    c.parentNode.insertBefore(ctl, c);
+    ctl.appendChild(c);
+    const out = document.createElement("span");
+    out.className = "hex-val";
+    ctl.appendChild(out);
+    const upd = () => { out.textContent = c.value.toUpperCase(); };
+    c.addEventListener("input", upd);
+    readoutUpdaters.push(upd);
+    upd();
+  }
+}
+
+// Re-sync all readouts after values are set programmatically (load/reset).
+function refreshReadouts() {
+  for (const f of readoutUpdaters) f();
+}
+
+// Remember which control groups the user collapsed (per browser) so the panel
+// reopens the way they left it.
+const GROUPS_KEY = "ws-editor-groups";
+function initGroupMemory() {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(GROUPS_KEY) || "{}"); } catch { /* ignore */ }
+  const groups = [...document.querySelectorAll(".controls .group")];
+  const keyOf = (g) => g.querySelector(".group-title")?.textContent?.trim() || "";
+  for (const g of groups) {
+    const key = keyOf(g);
+    if (key && key in saved) g.open = !!saved[key];
+    g.addEventListener("toggle", () => {
+      const cur = {};
+      for (const gg of groups) {
+        const k = keyOf(gg);
+        if (k) cur[k] = gg.open;
+      }
+      try { localStorage.setItem(GROUPS_KEY, JSON.stringify(cur)); } catch { /* ignore */ }
+    });
+  }
+}
+
 function fitContain(imgW, imgH, box) {
   if (imgW <= 0 || imgH <= 0) return box;
   const scale = Math.min(box.w / imgW, box.h / imgH);
@@ -152,6 +225,7 @@ function applyOptions(ui) {
   }
   syncBgState();
   syncModeUI();
+  refreshReadouts();
 }
 
 function syncBgState() {
@@ -380,6 +454,7 @@ async function serverRender() {
 function onAnyChange() {
   syncBgState();
   syncModeUI();
+  refreshReadouts();
   const opts = readOptions();
   if (renderKeyOf(opts) !== lastRenderKey) {
     clearTimeout(renderTimer);
@@ -572,6 +647,8 @@ function initTooltip() {
 
 async function init() {
   populateFonts();
+  initReadouts();
+  initGroupMemory();
   initTooltip();
 
   document.querySelector(".controls").addEventListener("input", onAnyChange);

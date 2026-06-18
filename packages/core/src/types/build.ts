@@ -84,10 +84,14 @@ export interface ScoreAppearance {
   lyricFont?: string;
   /** Bold the congregation lyrics. */
   lyricBold?: boolean;
+  /** Lyric fill colour (overrides ink for lyrics only), hex without '#'. */
+  lyricColor?: string;
   /** Lyric outline (외곽선) colour, hex without '#'. */
   lyricOutlineColor?: string;
   /** Lyric outline width as a percentage of glyph height (0 = none). */
   lyricOutlineWidth?: number;
+  /** Gap between staff and lyrics (Verovio units; larger = more space). */
+  lyricGap?: number;
 }
 
 export interface BuildOptions {

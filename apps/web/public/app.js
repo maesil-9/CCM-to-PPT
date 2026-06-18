@@ -96,8 +96,10 @@ function readOptions() {
       lineThickness: parseFloat($("line-thickness").value),
       lyricFont: $("lyric-font").value,
       lyricBold: $("lyric-bold").checked,
+      lyricColor: toHex($("lyric-color").value),
       lyricOutlineColor: toHex($("lyric-outline-color").value),
       lyricOutlineWidth: parseFloat($("lyric-outline-width").value),
+      lyricGap: parseFloat($("lyric-gap").value),
     },
     style,
   };
@@ -137,8 +139,10 @@ function applyOptions(ui) {
     if (ui.score.lineThickness != null) $("line-thickness").value = String(ui.score.lineThickness);
     if (ui.score.lyricFont) $("lyric-font").value = ui.score.lyricFont;
     $("lyric-bold").checked = !!ui.score.lyricBold;
+    if (ui.score.lyricColor) setColor($("lyric-color"), ui.score.lyricColor);
     if (ui.score.lyricOutlineColor) setColor($("lyric-outline-color"), ui.score.lyricOutlineColor);
     if (ui.score.lyricOutlineWidth != null) $("lyric-outline-width").value = String(ui.score.lyricOutlineWidth);
+    if (ui.score.lyricGap != null) $("lyric-gap").value = String(ui.score.lyricGap);
   }
   if (ui.layout) {
     if (ui.layout.measuresPerSystem) $("measures-per-system").value = String(ui.layout.measuresPerSystem);
@@ -173,8 +177,10 @@ function renderKeyOf(o) {
     o.score.lineThickness,
     o.score.lyricFont,
     o.score.lyricBold,
+    o.score.lyricColor,
     o.score.lyricOutlineColor,
     o.score.lyricOutlineWidth,
+    o.score.lyricGap,
     o.layout.mode,
     o.layout.lyricSize,
     o.layout.measuresPerSystem,
@@ -469,8 +475,10 @@ function resetDefaults() {
   $("line-thickness").value = "1";
   $("lyric-font").value = "Pretendard";
   $("lyric-bold").checked = false;
+  setColor($("lyric-color"), "1A1A1A");
   setColor($("lyric-outline-color"), "FFFFFF");
   $("lyric-outline-width").value = "0";
+  $("lyric-gap").value = "3";
   $("layout-mode").value = "projection";
   $("lyric-size").value = "6";
   $("chords-visible").checked = false;

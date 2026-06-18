@@ -51,6 +51,14 @@
             <span class="row-label">가사 글꼴</span>
             <select id="lyric-font" class="font-select"></select>
           </label>
+          <label class="row" data-hint="가사 글씨 색입니다. 오선·음표 색과 따로 지정합니다.">
+            <span class="row-label">가사 색</span>
+            <input type="color" id="lyric-color" value="#1a1a1a" />
+          </label>
+          <label class="row" data-hint="오선(음표)과 그 아래 가사 사이의 간격입니다. 클수록 가사가 아래로 내려갑니다.">
+            <span class="row-label">악보·가사 간격</span>
+            <input type="range" id="lyric-gap" min="0" max="16" step="0.5" value="3" />
+          </label>
           <label class="row" data-hint="가사 글씨를 굵게 표시합니다.">
             <span class="row-label">가사 굵기</span>
             <input type="checkbox" id="lyric-bold" />

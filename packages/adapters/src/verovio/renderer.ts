@@ -63,6 +63,8 @@ function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
     svgViewBox: true,
     // Large lyrics for projection subtitles (Verovio clamps to its 2–8 range).
     ...(options?.lyricSize ? { lyricSize: Math.max(2, Math.min(8, options.lyricSize)) } : {}),
+    // Gap between the staff and the lyrics below it (Verovio units).
+    ...(options?.lyricTopMargin !== undefined ? { lyricTopMinMargin: options.lyricTopMargin } : {}),
     // Use Bravura (the SMuFL reference font) for the engraving. Verovio renders
     // some glyphs as <text font-family="Bravura"> (metronome note, chord-symbol
     // accidentals); resvg can't read Verovio's embedded font, so we also bundle
@@ -140,11 +142,12 @@ function rightAlignTrailingSystems(svg: string): string {
  */
 function styleLyrics(
   svg: string,
-  opts: { lyricBold?: boolean; lyricOutlineColor?: string; lyricOutlineWidth?: number },
+  opts: { lyricBold?: boolean; lyricColor?: string; lyricOutlineColor?: string; lyricOutlineWidth?: number },
 ): string {
   const hasOutline = !!opts.lyricOutlineColor && (opts.lyricOutlineWidth ?? 0) > 0;
-  if (!opts.lyricBold && !hasOutline) return svg;
+  if (!opts.lyricBold && !opts.lyricColor && !hasOutline) return svg;
   const attrs: string[] = [];
+  if (opts.lyricColor) attrs.push(`fill="#${opts.lyricColor}"`);
   if (opts.lyricBold) attrs.push('font-weight="bold"');
   if (hasOutline) {
     const fs = parseFloat(svg.match(/class="syl">[\s\S]*?<tspan font-size="([\d.]+)px"/)?.[1] ?? "700");
@@ -242,6 +245,7 @@ export class VerovioRenderer implements RendererProvider {
     if (input.options?.rightAlignTrailingSystems) svg = rightAlignTrailingSystems(svg);
     svg = styleLyrics(svg, {
       ...(input.options?.lyricBold ? { lyricBold: true } : {}),
+      ...(input.options?.lyricColor ? { lyricColor: input.options.lyricColor } : {}),
       ...(input.options?.lyricOutlineColor ? { lyricOutlineColor: input.options.lyricOutlineColor } : {}),
       ...(input.options?.lyricOutlineWidth !== undefined ? { lyricOutlineWidth: input.options.lyricOutlineWidth } : {}),
     });

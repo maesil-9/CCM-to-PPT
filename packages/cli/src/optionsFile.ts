@@ -36,8 +36,10 @@ const optionsFileSchema = z
         lineThickness: z.number().min(0.3).max(3).optional(),
         lyricFont: z.string().max(64).optional(),
         lyricBold: z.boolean().optional(),
+        lyricColor: hex.optional(),
         lyricOutlineColor: hex.optional(),
         lyricOutlineWidth: z.number().min(0).max(20).optional(),
+        lyricGap: z.number().min(0).max(20).optional(),
       })
       .strict()
       .optional(),

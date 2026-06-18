@@ -49,6 +49,10 @@ export interface RenderOptions {
   rightAlignTrailingSystems?: boolean;
   /** Bold the congregation lyrics. */
   lyricBold?: boolean;
+  /** Lyric fill colour (overrides ink for lyrics only), hex without '#'. */
+  lyricColor?: string;
+  /** Gap between staff and lyrics (Verovio lyricTopMinMargin units). */
+  lyricTopMargin?: number;
   /** Lyric outline (halo/keyline) colour, hex without '#'. */
   lyricOutlineColor?: string;
   /** Lyric outline width as a percentage of glyph height (e.g. 4 = 4%). */

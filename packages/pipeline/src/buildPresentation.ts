@@ -111,6 +111,47 @@ function toPptxProfile(profile: PresentationProfile, options: BuildOptions): Ppt
   return p;
 }
 
+// --- Projection auto-sizing (maximum readable zoom) ---
+// We render every projection slide on ONE fixed-width page so all PNGs share a
+// width and a single composite scale gives identical note size deck-wide. To make
+// that size as LARGE as possible without a line wrapping to a second page, we
+// measure each deck's widest natural line and size the page so it just fills the
+// content area. This is an engine rule (per deck), not a hardcoded number.
+const PROJECTION_FALLBACK_PAGE_WIDTH = 2400; // used only if measuring is unavailable
+// A page wide enough that no realistic worship line wraps during measuring; with
+// adjustPageWidth the page is then cropped to the true content (incl. lyric overhang).
+const PROJECTION_MEASURE_PAGE_WIDTH = 4800;
+// Slack added to the widest line so it fills the content WITHOUT wrapping (the
+// measured width already includes lyric overhang, so a few percent is plenty).
+const PROJECTION_FILL_SLACK = 0.03;
+// Verovio's definition-scale maps page units → internal units ×10, and our fixed
+// 60-unit L/R page margins (see buildVerovioOptions) are 600 internal each.
+const PROJECTION_UNIT_SCALE = 10;
+const PROJECTION_MARGIN_INTERNAL_TOTAL = 1200;
+
+/**
+ * True content width of an `adjustPageWidth` render in internal units (incl. any
+ * lyric overhang past the staff): the cropped inner page width minus the
+ * symmetric L/R page margins. Returns 0 when the geometry can't be parsed.
+ */
+function pageContentWidth(svg: string): number {
+  const innerW = parseFloat(/<svg class="definition-scale"[^>]*viewBox="0 0 ([\d.]+) /.exec(svg)?.[1] ?? "0");
+  const leftMargin = parseFloat(/<g class="page-margin"[^>]*translate\(([\d.]+)/.exec(svg)?.[1] ?? "0");
+  return innerW > 0 && leftMargin > 0 ? innerW - 2 * leftMargin : 0;
+}
+
+/**
+ * Page width (Verovio page units) that makes the deck's widest natural line fill
+ * the content area with a small wrap-safety slack — the maximum readable zoom for
+ * this deck. `maxContentWidth` is the largest pageContentWidth() across the deck
+ * (internal units). Falls back to the default when no width was measured.
+ */
+function fitProjectionPageWidth(maxContentWidth: number): number {
+  if (!(maxContentWidth > 0)) return PROJECTION_FALLBACK_PAGE_WIDTH;
+  const innerW = maxContentWidth * (1 + PROJECTION_FILL_SLACK) + PROJECTION_MARGIN_INTERNAL_TOTAL;
+  return Math.max(1, Math.round(innerW / PROJECTION_UNIT_SCALE));
+}
+
 function renderOptionsFor(
   profile: PresentationProfile,
   options: BuildOptions,
@@ -135,15 +176,12 @@ function renderOptionsFor(
     // (line 1 → left margin, line 2 → right margin via rightAlignTrailingSystems).
     ...(projection ? { noJustification: true, rightAlignTrailingSystems: true } : {}),
     // Projection: a FIXED page width (constant across slides → equal-width PNGs →
-    // one global composite scale = identical note size on every slide). It is sized
-    // so a worship line (≤ ~4 measures) never wraps, yet is tight enough that the
-    // engraving fills the slide at a comfortable, readable size (≈1.45× larger than a
-    // 3200-wide page; composited note size ∝ 1/pageWidth). The deck's widest natural
-    // line here is ~20327 internal units; content width = 2207·10 − 1200 margins =
-    // 20870 leaves only a ~2.6% wrap buffer — near the practical max. A denser line
-    // would wrap → the one-page guard fails loudly (never silent).
+    // one global composite scale = identical note size on every slide). The value
+    // here is only a FALLBACK: buildPresentation measures the deck's widest natural
+    // line and tightens pageWidth so that line just fills the content (maximum
+    // readable zoom), uniform across slides — see fitProjectionPageWidth().
     // Leadsheet keeps a constant per-measure width.
-    pageWidth: projection ? 2207 : Math.max(900, profile.measuresPerSystem * 620),
+    pageWidth: projection ? PROJECTION_FALLBACK_PAGE_WIDTH : Math.max(900, profile.measuresPerSystem * 620),
     // Projection: modest linear spread; lower non-linear so runs of short notes
     // (eighths/melisma) distribute evenly instead of cramming (kills the
     // "highly compressed 0.57" warning). spacingLinear/NonLinear = horizontal;
@@ -270,7 +308,7 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
     throw new Error(`슬라이드가 너무 많습니다(${slidePlan.slides.length} > ${MAX_SLIDES}) — 반복 횟수·구성을 확인하세요.`);
   }
   const prepared = prepareScore(resolvedScore);
-  const renderOptions = renderOptionsFor(profile, options, fonts);
+  let renderOptions = renderOptionsFor(profile, options, fonts);
 
   const ownsRenderer = !input.renderer;
   let renderer = input.renderer;
@@ -284,8 +322,10 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
     // Render slides in parallel up to the renderer's safe concurrency (1 for a
     // single toolkit, pool size for a worker pool) — preserving slide order.
     const concurrency = Math.max(1, activeRenderer.maxConcurrency ?? 1);
-    const rendered = await mapWithConcurrency(slidePlan.slides, concurrency, async (slide) => {
-      const xml = serializeMusicXml(resolvedScore, {
+
+    // Per-slide MusicXML (deterministic), shared by the measuring and render passes.
+    const serializeSlide = (slide: SlidePlan["slides"][number]): string =>
+      serializeMusicXml(resolvedScore, {
         prepared,
         measureIds: slide.measureIds,
         includeChords: options.chords.visible,
@@ -303,6 +343,27 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
           : { systemBreakEvery: profile.measuresPerSystem }),
         ...(slide.verse !== undefined ? { verses: [slide.verse] } : {}),
       });
+
+    // Projection: measure the deck's widest natural line (cheap SVG pass, no
+    // rasterization; adjustPageWidth crops to true content incl. lyric overhang)
+    // and tighten the page so that line just fills it — the maximum readable zoom,
+    // identical on every slide. This guarantees no line wraps (content > measured
+    // width) so the one-page render stays safe.
+    if (profile.layout === "projection") {
+      const measureOptions: RenderOptions = {
+        ...renderOptions,
+        pageWidth: PROJECTION_MEASURE_PAGE_WIDTH,
+        adjustPageWidth: true,
+      };
+      const widths = await mapWithConcurrency(slidePlan.slides, concurrency, async (slide) => {
+        const r = await activeRenderer.renderScore({ musicXml: serializeSlide(slide), outputMode: "svg", options: measureOptions });
+        return pageContentWidth(r.pages[0]?.svg ?? "");
+      });
+      renderOptions = { ...renderOptions, pageWidth: fitProjectionPageWidth(Math.max(0, ...widths)) };
+    }
+
+    const rendered = await mapWithConcurrency(slidePlan.slides, concurrency, async (slide) => {
+      const xml = serializeSlide(slide);
       // One loadData → both PNG (embedded) and SVG (asset).
       const result = await activeRenderer.renderScore({ musicXml: xml, outputMode: "png", options: renderOptions });
       const page = result.pages[0];

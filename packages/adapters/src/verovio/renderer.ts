@@ -45,9 +45,12 @@ function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
     pageWidth: options?.pageWidth ?? 2400,
     pageHeight: options?.pageHeight ?? 60000,
     adjustPageHeight: options?.adjustPageHeight ?? true,
-    // Crop the page width to the engraved content so a natural-width line yields
-    // a tight PNG (no trailing whitespace) — composite then sizes it uniformly.
-    ...(options?.adjustPageWidth ? { adjustPageWidth: true } : {}),
+    // Crop the page width to the engraved content (used by the projection measuring
+    // pass to read each line's true width). MUST be emitted explicitly even when
+    // false: Verovio's setOptions MERGES into the toolkit's current options, so
+    // omitting the key would RETAIN a `true` from a previous render (e.g. the
+    // measuring pass) and wrongly crop the final fixed-width pages.
+    adjustPageWidth: options?.adjustPageWidth ?? false,
     pageMarginTop: 60,
     pageMarginBottom: 60,
     pageMarginLeft: 60,

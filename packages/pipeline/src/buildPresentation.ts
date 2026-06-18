@@ -128,9 +128,12 @@ function renderOptionsFor(
     scale: projection ? 3 : 2,
     encodedBreaks: true,
     // Projection: keep every line at its NATURAL width (no forced full-width
-    // stretch) — lines may differ in length, like a real lead sheet. Cross-slide
-    // size is made uniform at composite time instead.
-    ...(projection ? { noJustification: true, adjustPageWidth: true, rightAlignTrailingSystems: true } : {}),
+    // stretch) — lines may differ in length, like a real lead sheet. Do NOT crop
+    // the page width: every slide keeps the SAME fixed-width page canvas, so all
+    // PNGs share one width and the compositor's single global scale makes the
+    // staff/note size identical on every slide AND fills the content box width
+    // (line 1 → left margin, line 2 → right margin via rightAlignTrailingSystems).
+    ...(projection ? { noJustification: true, rightAlignTrailingSystems: true } : {}),
     // Projection: a wide page so noJustification leaves each line at its natural
     // width without wrapping. Leadsheet keeps a constant per-measure width.
     pageWidth: projection ? 3200 : Math.max(900, profile.measuresPerSystem * 620),
@@ -163,27 +166,6 @@ function renderOptionsFor(
   };
 }
 
-/**
- * Natural per-slide projection page width: proportional to the busiest sung
- * line's measure count, so a short phrase renders as a compact line (not
- * stretched full-width with an empty tail) and a dense line gets room to
- * breathe. Cross-slide staff size is normalised at composite time, so this only
- * sets each PNG's aspect/density, not its on-screen size.
- */
-function pageWidthForSlide(slide: { measureIds: string[]; systemBreakMeasureIds?: string[] }): number {
-  const breaks = new Set(slide.systemBreakMeasureIds ?? []);
-  let max = 0;
-  let cur = 0;
-  for (const id of slide.measureIds) {
-    if (breaks.has(id) && cur > 0) {
-      max = Math.max(max, cur);
-      cur = 0;
-    }
-    cur++;
-  }
-  max = Math.max(max, cur, 1);
-  return Math.max(1100, Math.min(2600, 300 + max * 380));
-}
 
 /**
  * Join a run of lyric syllables into readable words. A space precedes each

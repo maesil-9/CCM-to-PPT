@@ -97,15 +97,29 @@ function recolorSvg(svg: string, inkColor: string | undefined): string {
 }
 
 /**
- * Right-align every line after the first so a worship slide reads "line 1 from
- * the left, line 2 flush right" (like a real lead sheet) instead of all lines
- * left-aligned. Each `<g class="system">` starts at x=0; its width is the staff
- * line's right end (`M0 y Lwidth y`). We shift trailing, shorter systems right
- * so their right edge meets the widest line's right edge.
+ * Margin-based line alignment for a worship slide: line 1 sits at the slide's
+ * LEFT margin, every trailing line is flush to the slide's RIGHT margin — NOT to
+ * line 1's right edge. This reads like a real worship engraving and fills the
+ * horizontal span between margins (no big empty gap on the right).
+ *
+ * Geometry (verified empirically): Verovio nests systems inside
+ * `<g class="page-margin" transform="translate(LEFT, TOP)">`, so each
+ * `<g class="system">`'s staff coordinates are relative to the content's left
+ * edge (staff starts at x≈0). The page's content-right edge in those same
+ * coordinates is `innerPageWidth - leftMargin - rightMargin`; we set the L/R
+ * margins equal, so it is `innerW - 2·LEFT`. The inner page width comes from the
+ * definition-scale `<svg viewBox="0 0 innerW …">`. Each system's width is its
+ * rightmost staff-line end (staff lines are drawn per measure, horizontal:
+ * start-y === end-y). We translate trailing systems so their right edge meets
+ * the content-right edge. Falls back to the widest-system edge if the page
+ * geometry can't be parsed.
  */
 function rightAlignTrailingSystems(svg: string): string {
   const systems = [...svg.matchAll(/<g id="[^"]*" class="system">/g)];
   if (systems.length < 2) return svg;
+  const innerW = parseFloat(/<svg class="definition-scale"[^>]*viewBox="0 0 ([\d.]+) /.exec(svg)?.[1] ?? "0");
+  const leftMargin = parseFloat(/<g class="page-margin"[^>]*translate\(([\d.]+)/.exec(svg)?.[1] ?? "0");
+  const contentRight = innerW > 0 && leftMargin > 0 ? innerW - 2 * leftMargin : 0;
   const bounds = systems.map((m, i) => {
     const start = m.index!;
     const tagEnd = start + m[0].length;
@@ -118,12 +132,14 @@ function rightAlignTrailingSystems(svg: string): string {
       .map((x) => parseFloat(x[2]!));
     return { start, tag: m[0], width: ls.length ? Math.max(...ls) : 0 };
   });
-  const maxW = Math.max(...bounds.map((b) => b.width));
+  // Right edge to align trailing lines to: the slide's right margin (preferred),
+  // or the widest system as a fallback when the page geometry is unavailable.
+  const target = contentRight > 0 ? contentRight : Math.max(...bounds.map((b) => b.width));
   let out = svg;
   let offset = 0;
   bounds.forEach((b, i) => {
-    if (i === 0) return; // first line stays left
-    const dx = maxW - b.width;
+    if (i === 0) return; // first line stays at the left margin
+    const dx = target - b.width;
     if (dx <= 1) return;
     const newTag = b.tag.replace('class="system">', `class="system" transform="translate(${dx.toFixed(1)},0)">`);
     const at = b.start + offset;

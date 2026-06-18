@@ -127,12 +127,13 @@ function renderOptionsFor(
     // crisp on a 1080p+ sanctuary screen; leadsheet stays 2×.
     scale: projection ? 3 : 2,
     encodedBreaks: true,
-    // Projection: every line (including the last/only one) fills the full width.
-    ...(projection ? { justifyLastSystem: true } : {}),
-    // Projection pageWidth is set PER SLIDE (pageWidthForSlide) so each phrase
-    // gets a natural, compact width instead of being stretched to a fixed page;
-    // this is the fallback. Leadsheet keeps a constant per-measure width.
-    pageWidth: projection ? 2000 : Math.max(900, profile.measuresPerSystem * 620),
+    // Projection: keep every line at its NATURAL width (no forced full-width
+    // stretch) — lines may differ in length, like a real lead sheet. Cross-slide
+    // size is made uniform at composite time instead.
+    ...(projection ? { noJustification: true, adjustPageWidth: true } : {}),
+    // Projection: a wide page so noJustification leaves each line at its natural
+    // width without wrapping. Leadsheet keeps a constant per-measure width.
+    pageWidth: projection ? 3200 : Math.max(900, profile.measuresPerSystem * 620),
     // Projection: modest linear spread; lower non-linear so runs of short notes
     // (eighths/melisma) distribute evenly instead of cramming (kills the
     // "highly compressed 0.57" warning). spacingLinear/NonLinear = horizontal;
@@ -307,13 +308,8 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
           : { systemBreakEvery: profile.measuresPerSystem }),
         ...(slide.verse !== undefined ? { verses: [slide.verse] } : {}),
       });
-      // One loadData → both PNG (embedded) and SVG (asset). Projection sizes the
-      // page per slide so each phrase gets a natural, compact width.
-      const slideRenderOptions =
-        profile.layout === "projection"
-          ? { ...renderOptions, pageWidth: pageWidthForSlide(slide) }
-          : renderOptions;
-      const result = await activeRenderer.renderScore({ musicXml: xml, outputMode: "png", options: slideRenderOptions });
+      // One loadData → both PNG (embedded) and SVG (asset).
+      const result = await activeRenderer.renderScore({ musicXml: xml, outputMode: "png", options: renderOptions });
       const page = result.pages[0];
       if (!page?.png) throw new Error(`슬라이드 ${slide.index} PNG 렌더 실패`);
       return { slide, xml, png: page.png, svg: page.svg ?? "", widthPx: page.widthPx, heightPx: page.heightPx };

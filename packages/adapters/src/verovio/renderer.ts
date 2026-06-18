@@ -45,6 +45,9 @@ function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
     pageWidth: options?.pageWidth ?? 2400,
     pageHeight: options?.pageHeight ?? 60000,
     adjustPageHeight: options?.adjustPageHeight ?? true,
+    // Crop the page width to the engraved content so a natural-width line yields
+    // a tight PNG (no trailing whitespace) — composite then sizes it uniformly.
+    ...(options?.adjustPageWidth ? { adjustPageWidth: true } : {}),
     pageMarginTop: 60,
     pageMarginBottom: 60,
     pageMarginLeft: 60,
@@ -53,6 +56,8 @@ function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
     // Justify the last/only system to full width too, so a single-phrase line or
     // a short final line reaches both margins instead of stopping short.
     ...(options?.justifyLastSystem ? { minLastJustification: 0 } : {}),
+    // Or keep every line at its natural width (no forced full-width stretch).
+    ...(options?.noJustification ? { noJustification: true } : {}),
     header: "none",
     footer: "none",
     svgViewBox: true,

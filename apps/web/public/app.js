@@ -206,7 +206,14 @@ function computeLayout(s, compact) {
     if (hasTitle) titleRect = { x: SUB_MARGIN, y: rowY, w: subInnerW * 0.66, h: rowH };
     if (hasSection) sectionRect = { x: SUB_MARGIN + subInnerW * 0.66, y: rowY, w: subInnerW * 0.34, h: rowH };
     const box = { x: SUB_MARGIN, y: SUB_CHROME, w: subInnerW, h: SLIDE_H - SUB_CHROME - SUB_MARGIN };
-    const fit = fitContain(s.widthPx || 16, s.heightPx || 9, box);
+    // ONE global scale across the whole deck → identical staff/note size on every
+    // slide. Each line keeps its natural width (left-aligned), centred vertically.
+    const gScale = Math.min(
+      ...state.slides.map((sl) => Math.min(box.w / (sl.widthPx || 16), box.h / (sl.heightPx || 9))),
+    );
+    const w = (s.widthPx || 16) * gScale;
+    const h = (s.heightPx || 9) * gScale;
+    const fit = { x: box.x, y: box.y + (box.h - h) / 2, w, h };
     return { titleRect, sectionRect, fit, card: null };
   }
   {

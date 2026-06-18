@@ -150,6 +150,16 @@ export class PptxGenJsBuilder implements PptxBuilder {
     const makeShadow = (): PptxShadow | undefined =>
       profile.textShadow ? { type: "outer", color: "000000", blur: 4, offset: 2, angle: 90, opacity: 0.6 } : undefined;
 
+    // Projection: ONE global scale across the deck so every slide presents the
+    // staff/notes/lyrics at an identical size (must mirror app.js). The content
+    // box is constant for compact slides (chrome row is fixed-height).
+    const compactTop = margin * 0.5 + 0.55 + 0.12;
+    const compactBox: Box = { x: margin, y: compactTop, w: slideW - 2 * margin, h: slideH - compactTop - margin };
+    const compactGScale =
+      profile.compact === true && input.slides.length > 0
+        ? Math.min(...input.slides.map((s) => Math.min(compactBox.w / s.image.widthPx, compactBox.h / s.image.heightPx)))
+        : 0;
+
     for (const spec of input.slides) {
       const slide = pptx.addSlide();
       slide.background = { color: profile.background ?? "FFFFFF" };
@@ -231,7 +241,16 @@ export class PptxGenJsBuilder implements PptxBuilder {
           `슬라이드 콘텐츠 영역이 음수입니다(제목/섹션 라벨이 너무 큼): w=${box.w.toFixed(2)} h=${box.h.toFixed(2)}. 폰트 크기/여백을 줄이세요.`,
         );
       }
-      const fit = fitContain(spec.image.widthPx, spec.image.heightPx, box);
+      // Compact: global-scale, left-aligned, vertically centred (consistent size,
+      // natural per-line width). Leadsheet: per-slide contain-fit.
+      const fit = compact
+        ? {
+            x: compactBox.x,
+            y: compactBox.y + (compactBox.h - spec.image.heightPx * compactGScale) / 2,
+            w: spec.image.widthPx * compactGScale,
+            h: spec.image.heightPx * compactGScale,
+          }
+        : fitContain(spec.image.widthPx, spec.image.heightPx, box);
 
       // Legibility card behind the score, clamped inside the content box.
       if (cardOpacity > 0) {

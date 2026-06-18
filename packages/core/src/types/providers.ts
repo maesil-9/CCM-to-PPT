@@ -41,6 +41,10 @@ export interface RenderOptions {
   loadSystemFonts?: boolean;
   /** Justify the LAST/only system to full width too (projection: every line fills). */
   justifyLastSystem?: boolean;
+  /** Disable horizontal justification entirely — each line keeps its natural width. */
+  noJustification?: boolean;
+  /** Crop the page width to the engraved content (tight PNG, no trailing space). */
+  adjustPageWidth?: boolean;
   /** Ink colour for staff/notes/text (hex, no '#'); default engine black. */
   inkColor?: string;
   /** Line-weight scale (1 = engine default) for staff/stem/barline widths. */

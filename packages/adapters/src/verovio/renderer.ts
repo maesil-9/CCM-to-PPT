@@ -108,7 +108,12 @@ function rightAlignTrailingSystems(svg: string): string {
     const start = m.index!;
     const tagEnd = start + m[0].length;
     const contentEnd = i + 1 < systems.length ? systems[i + 1]!.index! : svg.length;
-    const ls = [...svg.slice(tagEnd, contentEnd).matchAll(/M0 [\d.-]+ L([\d.]+)/g)].map((x) => parseFloat(x[1]!));
+    // System width = the rightmost staff-line end. Verovio draws staff lines
+    // PER MEASURE, so match every HORIZONTAL line (start-y === end-y, any start
+    // x) and take the max end-x. The y-match excludes slurs/ties/stems.
+    const ls = [...svg.slice(tagEnd, contentEnd).matchAll(/M-?[\d.]+ (-?[\d.]+) L([\d.]+) (-?[\d.]+)/g)]
+      .filter((x) => x[1] === x[3])
+      .map((x) => parseFloat(x[2]!));
     return { start, tag: m[0], width: ls.length ? Math.max(...ls) : 0 };
   });
   const maxW = Math.max(...bounds.map((b) => b.width));

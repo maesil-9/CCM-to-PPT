@@ -126,6 +126,30 @@ function rightAlignTrailingSystems(svg: string): string {
   return out;
 }
 
+/**
+ * Style the congregation lyrics (the `<g class="syl">` groups): optional bold
+ * weight and an outline (stroke behind the fill via paint-order) so the text can
+ * be made heavier and given a halo/keyline for legibility over a photo. The
+ * outline width is given as a percentage of the glyph height so it scales with
+ * the lyric size. Other text (tempo, chords) is untouched.
+ */
+function styleLyrics(
+  svg: string,
+  opts: { lyricBold?: boolean; lyricOutlineColor?: string; lyricOutlineWidth?: number },
+): string {
+  const hasOutline = !!opts.lyricOutlineColor && (opts.lyricOutlineWidth ?? 0) > 0;
+  if (!opts.lyricBold && !hasOutline) return svg;
+  const attrs: string[] = [];
+  if (opts.lyricBold) attrs.push('font-weight="bold"');
+  if (hasOutline) {
+    const fs = parseFloat(svg.match(/class="syl">[\s\S]*?<tspan font-size="([\d.]+)px"/)?.[1] ?? "700");
+    const sw = (fs * (opts.lyricOutlineWidth as number)) / 100; // width as % of glyph height
+    attrs.push(`stroke="#${opts.lyricOutlineColor}" stroke-width="${sw.toFixed(1)}" paint-order="stroke" stroke-linejoin="round"`);
+  }
+  const add = " " + attrs.join(" ");
+  return svg.replace(/<g (id="[^"]*") class="syl">/g, `<g $1 class="syl"${add}>`);
+}
+
 // Strip Verovio's auto-generated measure-number groups. They contain only a
 // <text>/<tspan> (no nested <g>), so a non-greedy match to the first </g> is
 // safe. Attribute order varies (`id` before `class`), so match class anywhere.
@@ -211,6 +235,11 @@ export class VerovioRenderer implements RendererProvider {
     let svg = recolorSvg(this.toolkit.renderToSVG(1), input.options?.inkColor);
     if (input.options?.hideMeasureNumbers) svg = stripMeasureNumbers(svg);
     if (input.options?.rightAlignTrailingSystems) svg = rightAlignTrailingSystems(svg);
+    svg = styleLyrics(svg, {
+      ...(input.options?.lyricBold ? { lyricBold: true } : {}),
+      ...(input.options?.lyricOutlineColor ? { lyricOutlineColor: input.options.lyricOutlineColor } : {}),
+      ...(input.options?.lyricOutlineWidth !== undefined ? { lyricOutlineWidth: input.options.lyricOutlineWidth } : {}),
+    });
     const pages: RenderedPage[] = [];
 
     if (input.outputMode === "svg") {

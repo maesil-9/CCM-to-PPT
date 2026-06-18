@@ -91,7 +91,14 @@ function readOptions() {
       measuresPerSystem: clampInt($("measures-per-system").value, 1, 4),
       maxSystemsPerSlide: clampInt($("max-systems").value, 1, 6),
     },
-    score: { inkColor: toHex($("ink-color").value), lineThickness: parseFloat($("line-thickness").value), lyricFont: $("lyric-font").value },
+    score: {
+      inkColor: toHex($("ink-color").value),
+      lineThickness: parseFloat($("line-thickness").value),
+      lyricFont: $("lyric-font").value,
+      lyricBold: $("lyric-bold").checked,
+      lyricOutlineColor: toHex($("lyric-outline-color").value),
+      lyricOutlineWidth: parseFloat($("lyric-outline-width").value),
+    },
     style,
   };
   if (bgOn) o.backgroundEnabled = true;
@@ -129,6 +136,9 @@ function applyOptions(ui) {
     if (ui.score.inkColor) setColor($("ink-color"), ui.score.inkColor);
     if (ui.score.lineThickness != null) $("line-thickness").value = String(ui.score.lineThickness);
     if (ui.score.lyricFont) $("lyric-font").value = ui.score.lyricFont;
+    $("lyric-bold").checked = !!ui.score.lyricBold;
+    if (ui.score.lyricOutlineColor) setColor($("lyric-outline-color"), ui.score.lyricOutlineColor);
+    if (ui.score.lyricOutlineWidth != null) $("lyric-outline-width").value = String(ui.score.lyricOutlineWidth);
   }
   if (ui.layout) {
     if (ui.layout.measuresPerSystem) $("measures-per-system").value = String(ui.layout.measuresPerSystem);
@@ -162,6 +172,9 @@ function renderKeyOf(o) {
     o.score.inkColor,
     o.score.lineThickness,
     o.score.lyricFont,
+    o.score.lyricBold,
+    o.score.lyricOutlineColor,
+    o.score.lyricOutlineWidth,
     o.layout.mode,
     o.layout.lyricSize,
     o.layout.measuresPerSystem,
@@ -455,6 +468,9 @@ function resetDefaults() {
   setColor($("ink-color"), "1A1A1A");
   $("line-thickness").value = "1";
   $("lyric-font").value = "Pretendard";
+  $("lyric-bold").checked = false;
+  setColor($("lyric-outline-color"), "FFFFFF");
+  $("lyric-outline-width").value = "0";
   $("layout-mode").value = "projection";
   $("lyric-size").value = "6";
   $("chords-visible").checked = false;

@@ -51,6 +51,18 @@
             <span class="row-label">가사 글꼴</span>
             <select id="lyric-font" class="font-select"></select>
           </label>
+          <label class="row" data-hint="가사 글씨를 굵게 표시합니다.">
+            <span class="row-label">가사 굵기</span>
+            <input type="checkbox" id="lyric-bold" />
+          </label>
+          <label class="row" data-hint="가사 글씨에 두르는 외곽선(테두리) 색입니다. 사진 배경 위에서 글씨가 또렷하게 보이게 합니다.">
+            <span class="row-label">가사 외곽선 색</span>
+            <input type="color" id="lyric-outline-color" value="#ffffff" />
+          </label>
+          <label class="row" data-hint="가사 외곽선의 굵기입니다. 0이면 외곽선 없음. 글자 높이의 %로 적용됩니다.">
+            <span class="row-label">가사 외곽선 굵기</span>
+            <input type="range" id="lyric-outline-width" min="0" max="12" step="0.5" value="0" />
+          </label>
         </section>
 
         <section class="group">

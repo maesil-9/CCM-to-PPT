@@ -82,6 +82,12 @@ export interface ScoreAppearance {
    * Pretendard; choosing another loads system fonts so it can render.
    */
   lyricFont?: string;
+  /** Bold the congregation lyrics. */
+  lyricBold?: boolean;
+  /** Lyric outline (외곽선) colour, hex without '#'. */
+  lyricOutlineColor?: string;
+  /** Lyric outline width as a percentage of glyph height (0 = none). */
+  lyricOutlineWidth?: number;
 }
 
 export interface BuildOptions {

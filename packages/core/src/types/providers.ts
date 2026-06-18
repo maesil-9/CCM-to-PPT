@@ -47,6 +47,12 @@ export interface RenderOptions {
   adjustPageWidth?: boolean;
   /** Right-align every line after the first (line 1 left, line 2 flush right). */
   rightAlignTrailingSystems?: boolean;
+  /** Bold the congregation lyrics. */
+  lyricBold?: boolean;
+  /** Lyric outline (halo/keyline) colour, hex without '#'. */
+  lyricOutlineColor?: string;
+  /** Lyric outline width as a percentage of glyph height (e.g. 4 = 4%). */
+  lyricOutlineWidth?: number;
   /** Ink colour for staff/notes/text (hex, no '#'); default engine black. */
   inkColor?: string;
   /** Line-weight scale (1 = engine default) for staff/stem/barline widths. */

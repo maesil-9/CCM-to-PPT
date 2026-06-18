@@ -94,6 +94,38 @@ function recolorSvg(svg: string, inkColor: string | undefined): string {
     .replace('class="definition-scale"', 'class="definition-scale" fill="currentColor"');
 }
 
+/**
+ * Right-align every line after the first so a worship slide reads "line 1 from
+ * the left, line 2 flush right" (like a real lead sheet) instead of all lines
+ * left-aligned. Each `<g class="system">` starts at x=0; its width is the staff
+ * line's right end (`M0 y Lwidth y`). We shift trailing, shorter systems right
+ * so their right edge meets the widest line's right edge.
+ */
+function rightAlignTrailingSystems(svg: string): string {
+  const systems = [...svg.matchAll(/<g id="[^"]*" class="system">/g)];
+  if (systems.length < 2) return svg;
+  const bounds = systems.map((m, i) => {
+    const start = m.index!;
+    const tagEnd = start + m[0].length;
+    const contentEnd = i + 1 < systems.length ? systems[i + 1]!.index! : svg.length;
+    const ls = [...svg.slice(tagEnd, contentEnd).matchAll(/M0 [\d.-]+ L([\d.]+)/g)].map((x) => parseFloat(x[1]!));
+    return { start, tag: m[0], width: ls.length ? Math.max(...ls) : 0 };
+  });
+  const maxW = Math.max(...bounds.map((b) => b.width));
+  let out = svg;
+  let offset = 0;
+  bounds.forEach((b, i) => {
+    if (i === 0) return; // first line stays left
+    const dx = maxW - b.width;
+    if (dx <= 1) return;
+    const newTag = b.tag.replace('class="system">', `class="system" transform="translate(${dx.toFixed(1)},0)">`);
+    const at = b.start + offset;
+    out = out.slice(0, at) + newTag + out.slice(at + b.tag.length);
+    offset += newTag.length - b.tag.length;
+  });
+  return out;
+}
+
 // Strip Verovio's auto-generated measure-number groups. They contain only a
 // <text>/<tspan> (no nested <g>), so a non-greedy match to the first </g> is
 // safe. Attribute order varies (`id` before `class`), so match class anywhere.
@@ -178,6 +210,7 @@ export class VerovioRenderer implements RendererProvider {
 
     let svg = recolorSvg(this.toolkit.renderToSVG(1), input.options?.inkColor);
     if (input.options?.hideMeasureNumbers) svg = stripMeasureNumbers(svg);
+    if (input.options?.rightAlignTrailingSystems) svg = rightAlignTrailingSystems(svg);
     const pages: RenderedPage[] = [];
 
     if (input.outputMode === "svg") {

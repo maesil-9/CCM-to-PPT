@@ -130,7 +130,7 @@ function renderOptionsFor(
     // Projection: keep every line at its NATURAL width (no forced full-width
     // stretch) — lines may differ in length, like a real lead sheet. Cross-slide
     // size is made uniform at composite time instead.
-    ...(projection ? { noJustification: true, adjustPageWidth: true } : {}),
+    ...(projection ? { noJustification: true, adjustPageWidth: true, rightAlignTrailingSystems: true } : {}),
     // Projection: a wide page so noJustification leaves each line at its natural
     // width without wrapping. Leadsheet keeps a constant per-measure width.
     pageWidth: projection ? 3200 : Math.max(900, profile.measuresPerSystem * 620),
@@ -139,7 +139,7 @@ function renderOptionsFor(
     // "highly compressed 0.57" warning). spacingLinear/NonLinear = horizontal;
     // spacingSystem/spacingStaff = vertical gaps between sung lines.
     ...(projection
-      ? { rendererOptions: { spacingLinear: 0.35, spacingNonLinear: 0.55, spacingSystem: 16, spacingStaff: 4 } }
+      ? { rendererOptions: { spacingLinear: 0.62, spacingNonLinear: 0.6, spacingSystem: 18, spacingStaff: 4 } }
       : {}),
     ...(profile.minimumStaffSize ? { minStaffSize: profile.minimumStaffSize } : {}),
     ...(profile.lyricSize ? { lyricSize: profile.lyricSize } : {}),

@@ -56,6 +56,51 @@ function sectionLabel(section: ScoreSection | undefined, verse: number | undefin
   return num !== undefined ? `${base} ${num}` : base;
 }
 
+/** A projection line longer than this is sub-split so the engraving stays large. */
+const MAX_LINE_MEASURES = 4;
+
+/** True if `measure` begins a new word (its first sung syllable is single/begin). */
+function startsWord(measure: Measure, verse: number | undefined): boolean {
+  for (const ev of measure.events) {
+    if (ev.kind !== "note") continue;
+    const lys = ev.lyrics ?? [];
+    const ly = (verse !== undefined ? lys.find((l) => l.verse === verse) : undefined) ?? lys[0];
+    if (ly) return ly.syllabic === "single" || ly.syllabic === "begin" || ly.syllabic == null;
+  }
+  return true; // no lyric here → a safe place to break
+}
+
+/**
+ * Split a long phrase line into a few compact, roughly-even sub-lines so a wide
+ * phrase renders as a large, readable engraving instead of one tiny full-width
+ * row. Each break lands on an even division, snapped to a word boundary when one
+ * sits within a measure of it (so words stay whole); otherwise it breaks on the
+ * beat, where the syllable hyphen marks the carry-over (standard engraving).
+ */
+function splitLongLine(line: Measure[], verse: number | undefined): Measure[][] {
+  if (line.length <= MAX_LINE_MEASURES) return [line];
+  const parts = Math.ceil(line.length / MAX_LINE_MEASURES);
+  const out: Measure[][] = [];
+  let start = 0;
+  for (let p = 1; p < parts; p++) {
+    const ideal = Math.round((line.length * p) / parts);
+    let brk = ideal;
+    for (const d of [0, -1, 1]) {
+      const i = ideal + d;
+      if (i > start && i < line.length && startsWord(line[i]!, verse)) {
+        brk = i;
+        break;
+      }
+    }
+    if (brk > start) {
+      out.push(line.slice(start, brk));
+      start = brk;
+    }
+  }
+  out.push(line.slice(start));
+  return out;
+}
+
 export function planPresentation(score: ScoreIR, profile: PresentationProfile): SlidePlan {
   const ordered = orderedMeasures(score);
   const ko = score.metadata.language?.toLowerCase().startsWith("ko") ?? false;
@@ -78,7 +123,7 @@ export function planPresentation(score: ScoreIR, profile: PresentationProfile): 
   const linesPerSlide = Math.max(1, profile.maxSystemsPerSlide);
 
   /** Split a section's measures into slide chunks (+ per-line system breaks). */
-  const chunksFor = (measures: Measure[]): { ids: string[]; breaks: string[] }[] => {
+  const chunksFor = (measures: Measure[], verse: number | undefined): { ids: string[]; breaks: string[] }[] => {
     if (!projection) {
       const out: { ids: string[]; breaks: string[] }[] = [];
       for (let o = 0; o < measures.length; o += perSlide) {
@@ -87,17 +132,19 @@ export function planPresentation(score: ScoreIR, profile: PresentationProfile): 
       return out;
     }
     // Group measures into lines at `systemBreak` markers (last measure also ends
-    // a line); then pack `linesPerSlide` lines per slide.
-    const lines: Measure[][] = [];
+    // a line), sub-split any over-long phrase so the engraving stays large, then
+    // pack `linesPerSlide` lines per slide.
+    const phrases: Measure[][] = [];
     let cur: Measure[] = [];
     for (const m of measures) {
       cur.push(m);
       if (m.systemBreak) {
-        lines.push(cur);
+        phrases.push(cur);
         cur = [];
       }
     }
-    if (cur.length) lines.push(cur);
+    if (cur.length) phrases.push(cur);
+    const lines = phrases.flatMap((p) => splitLongLine(p, verse));
     const out: { ids: string[]; breaks: string[] }[] = [];
     for (let i = 0; i < lines.length; i += linesPerSlide) {
       const group = lines.slice(i, i + linesPerSlide);
@@ -121,7 +168,7 @@ export function planPresentation(score: ScoreIR, profile: PresentationProfile): 
 
     const repeats = Math.max(1, item.repeatCount ?? 1);
     for (let r = 0; r < repeats; r++) {
-      for (const chunk of chunksFor(measures)) {
+      for (const chunk of chunksFor(measures, item.verse)) {
         const slide: SlidePlanSlide = {
           index: slideIndex++,
           measureIds: chunk.ids,

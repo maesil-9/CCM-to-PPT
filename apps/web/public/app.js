@@ -6,13 +6,10 @@ const SLIDE_W = 13.333;
 const SLIDE_H = 7.5;
 const MARGIN = 0.35;
 const CARD_PAD = 0.18;
-// Projection subtitle geometry (must mirror packages/adapters pptx builder AND
-// the PROJECTION_PRESENTATION_PROFILE safeMargin of 0.4 so preview == export).
+// Projection geometry (must mirror packages/adapters pptx builder AND the
+// PROJECTION_PRESENTATION_PROFILE safeMargin of 0.4 so preview == export).
 const SUB_MARGIN = 0.4;
 const SUB_CHROME = SUB_MARGIN * 0.5 + 0.55 + 0.12; // title/section row bottom
-const SUB_GUIDE_H = 1.15; // small melody-guide band height (inches)
-const SUB_GAP = 0.3; // gap between the guide band and the lyric block
-const LYRIC_COLOR = "16233F"; // dark navy congregation lyric (white halo for contrast)
 const FONTS = ["Malgun Gothic", "Noto Sans KR", "Pretendard", "Segoe UI", "Arial", "Georgia", "Times New Roman"];
 
 const $ = (id) => document.getElementById(id);
@@ -193,27 +190,6 @@ function updateValidation(v, ooxmlOk) {
   }
 }
 
-/**
- * Global congregation-lyric metrics: one font size used on EVERY slide so the
- * lyric stays rock-steady across the set. Korean glyph ~1em, space ~0.5em.
- */
-function lyricLayout(slides) {
-  const areaTop = SUB_CHROME + SUB_GUIDE_H + SUB_GAP;
-  const areaH = SLIDE_H - areaTop - SUB_MARGIN;
-  const areaW = SLIDE_W - 2 * SUB_MARGIN;
-  const emW = (t) => {
-    let n = 0;
-    for (const c of t) n += c === " " ? 0.5 : 1;
-    return n;
-  };
-  const all = slides.flatMap((s) => s.lyricLines || []);
-  if (!all.length) return null;
-  const maxEm = Math.max(...all.map(emW), 1);
-  const maxLines = Math.max(...slides.map((s) => (s.lyricLines || []).length), 1);
-  const font = Math.min(areaW / (maxEm * 1.02), (areaH / maxLines) * 0.62);
-  return { areaTop, areaH, areaW, font, lineH: font * 1.5 };
-}
-
 function computeLayout(s, compact) {
   const hasTitle = !!s.title;
   const hasSection = !!s.sectionLabel;
@@ -222,15 +198,16 @@ function computeLayout(s, compact) {
   let titleRect = null;
   let sectionRect = null;
   if (compact) {
-    // Projection subtitle: small title top-left, section top-right; the score
-    // becomes a small melody guide in a fixed band, lyrics dominate below.
+    // Projection: small ♪ title top-left, section top-right; the full engraving
+    // (staff + lyrics under the notes) then fills the rest of the slide, large.
     const subInnerW = SLIDE_W - 2 * SUB_MARGIN;
     const rowY = SUB_MARGIN * 0.5;
     const rowH = 0.55;
     if (hasTitle) titleRect = { x: SUB_MARGIN, y: rowY, w: subInnerW * 0.66, h: rowH };
     if (hasSection) sectionRect = { x: SUB_MARGIN + subInnerW * 0.66, y: rowY, w: subInnerW * 0.34, h: rowH };
-    const guide = fitContain(s.widthPx || 16, s.heightPx || 9, { x: SUB_MARGIN, y: SUB_CHROME, w: subInnerW, h: SUB_GUIDE_H });
-    return { titleRect, sectionRect, fit: guide, card: null };
+    const box = { x: SUB_MARGIN, y: SUB_CHROME, w: subInnerW, h: SLIDE_H - SUB_CHROME - SUB_MARGIN };
+    const fit = fitContain(s.widthPx || 16, s.heightPx || 9, box);
+    return { titleRect, sectionRect, fit, card: null };
   }
   {
     if (hasTitle) {
@@ -261,7 +238,6 @@ function place(el, r) {
 function compose() {
   const ui = readOptions();
   const compact = ui.layout.mode === "projection";
-  const lyc = compact ? lyricLayout(state.slides) : null;
   const preview = $("preview");
   preview.innerHTML = "";
   if (state.slides.length === 0) {
@@ -313,32 +289,6 @@ function compose() {
       img.src = "data:image/png;base64," + s.png;
       place(img, L.fit);
       slide.appendChild(img);
-    }
-
-    // Projection subtitle: the big congregation lyric, one line per sung phrase,
-    // at a single global size (rock-steady across slides), centred in the area
-    // below the melody guide. Dark navy with a white halo to win over any bg.
-    if (compact && lyc && (s.lyricLines || []).length) {
-      const lines = s.lyricLines;
-      const blockH = lines.length * lyc.lineH;
-      let top = lyc.areaTop + (lyc.areaH - blockH) / 2;
-      const halo = "1px 1px 0 #fff,-1px 1px 0 #fff,1px -1px 0 #fff,-1px -1px 0 #fff,0 0 6px rgba(255,255,255,0.9)";
-      const lyricFont = (ui.score && ui.score.lyricFont) || "Malgun Gothic";
-      for (const text of lines) {
-        const ly = document.createElement("div");
-        ly.className = "slide-text slide-lyric";
-        place(ly, { x: SUB_MARGIN, y: top, w: lyc.areaW, h: lyc.lineH });
-        ly.textContent = text;
-        ly.style.fontFamily = lyricFont;
-        ly.style.fontSize = (lyc.font * 7.5).toFixed(3) + "cqw";
-        ly.style.fontWeight = "800";
-        ly.style.color = "#" + LYRIC_COLOR;
-        ly.style.justifyContent = "center";
-        ly.style.whiteSpace = "nowrap";
-        ly.style.textShadow = halo;
-        slide.appendChild(ly);
-        top += lyc.lineH;
-      }
     }
 
     if (L.titleRect && s.title) {

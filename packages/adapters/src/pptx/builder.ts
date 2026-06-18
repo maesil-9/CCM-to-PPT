@@ -150,32 +150,6 @@ export class PptxGenJsBuilder implements PptxBuilder {
     const makeShadow = (): PptxShadow | undefined =>
       profile.textShadow ? { type: "outer", color: "000000", blur: 4, offset: 2, angle: 90, opacity: 0.6 } : undefined;
 
-    // Projection subtitle metrics: a SINGLE congregation-lyric size used on every
-    // slide (rock-steady across the set), plus a fixed small melody-guide band.
-    // Must mirror apps/web/public/app.js (SUB_GUIDE_H/SUB_GAP/lyricLayout).
-    const SUB_GUIDE_H = 1.15;
-    const SUB_GAP = 0.3;
-    const LYRIC_INK = "16233F";
-    const lyricFontFace = profile.lyricFontFace ?? "Malgun Gothic";
-    const compactAll = profile.compact === true;
-    const lyricArea = (() => {
-      if (!compactAll) return null;
-      const areaTop = margin * 0.5 + 0.55 + 0.12 + SUB_GUIDE_H + SUB_GAP;
-      const areaH = slideH - areaTop - margin;
-      const areaW = slideW - 2 * margin;
-      const emW = (t: string) => {
-        let n = 0;
-        for (const c of t) n += c === " " ? 0.5 : 1;
-        return n;
-      };
-      const all = input.slides.flatMap((s) => s.lyricLines ?? []);
-      if (!all.length) return null;
-      const maxEm = Math.max(...all.map(emW), 1);
-      const maxLines = Math.max(...input.slides.map((s) => (s.lyricLines ?? []).length), 1);
-      const font = Math.min(areaW / (maxEm * 1.02), (areaH / maxLines) * 0.62);
-      return { areaTop, areaH, areaW, font, lineH: font * 1.5 };
-    })();
-
     for (const spec of input.slides) {
       const slide = pptx.addSlide();
       slide.background = { color: profile.background ?? "FFFFFF" };
@@ -249,79 +223,40 @@ export class PptxGenJsBuilder implements PptxBuilder {
         }
       }
 
-      if (compactAll) {
-        // Subtitle layout: the score is a small melody GUIDE in a fixed band…
-        const guide = fitContain(spec.image.widthPx, spec.image.heightPx, {
-          x: margin,
-          y: contentTop,
-          w: innerW,
-          h: SUB_GUIDE_H,
-        });
-        slide.addImage({
-          data: `data:${spec.image.mime};base64,${toBase64(spec.image.data)}`,
-          x: guide.x,
-          y: guide.y,
-          w: guide.w,
-          h: guide.h,
-        });
-        // …and the BIG congregation lyrics dominate below it, one line per sung
-        // phrase, vertically centred, at the single global size. Dark navy with a
-        // soft white glow so it survives any background.
-        if (lyricArea && spec.lyricLines?.length) {
-          const lines = spec.lyricLines;
-          const blockH = lines.length * lyricArea.lineH;
-          let top = lyricArea.areaTop + (lyricArea.areaH - blockH) / 2;
-          for (const text of lines) {
-            slide.addText(text, {
-              x: margin,
-              y: top,
-              w: lyricArea.areaW,
-              h: lyricArea.lineH,
-              fontSize: lyricArea.font * 72,
-              bold: true,
-              fontFace: lyricFontFace,
-              align: "center",
-              valign: "middle",
-              color: LYRIC_INK,
-              shadow: { type: "outer", color: "FFFFFF", blur: 5, offset: 0, angle: 0, opacity: 0.9 },
-            });
-            top += lyricArea.lineH;
-          }
-        }
-      } else {
-        const box: Box = { x: margin, y: contentTop, w: slideW - 2 * margin, h: slideH - contentTop - margin };
-        if (box.w <= 0 || box.h <= 0) {
-          throw new Error(
-            `슬라이드 콘텐츠 영역이 음수입니다(제목/섹션 라벨이 너무 큼): w=${box.w.toFixed(2)} h=${box.h.toFixed(2)}. 폰트 크기/여백을 줄이세요.`,
-          );
-        }
-        const fit = fitContain(spec.image.widthPx, spec.image.heightPx, box);
+      // The full engraving (staff + lyrics under the notes) fills the content
+      // box below the chrome — large, like a worship score subtitle.
+      const box: Box = { x: margin, y: contentTop, w: slideW - 2 * margin, h: slideH - contentTop - margin };
+      if (box.w <= 0 || box.h <= 0) {
+        throw new Error(
+          `슬라이드 콘텐츠 영역이 음수입니다(제목/섹션 라벨이 너무 큼): w=${box.w.toFixed(2)} h=${box.h.toFixed(2)}. 폰트 크기/여백을 줄이세요.`,
+        );
+      }
+      const fit = fitContain(spec.image.widthPx, spec.image.heightPx, box);
 
-        // Legibility card behind the score, clamped inside the content box.
-        if (cardOpacity > 0) {
-          const pad = 0.18;
-          const cardX = Math.max(box.x, fit.x - pad);
-          const cardY = Math.max(box.y, fit.y - pad);
-          const cardRight = Math.min(box.x + box.w, fit.x + fit.w + pad);
-          const cardBottom = Math.min(box.y + box.h, fit.y + fit.h + pad);
-          slide.addShape(ROUND_RECT, {
-            x: cardX,
-            y: cardY,
-            w: cardRight - cardX,
-            h: cardBottom - cardY,
-            fill: { color: cardColor, transparency: Math.round((1 - cardOpacity) * 100) },
-            rectRadius: 0.08,
-          });
-        }
-
-        slide.addImage({
-          data: `data:${spec.image.mime};base64,${toBase64(spec.image.data)}`,
-          x: fit.x,
-          y: fit.y,
-          w: fit.w,
-          h: fit.h,
+      // Legibility card behind the score, clamped inside the content box.
+      if (cardOpacity > 0) {
+        const pad = 0.18;
+        const cardX = Math.max(box.x, fit.x - pad);
+        const cardY = Math.max(box.y, fit.y - pad);
+        const cardRight = Math.min(box.x + box.w, fit.x + fit.w + pad);
+        const cardBottom = Math.min(box.y + box.h, fit.y + fit.h + pad);
+        slide.addShape(ROUND_RECT, {
+          x: cardX,
+          y: cardY,
+          w: cardRight - cardX,
+          h: cardBottom - cardY,
+          fill: { color: cardColor, transparency: Math.round((1 - cardOpacity) * 100) },
+          rectRadius: 0.08,
         });
       }
+
+      slide.addImage({
+        data: `data:${spec.image.mime};base64,${toBase64(spec.image.data)}`,
+        x: fit.x,
+        y: fit.y,
+        w: fit.w,
+        h: fit.h,
+      });
     }
 
     const out = (await pptx.write({ outputType: "nodebuffer" })) as Buffer | Uint8Array;

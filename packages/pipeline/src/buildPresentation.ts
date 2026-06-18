@@ -178,11 +178,28 @@ function pageWidthForSlide(slide: { measureIds: string[]; systemBreakMeasureIds?
 }
 
 /**
+ * Join a run of lyric syllables into readable words. A space precedes each
+ * syllable that STARTS a word (syllabic "single"/"begin", or — when the score
+ * carries no word-boundary data — every syllable, which degrades to one space
+ * per syllable). "middle"/"end" continue the current word with no space. This is
+ * the standard MusicXML mechanism for word grouping, so a properly-transcribed
+ * score yields "인자야 이 뼈들이" rather than "인 자 야 이 뼈 들 이".
+ */
+function joinSyllables(syllables: { text: string; syllabic?: string }[]): string {
+  let out = "";
+  for (const s of syllables) {
+    const startsWord = s.syllabic === "single" || s.syllabic === "begin" || s.syllabic == null;
+    if (out && startsWord) out += " ";
+    out += s.text;
+  }
+  return out;
+}
+
+/**
  * Congregation lyric text per sung line for a projection slide: walk the slide's
  * measures in order, take each note's lyric for the slide's verse (falling back
- * to the first), and split into lines at the explicit phrase breaks. Syllables
- * are space-joined — readable without word-boundary data (which Korean lyrics,
- * being one syllable per note, do not carry).
+ * to the first), group syllables into words via `syllabic`, and split into lines
+ * at the explicit phrase breaks.
  */
 function lyricLinesForSlide(
   measureById: Map<string, ScoreIR["measures"][number]>,
@@ -191,20 +208,20 @@ function lyricLinesForSlide(
   const verse = slide.verse ?? 1;
   const breaks = new Set(slide.systemBreakMeasureIds ?? []);
   const lines: string[] = [];
-  let cur: string[] = [];
+  let cur: { text: string; syllabic?: string }[] = [];
   for (const id of slide.measureIds) {
     if (breaks.has(id) && cur.length) {
-      lines.push(cur.join(" "));
+      lines.push(joinSyllables(cur));
       cur = [];
     }
     for (const ev of measureById.get(id)?.events ?? []) {
       if (ev.kind !== "note") continue;
       const lys = ev.lyrics ?? [];
       const ly = lys.find((l) => l.verse === verse) ?? lys[0];
-      if (ly?.text) cur.push(ly.text);
+      if (ly?.text) cur.push({ text: ly.text, ...(ly.syllabic ? { syllabic: ly.syllabic } : {}) });
     }
   }
-  if (cur.length) lines.push(cur.join(" "));
+  if (cur.length) lines.push(joinSyllables(cur));
   return lines;
 }
 

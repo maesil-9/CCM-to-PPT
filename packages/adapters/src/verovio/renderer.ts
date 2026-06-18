@@ -50,6 +50,9 @@ function buildVerovioOptions(options?: RenderOptions): Record<string, unknown> {
     pageMarginLeft: 60,
     pageMarginRight: 60,
     breaks: options?.encodedBreaks ? "encoded" : "auto",
+    // Justify the last/only system to full width too, so a single-phrase line or
+    // a short final line reaches both margins instead of stopping short.
+    ...(options?.justifyLastSystem ? { minLastJustification: 0 } : {}),
     header: "none",
     footer: "none",
     svgViewBox: true,

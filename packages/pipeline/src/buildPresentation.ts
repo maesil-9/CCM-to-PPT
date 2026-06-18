@@ -121,12 +121,14 @@ function renderOptionsFor(
   // staff/stems survive on a screen+background, and a near-black that aligns the
   // CLI/PPTX output with the web editor's default (#1a1a1a).
   const inkColor = options.score?.inkColor ?? (projection ? "1A1A1A" : undefined);
-  const lineThickness = options.score?.lineThickness ?? (projection ? 1.4 : undefined);
+  const lineThickness = options.score?.lineThickness ?? (projection ? 1.7 : undefined);
   return {
     // Projection rasterises at 3× so the (globally up-scaled) staff/lyrics stay
     // crisp on a 1080p+ sanctuary screen; leadsheet stays 2×.
     scale: projection ? 3 : 2,
     encodedBreaks: true,
+    // Projection: every line (including the last/only one) fills the full width.
+    ...(projection ? { justifyLastSystem: true } : {}),
     // Projection pageWidth is set PER SLIDE (pageWidthForSlide) so each phrase
     // gets a natural, compact width instead of being stretched to a fixed page;
     // this is the fallback. Leadsheet keeps a constant per-measure width.

@@ -58,6 +58,8 @@ function sectionLabel(section: ScoreSection | undefined, verse: number | undefin
 
 /** A projection line longer than this is sub-split so the engraving stays large. */
 const MAX_LINE_MEASURES = 4;
+/** Never produce a sub-line shorter than this (avoids a 1-2 note dangling stub). */
+const MIN_LINE_MEASURES = 2;
 
 /** True if `measure` begins a new word (its first sung syllable is single/begin). */
 function startsWord(measure: Measure, verse: number | undefined): boolean {
@@ -83,19 +85,20 @@ function splitLongLine(line: Measure[], verse: number | undefined): Measure[][] 
   const out: Measure[][] = [];
   let start = 0;
   for (let p = 1; p < parts; p++) {
-    const ideal = Math.round((line.length * p) / parts);
+    const remaining = parts - p + 1; // sub-lines still to emit incl. the rest
+    // Even target for the remaining span → keeps every sub-line near-equal length.
+    const ideal = start + Math.round((line.length - start) / remaining);
+    // Snap to a word boundary at the ideal (most balanced) or one measure before
+    // it; only those keep the split balanced. Otherwise break on the beat at the
+    // ideal — the syllable hyphen carries the word over (standard engraving).
     let brk = ideal;
-    for (const d of [0, -1, 1]) {
-      const i = ideal + d;
-      if (i > start && i < line.length && startsWord(line[i]!, verse)) {
-        brk = i;
-        break;
-      }
+    if (!startsWord(line[ideal]!, verse) && ideal - 1 > start && startsWord(line[ideal - 1]!, verse)) {
+      brk = ideal - 1;
     }
-    if (brk > start) {
-      out.push(line.slice(start, brk));
-      start = brk;
-    }
+    // Guarantee MIN_LINE_MEASURES on this line and on every line still to come.
+    brk = Math.max(start + MIN_LINE_MEASURES, Math.min(brk, line.length - MIN_LINE_MEASURES * (remaining - 1)));
+    out.push(line.slice(start, brk));
+    start = brk;
   }
   out.push(line.slice(start));
   return out;

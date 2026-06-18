@@ -42,7 +42,9 @@ export const PROJECTION_PRESENTATION_PROFILE: PresentationProfile = {
   minimumStaffSize: 60,
   safeMarginInches: 0.4,
   titleVisibility: "every-slide",
-  sectionLabelVisibility: true,
+  // Projection chrome stays clean like real worship slides: no section label in
+  // the top-right by default (opt back in via the editor).
+  sectionLabelVisibility: false,
   outputMode: "svg",
   slideWidthInches: 13.333,
   slideHeightInches: 7.5,

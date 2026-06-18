@@ -39,6 +39,8 @@ export interface RenderOptions {
   hideMeasureNumbers?: boolean;
   /** Also load system fonts during rasterization (for a user-chosen lyric font). */
   loadSystemFonts?: boolean;
+  /** Justify the LAST/only system to full width too (projection: every line fills). */
+  justifyLastSystem?: boolean;
   /** Ink colour for staff/notes/text (hex, no '#'); default engine black. */
   inkColor?: string;
   /** Line-weight scale (1 = engine default) for staff/stem/barline widths. */

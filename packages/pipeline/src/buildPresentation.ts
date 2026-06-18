@@ -137,12 +137,12 @@ function renderOptionsFor(
     // Projection: a FIXED page width (constant across slides → equal-width PNGs →
     // one global composite scale = identical note size on every slide). It is sized
     // so a worship line (≤ ~4 measures) never wraps, yet is tight enough that the
-    // engraving fills the slide at a comfortable, readable size (≈1.3× larger than a
+    // engraving fills the slide at a comfortable, readable size (≈1.4× larger than a
     // 3200-wide page). The deck's widest natural line here is ~20327 internal units;
-    // content width = 2460·10 − 1200 margins = 23400 leaves a ~15% wrap buffer. A
-    // far denser line would wrap → the one-page guard fails loudly (never silent).
+    // content width = 2320·10 − 1200 margins = 22000 leaves a ~8% wrap buffer. A far
+    // denser line would wrap → the one-page guard fails loudly (never silent).
     // Leadsheet keeps a constant per-measure width.
-    pageWidth: projection ? 2460 : Math.max(900, profile.measuresPerSystem * 620),
+    pageWidth: projection ? 2320 : Math.max(900, profile.measuresPerSystem * 620),
     // Projection: modest linear spread; lower non-linear so runs of short notes
     // (eighths/melisma) distribute evenly instead of cramming (kills the
     // "highly compressed 0.57" warning). spacingLinear/NonLinear = horizontal;

@@ -115,6 +115,8 @@ export interface PptxSlideSpec {
   title?: string;
   sectionLabel?: string;
   image: PptxImage;
+  /** Congregation lyric text, one entry per sung line (projection subtitle). */
+  lyricLines?: string[];
 }
 
 export interface PptxBackgroundImage {
@@ -138,6 +140,8 @@ export interface PptxProfile {
   textShadow?: boolean;
   /** Compact projection chrome: small ♪ title top-left, section label top-right. */
   compact?: boolean;
+  /** Font for the big congregation lyric text in the subtitle (compact) layout. */
+  lyricFontFace?: string;
 }
 
 /**

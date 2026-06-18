@@ -101,6 +101,8 @@ export interface PreviewSlide {
   widthPx: number;
   heightPx: number;
   png: string; // base64 of the score image (style is composed client-side)
+  /** Congregation lyric text, one entry per sung line (projection subtitle). */
+  lyricLines?: string[];
 }
 
 export interface PreviewResult {
@@ -136,6 +138,7 @@ export function renderPreview(
           widthPx: asset?.widthPx ?? 0,
           heightPx: asset?.heightPx ?? 0,
           png: asset ? Buffer.from(asset.png).toString("base64") : "",
+          ...(asset?.lyricLines?.length ? { lyricLines: asset.lyricLines } : {}),
         };
       }),
       validation: result.scoreValidation,

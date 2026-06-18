@@ -40,6 +40,8 @@ export interface SlideAsset {
   heightPx: number;
   sectionLabel?: string;
   verse?: number;
+  /** Congregation lyric text, one entry per sung line (projection subtitle). */
+  lyricLines?: string[];
 }
 
 export interface FontConfig {
@@ -102,6 +104,7 @@ function toPptxProfile(profile: PresentationProfile, options: BuildOptions): Ppt
   if (options.style?.sectionLabel) p.sectionLabel = options.style.sectionLabel;
   if (options.style?.textShadow) p.textShadow = true;
   if (profile.layout === "projection") p.compact = true;
+  if (options.score?.lyricFont) p.lyricFontFace = options.score.lyricFont;
   if (options.background) {
     p.backgroundImage = { data: options.background.data, mime: options.background.mime };
   }
@@ -114,24 +117,33 @@ function renderOptionsFor(
   fonts?: FontConfig,
 ): RenderOptions {
   const projection = profile.layout === "projection";
+  // Projection defaults that match real worship-PPT readability: a heavier ink so
+  // staff/stems survive on a screen+background, and a near-black that aligns the
+  // CLI/PPTX output with the web editor's default (#1a1a1a).
+  const inkColor = options.score?.inkColor ?? (projection ? "1A1A1A" : undefined);
+  const lineThickness = options.score?.lineThickness ?? (projection ? 1.4 : undefined);
   return {
-    scale: 2,
+    // Projection rasterises at 3× so the (globally up-scaled) staff/lyrics stay
+    // crisp on a 1080p+ sanctuary screen; leadsheet stays 2×.
+    scale: projection ? 3 : 2,
     encodedBreaks: true,
-    // Projection lines hold a whole sung phrase, so use a wide page and spread
-    // notes out (spacingLinear) to give the large lyrics room. Leadsheet keeps a
-    // constant per-measure width.
-    pageWidth: projection ? 2400 : Math.max(900, profile.measuresPerSystem * 620),
-    // Projection: full-width lyrics (spacingLinear modest so sparse phrases don't
-    // wrap) with a comfortable — not extreme — gap between the sung lines.
+    // Projection pageWidth is set PER SLIDE (pageWidthForSlide) so each phrase
+    // gets a natural, compact width instead of being stretched to a fixed page;
+    // this is the fallback. Leadsheet keeps a constant per-measure width.
+    pageWidth: projection ? 2000 : Math.max(900, profile.measuresPerSystem * 620),
+    // Projection: modest linear spread; lower non-linear so runs of short notes
+    // (eighths/melisma) distribute evenly instead of cramming (kills the
+    // "highly compressed 0.57" warning). spacingLinear/NonLinear = horizontal;
+    // spacingSystem/spacingStaff = vertical gaps between sung lines.
     ...(projection
-      ? { rendererOptions: { spacingLinear: 0.35, spacingNonLinear: 0.7, spacingSystem: 16, spacingStaff: 4 } }
+      ? { rendererOptions: { spacingLinear: 0.35, spacingNonLinear: 0.55, spacingSystem: 16, spacingStaff: 4 } }
       : {}),
     ...(profile.minimumStaffSize ? { minStaffSize: profile.minimumStaffSize } : {}),
     ...(profile.lyricSize ? { lyricSize: profile.lyricSize } : {}),
     // Measure numbers: shown for leadsheet, hidden for projection (unless overridden).
     ...((options.measureNumbers?.visible ?? !projection) ? {} : { hideMeasureNumbers: true }),
-    ...(options.score?.inkColor ? { inkColor: options.score.inkColor } : {}),
-    ...(options.score?.lineThickness ? { lineThickness: options.score.lineThickness } : {}),
+    ...(inkColor ? { inkColor } : {}),
+    ...(lineThickness ? { lineThickness } : {}),
     // Lyric font: a user choice overrides the bundled default and (if it is not
     // the bundled Pretendard) enables system fonts so resvg can find it.
     ...(options.score?.lyricFont
@@ -141,6 +153,59 @@ function renderOptionsFor(
         : {}),
     ...(fonts?.fontFiles ? { fontFiles: fonts.fontFiles } : {}),
   };
+}
+
+/**
+ * Natural per-slide projection page width: proportional to the busiest sung
+ * line's measure count, so a short phrase renders as a compact line (not
+ * stretched full-width with an empty tail) and a dense line gets room to
+ * breathe. Cross-slide staff size is normalised at composite time, so this only
+ * sets each PNG's aspect/density, not its on-screen size.
+ */
+function pageWidthForSlide(slide: { measureIds: string[]; systemBreakMeasureIds?: string[] }): number {
+  const breaks = new Set(slide.systemBreakMeasureIds ?? []);
+  let max = 0;
+  let cur = 0;
+  for (const id of slide.measureIds) {
+    if (breaks.has(id) && cur > 0) {
+      max = Math.max(max, cur);
+      cur = 0;
+    }
+    cur++;
+  }
+  max = Math.max(max, cur, 1);
+  return Math.max(1100, Math.min(2600, 300 + max * 380));
+}
+
+/**
+ * Congregation lyric text per sung line for a projection slide: walk the slide's
+ * measures in order, take each note's lyric for the slide's verse (falling back
+ * to the first), and split into lines at the explicit phrase breaks. Syllables
+ * are space-joined — readable without word-boundary data (which Korean lyrics,
+ * being one syllable per note, do not carry).
+ */
+function lyricLinesForSlide(
+  measureById: Map<string, ScoreIR["measures"][number]>,
+  slide: { measureIds: string[]; systemBreakMeasureIds?: string[]; verse?: number },
+): string[] {
+  const verse = slide.verse ?? 1;
+  const breaks = new Set(slide.systemBreakMeasureIds ?? []);
+  const lines: string[] = [];
+  let cur: string[] = [];
+  for (const id of slide.measureIds) {
+    if (breaks.has(id) && cur.length) {
+      lines.push(cur.join(" "));
+      cur = [];
+    }
+    for (const ev of measureById.get(id)?.events ?? []) {
+      if (ev.kind !== "note") continue;
+      const lys = ev.lyrics ?? [];
+      const ly = lys.find((l) => l.verse === verse) ?? lys[0];
+      if (ly?.text) cur.push(ly.text);
+    }
+  }
+  if (cur.length) lines.push(cur.join(" "));
+  return lines;
 }
 
 /** Map items through `fn` with at most `limit` in flight, preserving order. */
@@ -223,8 +288,13 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
           : { systemBreakEvery: profile.measuresPerSystem }),
         ...(slide.verse !== undefined ? { verses: [slide.verse] } : {}),
       });
-      // One loadData → both PNG (embedded) and SVG (asset).
-      const result = await activeRenderer.renderScore({ musicXml: xml, outputMode: "png", options: renderOptions });
+      // One loadData → both PNG (embedded) and SVG (asset). Projection sizes the
+      // page per slide so each phrase gets a natural, compact width.
+      const slideRenderOptions =
+        profile.layout === "projection"
+          ? { ...renderOptions, pageWidth: pageWidthForSlide(slide) }
+          : renderOptions;
+      const result = await activeRenderer.renderScore({ musicXml: xml, outputMode: "png", options: slideRenderOptions });
       const page = result.pages[0];
       if (!page?.png) throw new Error(`슬라이드 ${slide.index} PNG 렌더 실패`);
       return { slide, xml, png: page.png, svg: page.svg ?? "", widthPx: page.widthPx, heightPx: page.heightPx };
@@ -232,7 +302,10 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
 
     const assets: SlideAsset[] = [];
     const slideSpecs: PptxSlideSpec[] = [];
+    const measureById = new Map(resolvedScore.measures.map((m) => [m.id, m] as const));
+    const wantLyrics = profile.layout === "projection";
     for (const { slide, xml, png, svg, widthPx, heightPx } of rendered) {
+      const lyricLines = wantLyrics ? lyricLinesForSlide(measureById, slide) : [];
       assets.push({
         index: slide.index,
         png,
@@ -242,6 +315,7 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
         heightPx,
         ...(slide.sectionLabel ? { sectionLabel: slide.sectionLabel } : {}),
         ...(slide.verse !== undefined ? { verse: slide.verse } : {}),
+        ...(lyricLines.length ? { lyricLines } : {}),
       });
       const spec: PptxSlideSpec = {
         index: slide.index,
@@ -249,6 +323,7 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
       };
       if (slide.title) spec.title = slide.title;
       if (slide.sectionLabel) spec.sectionLabel = slide.sectionLabel;
+      if (lyricLines.length) spec.lyricLines = lyricLines;
       slideSpecs.push(spec);
     }
 

@@ -35,7 +35,11 @@ export const PROJECTION_PRESENTATION_PROFILE: PresentationProfile = {
   // In projection, maxSystemsPerSlide = sung lines per slide (reference: 2).
   maxSystemsPerSlide: 2,
   measuresPerSystem: 2,
-  minimumStaffSize: 28,
+  // Verovio `scale` percent. Must exceed the renderer's BASE_SCALE (50) or it is
+  // a no-op floor (the old value 28 silently rendered at the 50 default). 60
+  // gives a crisper, slightly larger engraving; cross-slide size is normalised
+  // at composite time, so this mainly sets render resolution + proportions.
+  minimumStaffSize: 60,
   safeMarginInches: 0.4,
   titleVisibility: "every-slide",
   sectionLabelVisibility: true,

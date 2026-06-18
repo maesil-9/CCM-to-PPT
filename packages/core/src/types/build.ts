@@ -92,6 +92,12 @@ export interface ScoreAppearance {
   lyricOutlineWidth?: number;
   /** Drop a soft shadow behind the congregation lyrics (legibility over photos). */
   lyricShadow?: boolean;
+  /**
+   * Show the inter-syllable connector hyphens (the short dashes between the
+   * syllables of a word, e.g. 인-자-야). Korean worship lyrics read cleaner
+   * without them, so projection slides hide them unless this is set true.
+   */
+  lyricHyphens?: boolean;
   /** Gap between staff and lyrics (Verovio units; larger = more space). */
   lyricGap?: number;
 }

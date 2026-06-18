@@ -200,6 +200,9 @@ function renderOptionsFor(
     ...(options.score?.lyricOutlineColor ? { lyricOutlineColor: options.score.lyricOutlineColor } : {}),
     ...(options.score?.lyricOutlineWidth !== undefined ? { lyricOutlineWidth: options.score.lyricOutlineWidth } : {}),
     ...(options.score?.lyricShadow ? { lyricShadow: true } : {}),
+    // Projection hides inter-syllable hyphens (cleaner Korean lyrics) unless the
+    // user opts in; leadsheets keep the conventional hyphens.
+    ...(projection && !(options.score?.lyricHyphens ?? false) ? { hideLyricHyphens: true } : {}),
     ...(options.score?.lyricGap !== undefined ? { lyricTopMargin: options.score.lyricGap } : {}),
     // Lyric font: a user choice overrides the bundled default and (if it is not
     // the bundled Pretendard) enables system fonts so resvg can find it.

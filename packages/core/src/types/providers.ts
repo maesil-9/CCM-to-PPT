@@ -59,6 +59,8 @@ export interface RenderOptions {
   lyricOutlineWidth?: number;
   /** Draw a soft drop shadow behind the congregation lyrics (over-photo legibility). */
   lyricShadow?: boolean;
+  /** Strip Verovio's inter-syllable connector hyphens (the 인-자-야 dashes). */
+  hideLyricHyphens?: boolean;
   /** Ink colour for staff/notes/text (hex, no '#'); default engine black. */
   inkColor?: string;
   /** Line-weight scale (1 = engine default) for staff/stem/barline widths. */

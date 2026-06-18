@@ -200,6 +200,20 @@ function styleLyrics(
   return out;
 }
 
+/**
+ * Remove the inter-syllable connector hyphens (인-자-야): Verovio draws them as
+ * short `<rect>` bars and they are the ONLY rects inside a `<g class="syl">`
+ * group (the syllable's `<text>` plus, optionally, a trailing connector). We strip
+ * rects scoped to those groups, so every other rect (ledger lines, etc.) and all
+ * glyphs/text are untouched. Korean worship lyrics read cleaner without them.
+ */
+function stripLyricHyphens(svg: string): string {
+  return svg.replace(
+    /(<g\b[^>]*\bclass="syl[^"]*"[^>]*>)([\s\S]*?)(<\/g>)/g,
+    (_m, open: string, inner: string, close: string) => open + inner.replace(/<rect\b[^>]*\/>/g, "") + close,
+  );
+}
+
 // Strip Verovio's auto-generated measure-number groups. They contain only a
 // <text>/<tspan> (no nested <g>), so a non-greedy match to the first </g> is
 // safe. Attribute order varies (`id` before `class`), so match class anywhere.
@@ -285,6 +299,7 @@ export class VerovioRenderer implements RendererProvider {
     let svg = recolorSvg(this.toolkit.renderToSVG(1), input.options?.inkColor);
     if (input.options?.hideMeasureNumbers) svg = stripMeasureNumbers(svg);
     if (input.options?.rightAlignTrailingSystems) svg = rightAlignTrailingSystems(svg);
+    if (input.options?.hideLyricHyphens) svg = stripLyricHyphens(svg);
     svg = styleLyrics(svg, {
       ...(input.options?.lyricBold ? { lyricBold: true } : {}),
       ...(input.options?.lyricColor ? { lyricColor: input.options.lyricColor } : {}),

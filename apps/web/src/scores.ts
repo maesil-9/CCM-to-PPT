@@ -151,6 +151,7 @@ export const uiOptionsSchema = z
         lyricOutlineColor: hex.optional(),
         lyricOutlineWidth: z.number().min(0).max(20).optional(),
         lyricShadow: z.boolean().optional(),
+        lyricHyphens: z.boolean().optional(),
         lyricGap: z.number().min(0).max(20).optional(),
       })
       .strict()

@@ -3,7 +3,7 @@
 Turning a source score (PDF / image) into a `ScoreIR` is a transcription step, and
 transcription introduces pitch errors that are easy to miss once the score renders
 cleanly. **An analysis is not "done" until its pitches have been audited
-note‑by‑note against the source.** A valid IR and a good‑looking render are
+note-by-note against the source.** A valid IR and a good-looking render are
 necessary but not sufficient.
 
 ## What must be checked
@@ -19,27 +19,32 @@ The hard part — must be audited explicitly:
 
 - **Every melody notehead's pitch**, in order, per staff system.
 
-## Note‑by‑note audit procedure
+## Reliability of automated image reads (measured)
 
-Optical music reading (by a human glancing or by an LLM) is error‑prone, so the
-audit is built for **consensus + flagging**, not a single read:
+A run of a multi-agent audit on a real lead-sheet PDF showed that **LLM
+note-reading from a rendered staff is not reliable enough to be the gate on its
+own.** Across every staff system the independent readers disagreed *with each
+other* (not just with the IR): different octaves, different note counts, and some
+musically implausible leaps. Low inter-reader agreement means the reads are noise,
+so they could neither confirm nor refute the transcription. Treat an automated
+read as a **flagging aid only, and only where independent readers strongly agree
+with each other** — never as proof the IR is wrong. It is also expensive (that run
+spent millions of tokens for an inconclusive result), so do not rerun it blindly.
 
-1. For each staff system, take **two independent blind reads** of the noteheads
-   from the source (different reading strategies, neither shown the IR's claim).
-2. Reconcile in code against the IR's pitch sequence:
-   - both reads agree with the IR → **confirmed**;
-   - both reads agree with each other but not the IR → **likely IR error**;
-   - reads disagree → **third close read + majority vote**.
-3. Anything not `confirmed` is **flagged for human/ear confirmation** — a flag is
-   "needs a look", not "proven wrong".
+## What actually verifies pitches (in order of trust)
 
-The repo includes a reusable `pitch-audit` workflow that implements this fan‑out
-(two blind readers per system, in‑script reconcile, tie‑break read). Locate staff
-systems by their **chord symbols, not their lyrics**, and have the audit emit
-**pitches and measure ids only** — never lyric text. Source scores under
-`scores/*/` are copyrighted and stay local (see the repo's score handling notes).
+1. **Machine-format diff** — if the source ships as MIDI/MusicXML, diff the IR
+   against it exactly. This is the only fully reliable automated gate.
+2. **Human side-by-side** — render the IR as a clean lead sheet in the source's
+   original order and have someone who can read or hear the song compare it to the
+   source. The human eye/ear is the reliable reader for scans/PDFs.
+3. **Harmonic sanity check (cheap, automated)** — confirm every melody note fits
+   (or plausibly decorates) its measure's chord, and that the contour matches the
+   source. Catches gross errors; does not prove every pitch.
+4. **Multi-agent image read** — only as a flag, per the reliability note above.
+   Locate staff systems by their **chord symbols, not their lyrics**, and emit
+   **pitches and measure ids only** — never lyric text. Source scores under
+   `scores/*/` are copyrighted and stay local.
 
-## Ground truth, when available
-
-If the source ships as MIDI/MusicXML, diff the IR against it exactly — that beats
-any image read. The multi‑agent image audit above is the fallback for scans/PDFs.
+Always also confirm key/meter/tempo/clef/chords/structure directly from the source
+(those are readable reliably).

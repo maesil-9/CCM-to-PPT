@@ -81,9 +81,9 @@ export interface BuildPresentationResult {
   resolvedScore: ScoreIR;
 }
 
-function resolveOptions(options?: Partial<BuildOptions>): BuildOptions {
+function resolveOptions(options?: Partial<BuildOptions>, defaultTempoVisible = true): BuildOptions {
   return {
-    tempo: { visible: options?.tempo?.visible ?? true },
+    tempo: { visible: options?.tempo?.visible ?? defaultTempoVisible },
     chords: { ...DEFAULT_BUILD_OPTIONS.chords, ...options?.chords },
     key: { ...DEFAULT_BUILD_OPTIONS.key, ...options?.key },
     ...(options?.background ? { background: options.background } : {}),
@@ -100,10 +100,17 @@ function toPptxProfile(profile: PresentationProfile, options: BuildOptions): Ppt
   };
   if (options.style?.backgroundColor) p.background = options.style.backgroundColor;
   if (options.style?.card) p.card = options.style.card;
-  if (options.style?.title) p.title = options.style.title;
-  if (options.style?.sectionLabel) p.sectionLabel = options.style.sectionLabel;
+  // Projection title/label DEFAULTS so any score reads like the worship preset
+  // without a saved style: the bundled Korean-capable font (so Korean titles never
+  // tofu) and a bold heading. Colour is left to the builder's background-aware
+  // fallback (white over a photo), since no single colour suits every background.
+  const projection = profile.layout === "projection";
+  const titleDefaults = projection ? { fontFace: BUNDLED_FONT_FAMILY, fontSize: 24, bold: true } : {};
+  const labelDefaults = projection ? { fontFace: BUNDLED_FONT_FAMILY, fontSize: 18, bold: true } : {};
+  if (options.style?.title || projection) p.title = { ...titleDefaults, ...(options.style?.title ?? {}) };
+  if (options.style?.sectionLabel || projection) p.sectionLabel = { ...labelDefaults, ...(options.style?.sectionLabel ?? {}) };
   if (options.style?.textShadow) p.textShadow = true;
-  if (profile.layout === "projection") p.compact = true;
+  if (projection) p.compact = true;
   if (options.score?.lyricFont) p.lyricFontFace = options.score.lyricFont;
   if (options.background) {
     p.backgroundImage = { data: options.background.data, mime: options.background.mime };
@@ -163,6 +170,16 @@ function renderOptionsFor(
   // CLI/PPTX output with the web editor's default (#1a1a1a).
   const inkColor = options.score?.inkColor ?? (projection ? "1A1A1A" : undefined);
   const lineThickness = options.score?.lineThickness ?? (projection ? 1.7 : undefined);
+  // Worship-slide lyric look applied as projection DEFAULTS (overridable per score),
+  // so ANY score renders like this without a saved preset: bold white lyrics with a
+  // black keyline read over any photo, and a comfortable staff↔lyric gap. The black
+  // outline also keeps white lyrics legible even with no background. `?? value`
+  // (not truthiness) so an explicit 0 / false from the user still wins.
+  const lyricColor = options.score?.lyricColor ?? (projection ? "FFFFFF" : undefined);
+  const lyricBold = options.score?.lyricBold ?? (projection ? true : false);
+  const lyricOutlineColor = options.score?.lyricOutlineColor ?? (projection ? "000000" : undefined);
+  const lyricOutlineWidth = options.score?.lyricOutlineWidth ?? (projection ? 12 : undefined);
+  const lyricGap = options.score?.lyricGap ?? (projection ? 8 : undefined);
   return {
     // Projection rasterises at 3× so the (globally up-scaled) staff/lyrics stay
     // crisp on a 1080p+ sanctuary screen; leadsheet stays 2×.
@@ -195,15 +212,15 @@ function renderOptionsFor(
     ...((options.measureNumbers?.visible ?? !projection) ? {} : { hideMeasureNumbers: true }),
     ...(inkColor ? { inkColor } : {}),
     ...(lineThickness ? { lineThickness } : {}),
-    ...(options.score?.lyricBold ? { lyricBold: true } : {}),
-    ...(options.score?.lyricColor ? { lyricColor: options.score.lyricColor } : {}),
-    ...(options.score?.lyricOutlineColor ? { lyricOutlineColor: options.score.lyricOutlineColor } : {}),
-    ...(options.score?.lyricOutlineWidth !== undefined ? { lyricOutlineWidth: options.score.lyricOutlineWidth } : {}),
+    ...(lyricBold ? { lyricBold: true } : {}),
+    ...(lyricColor ? { lyricColor } : {}),
+    ...(lyricOutlineColor ? { lyricOutlineColor } : {}),
+    ...(lyricOutlineWidth !== undefined ? { lyricOutlineWidth } : {}),
     ...(options.score?.lyricShadow ? { lyricShadow: true } : {}),
     // Projection hides inter-syllable hyphens (cleaner Korean lyrics) unless the
     // user opts in; leadsheets keep the conventional hyphens.
     ...(projection && !(options.score?.lyricHyphens ?? false) ? { hideLyricHyphens: true } : {}),
-    ...(options.score?.lyricGap !== undefined ? { lyricTopMargin: options.score.lyricGap } : {}),
+    ...(lyricGap !== undefined ? { lyricTopMargin: lyricGap } : {}),
     // Lyric font: a user choice overrides the bundled default and (if it is not
     // the bundled Pretendard) enables system fonts so resvg can find it.
     ...(options.score?.lyricFont
@@ -282,8 +299,10 @@ async function mapWithConcurrency<T, R>(
 }
 
 export async function buildPresentation(input: BuildPresentationInput): Promise<BuildPresentationResult> {
-  const options = resolveOptions(input.options);
   const profile = input.profile ?? DEFAULT_PRESENTATION_PROFILE;
+  // Projection hides the tempo mark by default (worship slides don't show ♩=…);
+  // leadsheets show it. Overridable per score via tempo.visible.
+  const options = resolveOptions(input.options, profile.layout !== "projection");
   const emitFullMusicXml = input.emitFullMusicXml ?? true;
   // Default to the bundled Korean-capable font so lyrics rasterize identically
   // on any machine. A caller can pass `fonts: {}` to opt back into system fonts.
@@ -358,20 +377,43 @@ export async function buildPresentation(input: BuildPresentationInput): Promise<
         pageWidth: PROJECTION_MEASURE_PAGE_WIDTH,
         adjustPageWidth: true,
       };
-      const widths = await mapWithConcurrency(slidePlan.slides, concurrency, async (slide) => {
-        const r = await activeRenderer.renderScore({ musicXml: serializeSlide(slide), outputMode: "svg", options: measureOptions });
-        return pageContentWidth(r.pages[0]?.svg ?? "");
-      });
+      // Dedupe identical slides (e.g. a chorus sung 4×): same MusicXML → same width.
+      const measureCache = new Map<string, Promise<number>>();
+      const measureXml = (xml: string): Promise<number> => {
+        let p = measureCache.get(xml);
+        if (!p) {
+          p = activeRenderer
+            .renderScore({ musicXml: xml, outputMode: "svg", options: measureOptions })
+            .then((r) => pageContentWidth(r.pages[0]?.svg ?? ""));
+          measureCache.set(xml, p);
+        }
+        return p;
+      };
+      const widths = await mapWithConcurrency(slidePlan.slides, concurrency, (slide) => measureXml(serializeSlide(slide)));
       renderOptions = { ...renderOptions, pageWidth: fitProjectionPageWidth(Math.max(0, ...widths)) };
     }
 
+    // Render-dedup cache: identical slides (same MusicXML, same options) render
+    // once and reuse the PNG/SVG. Rendering is deterministic, so output is byte-for-
+    // byte unchanged — only repeated sections (verse/chorus/bridge sung multiple
+    // times) get faster. Keyed by MusicXML since renderOptions is fixed here.
+    const renderCache = new Map<string, Promise<{ png: Uint8Array; svg: string; widthPx: number; heightPx: number }>>();
+    const renderXml = (xml: string): Promise<{ png: Uint8Array; svg: string; widthPx: number; heightPx: number }> => {
+      let p = renderCache.get(xml);
+      if (!p) {
+        // One loadData → both PNG (embedded) and SVG (asset).
+        p = activeRenderer.renderScore({ musicXml: xml, outputMode: "png", options: renderOptions }).then((result) => {
+          const page = result.pages[0];
+          if (!page?.png) throw new Error("슬라이드 PNG 렌더 실패(빈 결과)");
+          return { png: page.png, svg: page.svg ?? "", widthPx: page.widthPx, heightPx: page.heightPx };
+        });
+        renderCache.set(xml, p);
+      }
+      return p;
+    };
     const rendered = await mapWithConcurrency(slidePlan.slides, concurrency, async (slide) => {
       const xml = serializeSlide(slide);
-      // One loadData → both PNG (embedded) and SVG (asset).
-      const result = await activeRenderer.renderScore({ musicXml: xml, outputMode: "png", options: renderOptions });
-      const page = result.pages[0];
-      if (!page?.png) throw new Error(`슬라이드 ${slide.index} PNG 렌더 실패`);
-      return { slide, xml, png: page.png, svg: page.svg ?? "", widthPx: page.widthPx, heightPx: page.heightPx };
+      return { slide, xml, ...(await renderXml(xml)) };
     });
 
     const assets: SlideAsset[] = [];

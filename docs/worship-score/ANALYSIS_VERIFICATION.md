@@ -35,9 +35,15 @@ spent millions of tokens for an inconclusive result), so do not rerun it blindly
 
 1. **Machine-format diff** — if the source ships as MIDI/MusicXML, diff the IR
    against it exactly. This is the only fully reliable automated gate.
-2. **Human side-by-side** — render the IR as a clean lead sheet in the source's
-   original order and have someone who can read or hear the song compare it to the
-   source. The human eye/ear is the reliable reader for scans/PDFs.
+2. **Render-and-compare engravings (the reliable manual check)** — render the IR
+   in the source's original order as a clean lead sheet with chords, lyrics
+   suppressed (`verses: []`), then compare NOTEHEAD POSITIONS to the source staff,
+   measure by measure. Matching two engravings ("does this note sit on the same
+   line/space?") is far more reliable than reading an absolute pitch off one staff,
+   and distinctive landmarks (phrase peaks, cadence resolutions) anchor the
+   alignment. A person who can read or hear the song is the reliable judge. This is
+   what actually confirmed saenggi-ya's melody after the multi-agent OMR was
+   inconclusive.
 3. **Harmonic sanity check (cheap, automated)** — confirm every melody note fits
    (or plausibly decorates) its measure's chord, and that the contour matches the
    source. Catches gross errors; does not prove every pitch.

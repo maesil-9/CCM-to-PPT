@@ -148,6 +148,7 @@ function readOptions() {
       color: toHex($("label-color").value),
       bold: $("label-bold").checked,
     },
+    titleAccentColor: toHex($("title-accent-color").value),
     card: { color: toHex($("card-color").value), opacity: parseFloat($("card-opacity").value) },
     textShadow: $("text-shadow").checked,
   };
@@ -198,6 +199,8 @@ function applyOptions(ui) {
     if (ui.style.title.color) setColor($("title-color"), ui.style.title.color);
     $("title-bold").checked = ui.style.title.bold !== false;
   }
+  // ♪ accent: the saved value, else fall back to the title colour (so it matches).
+  setColor($("title-accent-color"), ui.style?.titleAccentColor || ui.style?.title?.color || "2A3A66");
   if (ui.style?.sectionLabel) {
     if (ui.style.sectionLabel.fontFace) $("label-font").value = ui.style.sectionLabel.fontFace;
     if (ui.style.sectionLabel.fontSize) $("label-size").value = String(ui.style.sectionLabel.fontSize);
@@ -401,7 +404,17 @@ function compose() {
       const t = document.createElement("div");
       t.className = "slide-text slide-title";
       place(t, L.titleRect);
-      t.textContent = compact ? "♪ " + s.title : s.title;
+      if (compact) {
+        // The ♪ accent can be coloured independently of the title text.
+        const accent = ui.style.titleAccentColor || ui.style.title.color;
+        const note = document.createElement("span");
+        note.textContent = "♪ ";
+        note.style.color = "#" + accent;
+        t.appendChild(note);
+        t.appendChild(document.createTextNode(s.title));
+      } else {
+        t.textContent = s.title;
+      }
       t.style.fontFamily = ui.style.title.fontFace;
       t.style.fontSize = ptToCqw(ui.style.title.fontSize).toFixed(3) + "cqw";
       t.style.color = "#" + ui.style.title.color;
@@ -583,6 +596,7 @@ function resetDefaults() {
   $("title-font").value = "Pretendard";
   $("title-size").value = "24";
   setColor($("title-color"), "2A3A66");
+  setColor($("title-accent-color"), "2A3A66");
   $("title-bold").checked = true;
   $("label-font").value = "Pretendard";
   $("label-size").value = "18";

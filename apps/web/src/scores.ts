@@ -160,6 +160,7 @@ export const uiOptionsSchema = z
       .object({
         title: textStyle.optional(),
         sectionLabel: textStyle.optional(),
+        titleAccentColor: hex.optional(),
         backgroundColor: hex.optional(),
         card: z.object({ color: hex.optional(), opacity: z.number().min(0).max(1).optional() }).strict().optional(),
         textShadow: z.boolean().optional(),

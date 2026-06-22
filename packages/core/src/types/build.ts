@@ -60,6 +60,8 @@ export interface TextStyle {
 export interface StyleOptions {
   title?: TextStyle;
   sectionLabel?: TextStyle;
+  /** Colour of the ♪ accent before the title (hex, no '#'); defaults to title colour. */
+  titleAccentColor?: string;
   /** Slide background colour (hex, no '#') when no background image is set. */
   backgroundColor?: string;
   /** Legibility card behind the score. */

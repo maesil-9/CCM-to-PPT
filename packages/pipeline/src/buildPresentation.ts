@@ -109,6 +109,7 @@ function toPptxProfile(profile: PresentationProfile, options: BuildOptions): Ppt
   const labelDefaults = projection ? { fontFace: BUNDLED_FONT_FAMILY, fontSize: 18, bold: true } : {};
   if (options.style?.title || projection) p.title = { ...titleDefaults, ...(options.style?.title ?? {}) };
   if (options.style?.sectionLabel || projection) p.sectionLabel = { ...labelDefaults, ...(options.style?.sectionLabel ?? {}) };
+  if (options.style?.titleAccentColor) p.titleAccentColor = options.style.titleAccentColor;
   if (options.style?.textShadow) p.textShadow = true;
   if (projection) p.compact = true;
   if (options.score?.lyricFont) p.lyricFontFace = options.score.lyricFont;

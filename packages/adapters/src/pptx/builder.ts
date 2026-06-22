@@ -68,9 +68,13 @@ interface PptxShapeOptions {
   line?: { color: string; width: number };
   rectRadius?: number;
 }
+interface PptxTextRun {
+  text: string;
+  options?: { color?: string; bold?: boolean; italic?: boolean };
+}
 interface PptxSlide {
   background: { color: string };
-  addText(text: string, opts: PptxTextOptions): void;
+  addText(text: string | PptxTextRun[], opts: PptxTextOptions): void;
   addImage(opts: PptxImageOptions): void;
   addShape(shapeType: string, opts: PptxShapeOptions): void;
 }
@@ -186,14 +190,22 @@ export class PptxGenJsBuilder implements PptxBuilder {
         const rowY = margin * 0.5;
         const rowH = 0.55;
         if (spec.title) {
-          slide.addText("♪ " + spec.title, {
-            x: margin, y: rowY, w: innerW * 0.66, h: rowH,
-            fontSize: titleStyle.fontSize ?? 24,
-            bold: titleStyle.bold ?? true,
-            ...(titleStyle.fontFace ? { fontFace: titleStyle.fontFace } : {}),
-            align: "left", color: titleColor,
-            ...(() => { const s = makeShadow(); return s ? { shadow: s } : {}; })(),
-          });
+          // The ♪ accent can be coloured independently of the title text.
+          const accentColor = profile.titleAccentColor ?? titleColor;
+          slide.addText(
+            [
+              { text: "♪ ", options: { color: accentColor } },
+              { text: spec.title, options: { color: titleColor } },
+            ],
+            {
+              x: margin, y: rowY, w: innerW * 0.66, h: rowH,
+              fontSize: titleStyle.fontSize ?? 24,
+              bold: titleStyle.bold ?? true,
+              ...(titleStyle.fontFace ? { fontFace: titleStyle.fontFace } : {}),
+              align: "left", color: titleColor,
+              ...(() => { const s = makeShadow(); return s ? { shadow: s } : {}; })(),
+            },
+          );
         }
         if (spec.sectionLabel) {
           slide.addText(spec.sectionLabel, {
